@@ -1,0 +1,35 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Asystent studenta – Uniwersytet Radomski</title>
+<style>
+body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f3f5f9;color:#1d2433}
+header{background:#003a70;color:#fff;padding:14px 22px}header h1{margin:0;font-size:20px}header p{margin:4px 0 0;font-size:13px;opacity:.85}
+#wrap{max-width:860px;margin:0 auto;padding:16px}
+#chat{background:#fff;border-radius:10px;min-height:420px;padding:16px;box-shadow:0 1px 4px #0002;overflow-y:auto;max-height:68vh}
+.m{margin:10px 0;padding:10px 14px;border-radius:10px;white-space:pre-wrap;line-height:1.45;font-size:14.5px}
+.u{background:#e3edf9;margin-left:15%}.a{background:#f6f6f6;margin-right:8%;border-left:4px solid #003a70}.a.c{border-left-color:#e59b00;background:#fff8e6}
+.src{font-size:12.5px;margin-top:8px}.src a{color:#003a70}.old{color:#b25b00;font-weight:600}
+form{display:flex;gap:8px;margin-top:12px}input{flex:1;padding:12px;border:1px solid #bbc;border-radius:8px;font-size:15px}
+button{background:#003a70;color:#fff;border:0;padding:0 20px;border-radius:8px;font-size:15px;cursor:pointer}
+.chips{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}.chips span{background:#fff;border:1px solid #c9d3e3;border-radius:14px;padding:4px 10px;font-size:12.5px;cursor:pointer}
+footer{font-size:12px;color:#667;margin-top:10px}#st{float:right}
+</style></head><body>
+<header><h1>🎓 Asystent studenta UR</h1><p>Odpowiedzi wyłącznie na podstawie oficjalnych stron Uniwersytetu Radomskiego – zawsze ze źródłem i datą aktualizacji.</p></header>
+<div id="wrap"><div id="chat"><div class="m a">Dzień dobry! Pomogę znaleźć informacje o stypendiach, opłatach, Erasmus+, regulaminach i planach zajęć. Jeśli zasady zależą od Twojej sytuacji (np. obywatelstwo, tryb studiów, drugi kierunek), najpierw zadam kilka pytań. W czym mogę pomóc?</div></div>
+<div class="chips"><span>Jak dostać stypendium socjalne?</span><span>Stypendium rektora dla cudzoziemca</span><span>Wyjazd na Erasmus+</span><span>Plan zajęć WTEiI</span><span>Opłaty za studia</span></div>
+<form id="f"><input id="q" maxlength="500" placeholder="Zadaj pytanie po polsku…" autocomplete="off"><button>Wyślij</button></form>
+<footer>Prototyp – nie jest oficjalnym serwisem UR. W sprawach indywidualnych skontaktuj się z Biurem Obsługi Studenta. <span id="st"></span></footer></div>
+<script>
+const H=[];const chat=document.getElementById('chat');
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function add(cls,html){const d=document.createElement('div');d.className='m '+cls;d.innerHTML=html;chat.appendChild(d);chat.scrollTop=1e9;return d}
+async function send(q){add('u',esc(q));const w=add('a','Szukam w materiałach UR…');
+ const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history:H})});const j=await r.json();if(!r.ok)j.answer='⚠️ '+(j.detail||'Błąd serwera');
+ let h=esc(j.answer).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^#+\s*(.+)$/gm,'<b>$1</b>').replace(/^\* /gm,'• ');
+ if(false){h+='<div class="src"><b>Źródła:</b><br>'+j.sources.slice(0,5).map(s=>`[${s.n}] <a href="${s.url}" target="_blank">${esc(s.title)}</a> – ${s.modified||'brak daty'} ${s.outdated?'<span class=old>⚠️ może być nieaktualne</span>':''}`).join('<br>')+'</div>'}
+ h=h.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank">$1</a>');
+ w.innerHTML=h;if(j.clarify)w.classList.add('c');H.push({role:'user',content:q},{role:'assistant',content:j.answer});}
+document.getElementById('f').onsubmit=e=>{e.preventDefault();const q=document.getElementById('q');if(q.value.trim()){send(q.value.trim());q.value=''}};
+document.querySelectorAll('.chips span').forEach(s=>s.onclick=()=>send(s.textContent));
+fetch('/api/status').then(r=>r.json()).then(j=>document.getElementById('st').textContent=`Indeks: ${j.chunks} fragmentów · LLM: ${j.llm?j.provider:'wyłączony (tryb wyszukiwania)'}`);
+(async()=>{const p=new URLSearchParams(location.search);for(const k of ['q1','q2','q3']){if(p.get(k))await send(p.get(k))}})();
+</script></body></html>
