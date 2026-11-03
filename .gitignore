@@ -1,0 +1,8 @@
+.env
+*.env
+.venv/
+__pycache__/
+data/index.pkl
+data/docs.jsonl
+data/*.log
+data/*.err
