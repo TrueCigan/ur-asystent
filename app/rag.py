@@ -156,14 +156,14 @@ SLOT_OPTS = {
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|i'?m\s*a?\s*foreign|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карта\s*побуту|тимчасов\w*\s*захист|біжен|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
  ],
  "tryb": [
-  ("stacjonarne", r"(?<!nie)stacjonar|dzienn|full[-\s]?time|on[- ]campus|pe[lł]ny\s*etat|денн|стаціонар|очна\s*форм|өдрийн|бүтэн\s*цаг"),
-  ("niestacjonarne", r"niestacjonar|zaoczn|weekend|part[-\s]?time|extramural|заочн|вечірнь|эчнээ|цагийн\s*сургалт"),
+  ("stacjonarne", r"(?<!nie)stacjonar|dzienn|full[-\s]?time|on[- ]campus|pe[lł]ny\s*etat|денн\w*|стаціонар\w*|\bочн\w*\b|өдрийн|бүтэн\s*цаг"),
+  ("niestacjonarne", r"niestacjonar|zaoczn|weekend|part[-\s]?time|extramural|заочн\w*|вечірнь|эчнээ|цагийн\s*сургалт"),
  ],
  "poziom": [
   ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|phd\b|doktoranc|докторантур|докторант(?!\w)"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
-  ("II", r"\bii\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|другого\s*ступ|магістр|ii\s*зэрэг|2\s*зэрэг|магистр"),
-  ("I", r"\bi\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|bachelor|undergraduate|licencj|in[zż]ynier|і\s*ступ|бакалавр|інженер|i\s*зэрэг|1\s*зэрэг"),
+  ("II", r"\bii\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|другого\s*ступ|магістр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
+  ("I", r"\bi\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|bachelor|undergraduate|licencj|in[zż]ynier|і\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
  ],
  "rok": [
   ("1", r"(\b1\s*(rok|year|курс|жил)\b|\byear\s*1\b|\b1(st)?\s*year\b|\bpierwsz\w*\s*rok|\bfirst\s*year|\bfreshman|\bперш\w*\s*рік|\b(?:na|jestem na)\s+i\s+roku|\bpierwszoroczn|^\s*1\s*$)"),
@@ -174,9 +174,9 @@ SLOT_OPTS = {
   ("6", r"(\b6\s*(rok|year|курс|жил)\b|\byear\s*6\b|\b6(th)?\s*year\b|^\s*6\s*$)"),
  ],
  "drugi_kierunek": [
-  # „nie” najpierw – unikaj fałszywego „tak” przy „nie posiadam dyplomu”
-  ("nie", r"(?i)(?:^\s*nie\.?\s*$|(?:,\s*|\s+)nie\.?\s*$|jedyn\w*\s*kierun|jeden\s*kierun|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one\s*(program|programme|major|degree|field)|single\s*(major|program|programme)|one\s*program\s*only|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|не\s*маю\s*(жодн\w*\s*)?диплом|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
-  ("tak", r"(?i)(?:(?:mam|posiadam)\s+(?:ju[zż]\s+)?(?:uko[nń]czon\w*\s+)?(?:tytu[lł]|licencjat|in[zż]ynier|magister|dyplom)(?!\w)|drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*uko[nń]czy|друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)\w*\s*диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
+  # „nie” najpierw – unikaj fałszywego „tak” przy „nie posiadam dyplomu” / echo pytań clarify
+  ("nie", r"(?i)(?:^\s*(nie|no|ні|үгүй)\.?\s*$|(?:,\s*|\s+)(nie|ні)\.?\s*$|jedyn\w*\s*kierun|jeden\s*kierun|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one\s*(program|programme|major|degree|field)|single\s*(major|program|programme)|one\s*program\s*only|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|тільки\s*в\s*цьому|нігде\s*більше\s*не\s*навч|ніде\s*більше|не\s*навча\w*\s*(більше|ніде|нігде)|не\s*маю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немаю\s*(жодн\w*\s*|інш\w*\s*)?диплом|диплом\w*\s*не\s*маю|інш\w*\s*диплом\w*\s*не|друг\w*\s*напрям\w*\s*чи\s*диплом\w*\s*не\s*маю|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
+  ("tak", r"(?i)(?:(?:mam|posiadam)\s+(?:ju[zż]\s+)?(?:uko[nń]czon\w*\s+)?(?:tytu[lł]|licencjat|in[zż]ynier|magister|dyplom)(?!\w)|(?:studiuj[eę]|mam)\s+drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*uko[nń]czy|(?:навча\w*|маю)\s+друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)\w*\s*диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
  ],
  "niepelnosprawnosc": [
   ("tak", r"(mam\s*orzeczenie|z\s*niepe[lł]nosprawno|orzeczen\w*\s*o\s*(niepe|stop)|disability\s*(certificate|ruling|status)|i\s*have\s*a?\s*disability|інвалід|посвідчен\w*\s*про\s*інвал|хөгжлийн\s*бэрхшээл)"),
@@ -306,6 +306,19 @@ def extract_profile(text):
         prof.setdefault("drugi_kierunek", "tak")
     if re.match(r"^\s*(nie|no|ні|үгүй)\s*\.?\s*$", t, re.I):
         prof.setdefault("drugi_kierunek", "nie")
+    # „Очна, ні” / „stacjonarne, nie” – drugi slot w krótkiej odpowiedzi
+    if re.search(r"(?:,|;)\s*(nie|no|ні|үгүй)\s*\.?\s*$", t, re.I):
+        prof.setdefault("drugi_kierunek", "nie")
+    if re.search(r"(?:,|;)\s*(tak|yes|так|тийм)\s*\.?\s*$", t, re.I):
+        prof.setdefault("drugi_kierunek", "tak")
+    # Negacja dyplomu/2. kierunku wygrywa z echo pytania („drugiego kierunku czy…”)
+    if re.search(
+        r"(?i)(nie\s*mam|nie\s*posiadam|не\s*маю|немаю|brak\s*dyplom|інш\w*\s*диплом\w*\s*не|"
+        r"диплом\w*\s*не\s*маю|тільки\s*в\s*цьому|tylko\s*(w\s*)?(tej\s*)?(uczelni|na\s*ur)|"
+        r"нігде\s*більше|ніде\s*більше|jedyn\w*\s*kierun|один\s*напрям)",
+        t,
+    ):
+        prof["drugi_kierunek"] = "nie"
     if prof.get("status") == "doktorant":
         prof.setdefault("poziom", "SD"); prof.setdefault("tryb", "stacjonarne"); prof.setdefault("rok", "1")
     if prof.get("poziom") == "SD":
@@ -355,13 +368,18 @@ CLARIFY_SYS = """You help students of Uniwersytet Radomski (UR). The user asked 
 Write a short, warm clarification in {lang_name} (lang={lang}).
 Rules:
 - Do NOT answer the substantive question yet.
-- Ask ONLY about these missing fields: {missing_labels}.
+- Ask ONLY about these missing fields: {missing_labels}. Never re-ask fields already listed in Known profile.
 - 1–2 sentence intro why you ask, then a short numbered list (max {n} questions).
-- Invite a single-sentence reply with an example fitting the topic ({topics}).
+- Invite a single-sentence reply with a natural example (NO internal topic ids like stypendium_socjalne, NO English field keys).
 - No URLs, no invented rules, no legal advice.
 {security_rules}
 Known profile so far: {profile}
 """
+
+# Deterministyczny clarify domyślnie – LLM często pętli i wycieka id tematów.
+# Włącz styl LLM: CLARIFY_LLM=1
+def _clarify_llm_enabled():
+    return os.getenv("CLARIFY_LLM", "").strip() == "1" and llm_enabled()
 
 SYSTEM = """You are a helpful campus information assistant for students of Kazimierz Pułaski University of Radom (Uniwersytet Radomski, UR).
 Your job is to SAVE the student’s time: extract concrete rules from ŹRÓDŁA (who may apply, amounts, deadlines, documents, where to submit) so they rarely need to dig through PDFs themselves.
@@ -388,16 +406,15 @@ SLOT_LABEL = {
 }
 
 def clarify_answer(lang, missing, question, history, topics, prof):
-    """Natural LLM clarification when possible; template fallback otherwise."""
-    if llm_enabled():
+    """Template clarify by default; optional LLM when CLARIFY_LLM=1."""
+    if _clarify_llm_enabled():
         labels = SLOT_LABEL.get(lang, SLOT_LABEL["pl"])
         miss_l = ", ".join(labels.get(m, m) for m in missing)
-        prof_txt = ", ".join(f"{k}={v}" for k, v in prof.items()) or "—"
+        prof_txt = ", ".join(f"{labels.get(k, k)}: {v}" for k, v in prof.items() if k in labels) or "—"
         sys = (CLARIFY_SYS.replace("{lang}", lang)
                           .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
                           .replace("{missing_labels}", miss_l)
                           .replace("{n}", str(len(missing)))
-                          .replace("{topics}", ", ".join(topics) or "general")
                           .replace("{profile}", prof_txt)
                           .replace("{security_rules}", SECURITY_RULES))
         msgs = [{"role": "system", "content": sys}] + _safe_history(history, 6) + [
