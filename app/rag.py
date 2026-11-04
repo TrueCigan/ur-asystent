@@ -162,8 +162,8 @@ SLOT_OPTS = {
  "poziom": [
   ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|phd\b|doktoranc|докторантур|докторант(?!\w)"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
-  ("II", r"\bii\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|другого\s*ступ|магістр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
-  ("I", r"\bi\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|bachelor|undergraduate|licencj|in[zż]ynier|і\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
+  ("II", r"\bii\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
+  ("I", r"\bi\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|bachelor|undergraduate|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
  ],
  "rok": [
   ("1", r"(\b1\s*(rok|year|курс|жил)\b|\byear\s*1\b|\b1(st)?\s*year\b|\bpierwsz\w*\s*rok|\bfirst\s*year|\bfreshman|\bперш\w*\s*рік|\b(?:na|jestem na)\s+i\s+roku|\bpierwszoroczn|^\s*1\s*$)"),
@@ -175,7 +175,7 @@ SLOT_OPTS = {
  ],
  "drugi_kierunek": [
   # „nie” najpierw – unikaj fałszywego „tak” przy „nie posiadam dyplomu” / echo pytań clarify
-  ("nie", r"(?i)(?:^\s*(nie|no|ні|үгүй)\.?\s*$|(?:,\s*|\s+)(nie|ні)\.?\s*$|jedyn\w*\s*kierun|jeden\s*kierun|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one\s*(program|programme|major|degree|field)|single\s*(major|program|programme)|one\s*program\s*only|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|тільки\s*в\s*цьому|нігде\s*більше\s*не\s*навч|ніде\s*більше|не\s*навча\w*\s*(більше|ніде|нігде)|не\s*маю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немаю\s*(жодн\w*\s*|інш\w*\s*)?диплом|диплом\w*\s*не\s*маю|інш\w*\s*диплом\w*\s*не|друг\w*\s*напрям\w*\s*чи\s*диплом\w*\s*не\s*маю|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
+  ("nie", r"(?i)(?:^\s*(nie|no|ні|үгүй)\.?\s*$|(?:,\s*|\s+)(nie|ні)\.?\s*$|^\s*(ні|nie)\b.{0,60}не\s*навч|jedyn\w*\s*kierun|jeden\s*kierun|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one\s*(program|programme|major|degree|field)|single\s*(major|program|programme)|one\s*program\s*only|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|тільки\s*(в|на)\s*цьому|нігде\s*більше\s*не\s*навч|ніде\s*більше|не\s*навча\w*\s*(більше|ніде|нігде|на\s*друг)|не\s*маю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немаю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(інш\w*\s*)?диплом|в\s*мене\s*нема|диплом\w*\s*не\s*ма(ю|є)|диплом\w*\s*цього\s*рівн|інш\w*\s*диплом\w*\s*не|друг\w*\s*напрям\w*\s*чи\s*диплом\w*\s*не\s*ма|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
   ("tak", r"(?i)(?:(?:mam|posiadam)\s+(?:ju[zż]\s+)?(?:uko[nń]czon\w*\s+)?(?:tytu[lł]|licencjat|in[zż]ynier|magister|dyplom)(?!\w)|(?:studiuj[eę]|mam)\s+drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*uko[nń]czy|(?:навча\w*|маю)\s+друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)\w*\s*диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
  ],
  "niepelnosprawnosc": [
@@ -270,7 +270,7 @@ CLARIFY = {
  "en": ("Before I answer – UR rules depend on your situation. Please clarify:",
         "You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”."),
  "uk": ("Перш ніж відповісти – правила UR залежать від вашої ситуації. Уточніть, будь ласка:",
-        "Можна однією фразою, напр. «іноземець з картою побуту, денна, І ступінь, 2 рік, один напрям»."),
+        "Можна однією фразою, напр. «громадянин Польщі, денна, І ступінь, тільки цей напрям, без диплома»."),
  "mn": ("Хариулахаас өмнө – UR-ийн дүрэм таны нөхцөл байдлаас хамаарна. Тодруулна уу:",
         "Нэг өгүүлбэрээр хариулж болно, ж.нь. «оршин суух зөвшөөрөлтэй гадаадын оюутан, өдрийн, I зэрэг, 2-р курс, нэг мэргэжил»."),
 }
@@ -313,12 +313,20 @@ def extract_profile(text):
         prof.setdefault("drugi_kierunek", "tak")
     # Negacja dyplomu/2. kierunku wygrywa z echo pytania („drugiego kierunku czy…”)
     if re.search(
-        r"(?i)(nie\s*mam|nie\s*posiadam|не\s*маю|немаю|brak\s*dyplom|інш\w*\s*диплом\w*\s*не|"
-        r"диплом\w*\s*не\s*маю|тільки\s*в\s*цьому|tylko\s*(w\s*)?(tej\s*)?(uczelni|na\s*ur)|"
-        r"нігде\s*більше|ніде\s*більше|jedyn\w*\s*kierun|один\s*напрям)",
+        r"(?i)(nie\s*mam|nie\s*posiadam|не\s*маю|немаю|немає|в\s*мене\s*нема|brak\s*dyplom|"
+        r"інш\w*\s*диплом\w*\s*не|диплом\w*\s*не\s*ма(ю|є)|диплом\w*\s*цього\s*рівн|"
+        r"тільки\s*(в|на)\s*цьому|tylko\s*(w\s*)?(tej\s*)?(uczelni|na\s*ur)|"
+        r"нігде\s*більше|ніде\s*більше|jedyn\w*\s*kierun|один\s*напрям|"
+        r"^\s*(ні|nie)\b.{0,80}(не\s*навч|диплом|напрям|kierun|dyplom))",
         t,
     ):
         prof["drugi_kierunek"] = "nie"
+    # Samo „ні/nie” po dopytaniu o 2. kierunek – zawsze zamyka slot
+    if re.match(r"^\s*(nie|no|ні|үгүй)\b", t, re.I) and not re.search(
+        r"(?i)(mam\s+drug|posiadam\s+dyplom|маю\s+друг|маю\s+диплом|yes\s+i\s+have)", t
+    ):
+        if len(t) < 80 or re.search(r"(?i)диплом|напрям|kierun|dyplom|навч|stud", t):
+            prof["drugi_kierunek"] = "nie"
     if prof.get("status") == "doktorant":
         prof.setdefault("poziom", "SD"); prof.setdefault("tryb", "stacjonarne"); prof.setdefault("rok", "1")
     if prof.get("poziom") == "SD":
@@ -664,11 +672,19 @@ def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=""):
     tset = set(topics or [])
 
     if "stypendium_socjalne" in tset:
+        is_ukr = prof.get("pobyt") == "ukr"
+        is_pl = prof.get("status") == "pl"
+        show_ukr_form = is_ukr and any("Zalacznik-Nr-8-Ukraina" in u for u in facts.get("urls", []))
         if lang == "uk":
-            if prof.get("pobyt") == "ukr" or facts.get("ukr_ok"):
+            if is_ukr:
                 lines.append(
                     "\n**Так — за правилами UR громадяни України (зокрема захист / PESEL UKR) можуть претендувати "
                     "на соціальну стипендію**, якщо виконуються умови доходу та один напрям навчання."
+                )
+            elif is_pl:
+                lines.append(
+                    "\n**Так — громадяни Польщі можуть подати заяву на соціальну стипендію**, "
+                    "якщо дохід сім’ї не перевищує порогу і стипендія береться лише на одному напрямі."
                 )
             else:
                 lines.append("\n**Соціальна стипендія** залежить від доходу сім’ї та статусу студента (див. джерела нижче).")
@@ -676,14 +692,19 @@ def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=""):
                 lines.append(f"- Поріг доходу (з офіційної сторінки): **{facts['income_cap']}** на особу в сім’ї.")
             if facts.get("submit"):
                 lines.append(f"- Подання заяви: **{facts['submit']}** (і документи за списком на сторінці стипендій).")
-            if any("Zalacznik-Nr-8-Ukraina" in u for u in facts.get("urls", [])):
+            if show_ukr_form:
                 lines.append("- Для громадян України потрібна **заява (Załącznik nr 8)** — PDF у джерелах.")
             lines.append("- Далі: відкрийте сторінку стипендій, перевірте список документів і терміни на поточний навчальний рік.")
         elif lang == "en":
-            if prof.get("pobyt") == "ukr" or facts.get("ukr_ok"):
+            if is_ukr:
                 lines.append(
                     "\n**Yes — under UR rules, citizens of Ukraine (temporary protection / PESEL UKR) may apply "
                     "for a social scholarship** if income and single-programme rules are met."
+                )
+            elif is_pl:
+                lines.append(
+                    "\n**Yes — Polish citizens may apply for a social scholarship** if family income is within "
+                    "the threshold and the benefit is taken for one programme only."
                 )
             else:
                 lines.append("\n**Social scholarship** depends on family income and student status (see sources).")
@@ -692,11 +713,16 @@ def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=""):
             if facts.get("submit"):
                 lines.append(f"- Submit via **{facts['submit']}** with the required documents.")
             lines.append("- Next: open the scholarship page, check documents and deadlines for the current year.")
-        else:  # pl / mn fallback → pl structure
-            if prof.get("pobyt") == "ukr" or facts.get("ukr_ok"):
+        else:  # pl / mn
+            if is_ukr:
                 lines.append(
                     "\n**Tak — według zasad UR obywatele Ukrainy (ochrona czasowa / PESEL UKR) mogą ubiegać się "
                     "o stypendium socjalne**, jeśli spełniają warunki dochodowe i zasady jednego kierunku."
+                )
+            elif is_pl:
+                lines.append(
+                    "\n**Tak — obywatel Polski może ubiegać się o stypendium socjalne**, jeśli dochód rodziny "
+                    "nie przekracza progu i świadczenie dotyczy jednego kierunku."
                 )
             else:
                 lines.append("\n**Stypendium socjalne** zależy od dochodu rodziny i statusu studenta (szczegóły w źródłach).")
@@ -704,13 +730,18 @@ def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=""):
                 lines.append(f"- Próg dochodu (oficjalna strona): **{facts['income_cap']}** na osobę w rodzinie.")
             if facts.get("submit"):
                 lines.append(f"- Złożenie wniosku: **{facts['submit']}** + wymagane dokumenty.")
-            if any("Zalacznik-Nr-8-Ukraina" in u for u in facts.get("urls", [])):
+            if show_ukr_form:
                 lines.append("- Dla obywateli Ukrainy: **oświadczenie – Załącznik nr 8** (PDF w źródłach).")
             lines.append("- Dalej: sprawdź listę dokumentów i terminy na stronie stypendiów na bieżący rok.")
-        if facts.get("sents"):
+        sents = facts.get("sents") or []
+        if is_pl:
+            sents = [s for s in sents if not re.search(r"Ukrain|ochrony czasowej|PESEL\s*UKR", s, re.I)]
+        elif not is_ukr:
+            sents = [s for s in sents if not re.search(r"ochrony czasowej|PESEL\s*UKR", s, re.I)]
+        if sents:
             frag_h = {"pl": "Fragmenty ze źródeł:", "en": "Source excerpts:", "uk": "Уривки з джерел:", "mn": "Эх сурвалжийн хэсэг:"}.get(lang, "Fragmenty ze źródeł:")
             lines.append(f"\n{frag_h}")
-            for s in facts["sents"]:
+            for s in sents:
                 lines.append(f"- „{s}…”")
     else:
         # ogólny fallback – krótsze cytaty zamiast ściany tekstu

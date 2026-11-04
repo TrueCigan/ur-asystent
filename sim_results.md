@@ -349,13 +349,12 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 Na podstawie oficjalnych stron UR (profil: status: pl, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie):
 
-**Tak — według zasad UR obywatele Ukrainy (ochrona czasowa / PESEL UKR) mogą ubiegać się o stypendium socjalne**, jeśli spełniają warunki dochodowe i zasady jednego kierunku.
+**Tak — obywatel Polski może ubiegać się o stypendium socjalne**, jeśli dochód rodziny nie przekracza progu i świadczenie dotyczy jednego kierunku.
 - Próg dochodu (oficjalna strona): **2099,70 zł** na osobę w rodzinie.
 - Dalej: sprawdź listę dokumentów i terminy na stronie stypendiów na bieżący rok.
 
 Fragmenty ze źródeł:
 - „lne w roku akademickim 2026/2027 wynosi 2099,70 zł. Termin składania wniosków o świadczenia na cały rok akademicki 2026/2027 od 01…”
-- „j albo korzystają z ochrony czasowej albo ochrony uzupełniającej na terytorium Rzeczypospolitej Polskiej, posiadacze certyfikatu poświad…”
 
 Źródła:
 [1] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
@@ -364,6 +363,45 @@ Fragmenty ze źródeł:
 [4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
 
 Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
+
+
+**ASSERT PASS**
+
+
+## Stypendium socjalne PL po ukraińsku
+
+**Użytkownik:** Як отримати соціальну стипендію?
+
+**Asystent** _(mode=doprecyzowanie; profile={})_:
+
+Перш ніж відповісти – правила UR залежать від вашої ситуації. Уточніть, будь ласка:
+1. Який ваш статус: громадянин Польщі, іноземець (напр. Карта поляка, карта побуту, біженець/тимчасовий захист UKR), особа без громадянства чи докторант?
+2. Чи навчаєтесь паралельно на другому напрямі або вже маєте диплом цього рівня? (виплати зазвичай лише на одному напрямі)
+3. Ви навчаєтесь на денній (стаціонар) чи заочній формі?
+4. Рівень: І ступінь (бакалавр/інженер), ІІ ступінь (магістр), єдиний магістерський чи докторантура?
+
+Можна однією фразою, напр. «громадянин Польщі, денна, І ступінь, тільки цей напрям, без диплома».
+
+**Użytkownik:** Я громадянин Польщі, навчаюсь тільки на цьому напрямі, навчаюсь на денній формі, 1 ступінь
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie"})_:
+
+На основі офіційних сторінок UR (профіль: статус: pl, форма: stacjonarne, рівень: I, другий напрям / диплом: nie):
+
+**Так — громадяни Польщі можуть подати заяву на соціальну стипендію**, якщо дохід сім’ї не перевищує порогу і стипендія береться лише на одному напрямі.
+- Поріг доходу (з офіційної сторінки): **2099,70 zł** на особу в сім’ї.
+- Далі: відкрийте сторінку стипендій, перевірте список документів і терміни на поточний навчальний рік.
+
+Уривки з джерел:
+- „lne w roku akademickim 2026/2027 wynosi 2099,70 zł. Termin składania wniosków o świadczenia na cały rok akademicki 2026/2027 od 01…”
+
+Джерела:
+[1] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/R-41-2025.pdf – 2025-12-05
+[4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+
+Щодо індивідуального рішення комісії можна звернутися до Biuro Obsługi Studenta — після перевірки документів зі списку вище.
 
 
 **ASSERT PASS**
@@ -1011,7 +1049,7 @@ Na podstawie oficjalnych stron UR (profil: tryb: stacjonarne, poziom: I, rok: 1,
 
 ## Summary
 
-PASS=29 FAIL=0
+PASS=30 FAIL=0
 
 - PASS: Plan Ekonomia i Finanse (messy)
 - PASS: Plan Ekonomia konkretnie
@@ -1022,6 +1060,7 @@ PASS=29 FAIL=0
 - PASS: Stypendium socjalne PESEL UKR
 - PASS: Stypendium socjalne UKR multi-turn
 - PASS: Stypendium socjalne PL
+- PASS: Stypendium socjalne PL po ukraińsku
 - PASS: Stypendium rektora PL
 - PASS: Stypendium rektora cudzoziemiec
 - PASS: Stypendium niepełnosprawnych
