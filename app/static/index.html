@@ -316,6 +316,7 @@
 <script>
 const H = [];
 let sessionLang = sessionStorage.getItem('ur_session_lang') || null;
+let sessionState = sessionStorage.getItem('ur_session_state') || null;
 const chat = document.getElementById('chat');
 const panel = document.getElementById('panel');
 const launcher = document.getElementById('launcher');
@@ -524,6 +525,7 @@ async function askApi(q) {
   try {
     const payload = {question: q, history: H};
     if (sessionLang) payload.session_lang = sessionLang;
+    if (sessionState) payload.state = sessionState;
     const r = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -534,6 +536,10 @@ async function askApi(q) {
     if (j.lang) {
       sessionLang = j.lang;
       try { sessionStorage.setItem('ur_session_lang', j.lang); } catch (_) {}
+    }
+    if (j.state) {
+      sessionState = j.state;
+      try { sessionStorage.setItem('ur_session_state', j.state); } catch (_) {}
     }
     return j;
   } catch (e) {

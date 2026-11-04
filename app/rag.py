@@ -153,7 +153,7 @@ SLOT_OPTS = {
   ("doktorant", r"doktorant|doktoranc|doctoral\s*school|phd\s*student|i'?m\s*a?\s*phd|doctoral\s*student|школ\w*\s*доктор|докторант|докторантур"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
   ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|i(?:'?m|\s+am)\s+polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
-  ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|i'?m\s*a?\s*foreign|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
+  ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|\bforeigner\b|i'?m\s*a?\s*foreign|i\s*am\s*from\s+(?!poland|polsk)|from\s+(india|china|ukraine|belarus|vietnam|nigeria|turkey|georgia)|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
  ],
  "tryb": [
   ("stacjonarne", r"(?<!nie)stacjonar|dzienn|\bdaily\b|full[-\s]?time|on[- ]campus|pe[lł]ny\s*etat|денн\w*|стаціонар\w*|дневн\w*|\bочн\w*\b|өдрийн|бүтэн\s*цаг"),
@@ -175,7 +175,7 @@ SLOT_OPTS = {
  ],
  "drugi_kierunek": [
   # „nie” najpierw – unikaj fałszywego „tak” przy „nie posiadam dyplomu” / „no second degree”
-  ("nie", r"(?i)(?:^\s*(nie|no|ні|үгүй)\.?\s*$|(?:,\s*|\s+)(nie|no|ні)\.?\s*$|^\s*(ні|nie|no)\b.{0,60}не\s*навч|jedyn\w*\s*kierun|jeden\s*kierun|jednokierunkow|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one(?:\s*,?\s*no)?|only\s*one\s*(program|programme|major|degree|field)|just\s*one\s*(program|programme|major|degree)|single\s*(major|program|programme)|one\s*program\s*only|nothing\s*else|no\s*(?:second|other)\s*(?:degree|program|programme|major|field)|without\s*(?:a\s*)?second\s*(?:degree|program|programme)|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|nie\s*mam\s+drug|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|тільки\s*(в|на)\s*цьому|(?:^|[,;]\s*)(jeden|jedna|один|одна|one)\s*(?:$|[,;.])|нігде\s*більше\s*не\s*навч|ніде\s*більше|не\s*навча\w*\s*(більше|ніде|нігде|на\s*друг)|не\s*маю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немаю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(інш\w*\s*)?диплом|в\s*мене\s*нема|диплом\w*\s*не\s*ма(ю|є)|диплом\w*\s*цього\s*рівн|інш\w*\s*диплом\w*\s*не|друг\w*\s*напрям\w*\s*чи\s*диплом\w*\s*не\s*ма|нет\s*втор|без\s*диплом|только\s*одно|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
+  ("nie", r"(?i)(?:^\s*(nie|no|ні|үгүй)\.?\s*$|(?:,\s*|\s+)(nie|no|ні)\.?\s*$|^\s*(ні|nie|no)\b.{0,60}не\s*навч|jedyn\w*\s*kierun|jeden\s*kierun|jednokierunkow|\bjedno\b|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one(?:\s*,?\s*no)?|only\s*one\s*(program|programme|major|degree|field)|just\s*one\s*(program|programme|major|degree)|single\s*(major|program|programme)|one\s*program\s*only|nothing\s*else|no\s*(?:second|other)\s*(?:degree|program|programme|major|field)|without\s*(?:a\s*)?second\s*(?:degree|program|programme)|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|nie\s*mam\s+drug|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|тільки\s*(в|на)\s*цьому|(?:^|[,;]\s*)(jeden|jedna|jeden|jedno|один|одна|one)\s*(?:$|[,;.])|нігде\s*більше\s*не\s*навч|ніде\s*більше|не\s*навча\w*\s*(більше|ніде|нігде|на\s*друг)|не\s*маю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немаю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(інш\w*\s*)?диплом|в\s*мене\s*нема|диплом\w*\s*не\s*ма(ю|є)|диплом\w*\s*цього\s*рівн|інш\w*\s*диплом\w*\s*не|друг\w*\s*напрям\w*\s*чи\s*диплом\w*\s*не\s*ма|нет\s*втор|без\s*диплом|только\s*одно|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
   ("tak", r"(?i)(?:(?:mam|posiadam)\s+(?:ju[zż]\s+)?(?:uko[nń]czon\w*\s+)?(?:tytu[lł]|licencjat|in[zż]ynier|magister|dyplom)(?!\w)|(?:studiuj[eę]|mam)\s+drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|(?<!\bno\s)(?<!no\s)(?<!without\s)second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*uko[nń]czy|(?:навча\w*|маю)\s+друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)\w*\s*диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
  ],
  "niepelnosprawnosc": [
@@ -241,8 +241,8 @@ PLAN_SOURCES = set(FACULTY_PLAN_URL)
 SLOTS = {k: (SLOT_Q[k]["pl"], {val: rx for val, rx in opts}) for k, opts in SLOT_OPTS.items()}
 
 TOPICS = [
- ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w*\s*materialn|[sś]wiadcze|social\s*scholarship|scholarship\s*for\s*foreign|maintenance\s*grant|need[-\s]?based|стипенд\w*\s*соціал|соціальн\w*\s*стипенд|социальн\w*\s*стипенд|стипенд\w*\s*для\s*(иностран|cudzoziem)|матеріальн\w*\s*допомог|тэтгэлэг|нийгмийн\s*тэтгэлэг|амьжиргааны", ["status", "drugi_kierunek", "tryb", "poziom"]),
- ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|merit\s*scholarship|academic\s*excellence|науков\w*\s*досягнен|стипенд\w*\s*ректор|ректор|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom", "rok"]),
+ ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w*\s*materialn|[sś]wiadcze|social\s*scholarship|\bsocial\b(?=.{0,40}scholarship)|scholarship\s*for\s*foreign|maintenance\s*grant|need[-\s]?based|стипенд\w*\s*соціал|соціальн\w*\s*стипенд|социальн\w*\s*стипенд|стипенд\w*\s*для\s*(иностран|cudzoziem)|матеріальн\w*\s*допомог|тэтгэлэг|нийгмийн\s*тэтгэлэг|амьжиргааны", ["status", "drugi_kierunek", "tryb", "poziom"]),
+ ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|\brector\b(?=.{0,40}scholarship)|merit\s*scholarship|academic\s*excellence|науков\w*\s*досягнен|стипенд\w*\s*ректор|ректор|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom"]),
  ("stypendium_niepeln", r"niepe[lł]nospraw|disability\s*scholarship|інвалід|инвалидн|хөгжлийн\s*бэрхшээл", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
  ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|doctoral\s*stipend|докторант|докторантур|докторск\w*\s*стипенд|стипенд\w*\s*доктор", ["status"]),
  ("akademik", r"akademik|dom\w*\s*studen|miejsce\s*w\s*akadem|dormitor|student\s*hous|residence\s*hall|общежит|гуртожит|дотуур\s*байр", []),
@@ -430,18 +430,22 @@ def _drop_negated_dwa_kierunki(topics, text):
         return [(n, s) for n, s in topics if n != "dwa_kierunki"]
     return topics
 
-def _recent_benefit_from_history(history_text):
-    """Ostatni benefit-temat z historii (nie pierwszy – inaczej sticky zostaje na socjalne)."""
+def _recent_benefits_from_history(history_text):
+    """Wszystkie benefit-tematy z ostatniej merytorycznej wiadomości (multi-topic sticky)."""
     if not history_text:
-        return None
-    # szukaj per wiadomość od końca
+        return []
     parts = [p.strip() for p in re.split(r"\n+", history_text) if p.strip()]
     for part in reversed(parts):
         hits = [(n, s) for n, rx, s in TOPICS if n in _BENEFIT_TOPICS and re.search(rx, part, re.I)]
         hits = _drop_negated_dwa_kierunki(hits, part)
         if hits:
-            return _primary_benefit_topic(part, hits)
-    return None
+            return _order_benefit_topics(part, hits)
+    return []
+
+def _recent_benefit_from_history(history_text):
+    """Compat: pojedynczy sticky (ostatni z multi)."""
+    many = _recent_benefits_from_history(history_text)
+    return many[-1] if many else None
 
 def needed(question, history_text):
     q = question.lower()
@@ -449,7 +453,8 @@ def needed(question, history_text):
     # Negacja drugiego kierunku ≠ pytanie o dwa kierunki (BUG-R2-04)
     topics = _drop_negated_dwa_kierunki(topics, q)
     hist_topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, history_text.lower(), re.I)]
-    benefit_hist_last = _recent_benefit_from_history(history_text)
+    benefit_hist = _recent_benefits_from_history(history_text)
+    benefit_hist_last = benefit_hist[-1] if benefit_hist else None
     cur_benefit = [(n, s) for n, s in topics if n in _BENEFIT_TOPICS]
     # „how much money / ile punktów” przy stypendium ≠ czesne
     if (
@@ -467,12 +472,12 @@ def needed(question, history_text):
         ordered = _order_benefit_topics(question, cur_benefit)
         others = [(n, s) for n, s in topics if n not in _BENEFIT_TOPICS and n != "cudzoziemcy"]
         topics = ordered + others
-    elif benefit_hist_last:
+    elif benefit_hist:
         names = {n for n, _ in topics}
         if not topics or names <= {"cudzoziemcy", "dwa_kierunki"}:
-            topics = [benefit_hist_last]
+            topics = list(benefit_hist)
         else:
-            topics = [(n, s) for n, s in topics if n != "cudzoziemcy"] or [benefit_hist_last]
+            topics = [(n, s) for n, s in topics if n != "cudzoziemcy"] or list(benefit_hist)
     elif not topics and hist_topics:
         topics = [hist_topics[-1]]
     req = []
@@ -960,8 +965,18 @@ def _scrub_hallucinations(text, hits_blob=""):
         text = re.sub(r"[ \t]{2,}", " ", text)
     return text
 
-def answer(question, history, session_lang=None):
-    """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang)"""
+def _attach_state(result, state):
+    try:
+        from session import encode
+        result["state"] = encode(state)
+    except Exception:
+        pass
+    return result
+
+def answer(question, history, session_lang=None, state_token=None):
+    """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang, state)"""
+    from session import decode, fresh
+    state = decode(state_token) or fresh()
     question = redact_secrets((question or "").strip())
     history = [
         {"role": m.get("role"), "content": redact_secrets(str(m.get("content", ""))[:3000])}
@@ -970,18 +985,46 @@ def answer(question, history, session_lang=None):
     ]
     hist_user = "\n".join(m["content"] for m in history if m["role"] == "user")
     user_turns = [m["content"] for m in history if m["role"] == "user"]
-    if session_lang:
-        lang = resolve_session_lang(map_policy(session_lang), question)
+    seed_lang = session_lang or state.lang
+    if seed_lang:
+        lang = resolve_session_lang(map_policy(seed_lang), question)
     else:
         lang = sticky_lang_from_user_turns(user_turns, question)
+    state.lang = lang
     # Deterministyczna bramka: klucze API, konta wykładowców, jailbreak – bez wywołania LLM
     if is_security_probe(question) or is_security_probe(hist_user[-500:], question):
-        return dict(clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
-                    answer=refuse_message(lang))
+        return _attach_state(dict(clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
+                    answer=refuse_message(lang)), state)
     topics, prof, missing = needed(question, hist_user)
+    # Merge session profile (client-carried) with regex parse — this turn wins on conflicts
+    if state.profile:
+        merged = dict(state.profile)
+        merged.update(prof)
+        prof = merged
+        req = []
+        for name in topics:
+            for n, _rx, slots in TOPICS:
+                if n == name:
+                    for x in slots:
+                        if x not in req:
+                            req.append(x)
+        if prof.get("status") == "doktorant" or prof.get("poziom") == "SD":
+            req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
+        missing = [x for x in req if x not in prof]
+    state.profile = dict(prof)
+    state.intents = list(topics)
     if missing:
+        state.pending_slots = list(missing)
+        if not state.original_question and any(re.search(rx, question, re.I) for _, rx, _ in TOPICS):
+            state.original_question = question
         text, mode = clarify_answer(lang, missing, question, history, topics, prof)
-        return dict(clarify=True, mode=mode, sources=[], profile=prof, topics=topics, lang=lang, answer=text)
+        state.pending_question = text
+        return _attach_state(dict(clarify=True, mode=mode, sources=[], profile=prof, topics=topics, lang=lang, answer=text), state)
+    state.pending_slots = []
+    state.pending_question = None
+    if state.original_question:
+        # keep until answered; clear after successful answer path below
+        pass
     base_q = question
     if history:
         prev = [m["content"] for m in history if m["role"] == "user" and any(re.search(rx, m["content"], re.I) for _, rx, _ in TOPICS)]
@@ -1113,7 +1156,8 @@ def answer(question, history, session_lang=None):
             out = strip_llm_deadline_notes(out)
             out = _postcheck_amounts(out)
             out += deadline_passed_note(out, lang)
-            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, topics=topics, lang=lang, answer=out)
+            state.original_question = None
+            return _attach_state(dict(clarify=False, mode="llm", sources=srcs, profile=prof, topics=topics, lang=lang, answer=out), state)
         except Exception:
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
     else:
@@ -1122,4 +1166,5 @@ def answer(question, history, session_lang=None):
     ans = _scrub_hallucinations(ans, _hit_blob(hits[:6]))
     ans = strip_llm_deadline_notes(ans)
     ans += deadline_passed_note(ans, lang)
-    return dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, topics=topics, lang=lang, answer=ans)
+    state.original_question = None
+    return _attach_state(dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, topics=topics, lang=lang, answer=ans), state)

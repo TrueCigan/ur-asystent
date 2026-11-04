@@ -23,6 +23,7 @@ class Q(BaseModel):
     question: str = Field(..., min_length=1, max_length=MAXQ)
     history: list = Field(default_factory=list)
     session_lang: str | None = Field(default=None, max_length=8)
+    state: str | None = Field(default=None, max_length=8000)
 
 def _public_ip(s: str):
     s = (s or "").strip()
@@ -119,7 +120,7 @@ def chat(q: Q, r: Request):
     if not sem.acquire(timeout=60):
         raise HTTPException(503, "Serwer zajęty, spróbuj za chwilę.")
     try:
-        return rag.answer(question, hist, session_lang=q.session_lang)
+        return rag.answer(question, hist, session_lang=q.session_lang, state_token=q.state)
     except HTTPException:
         raise
     except Exception:
