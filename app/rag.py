@@ -521,7 +521,7 @@ HARD RULES:
 1. Answer in {lang_name} (lang={lang}). NEVER answer in Russian. If the user writes Russian or asks for Russian (“по-русски”, “in Russian”), answer in Ukrainian and do NOT offer or promise Russian. Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) when useful. If the user asks to switch language (“po polsku”, “на польській”, “in English”), switch language — do NOT treat that as a question about tuition “in the Polish language”.
 2. Use ONLY the FACTS block (if present) and the source fragments below. No outside knowledge. Numbers, prices, caps, deadlines: use ONLY the FACTS block or quote a source chunk verbatim; if neither has it, say it is not available. ALWAYS first give every concrete fact that IS in the sources (eligibility yes/no for THIS profile, income thresholds, document lists, deadlines, submission channel, links). FORBIDDEN: an answer that only says you don’t know / contact BOS when sources contain a relevant section (e.g. “Stypendium dla cudzoziemców”, “obywatel Ukrainy”). Mention Biuro Obsługi Studenta / DWZ only as a short last-line tip when a personal decision or missing individual document remains — never instead of the rules.
 3. Structure: (a) direct answer first, (b) conditions/exceptions for THIS student’s profile, (c) what to do next (documents, channel, deadlines), (d) sources list. Use short paragraphs or bullets.
-4. Cite claims with [n]. End with a sources heading in the answer language ONLY: Źródła / Sources / Джерела / Эх сурвалж — never write the internal label “ŹRÓDŁA” or “Источники”. Each URL once. Do not invent source numbers.
+4. Cite claims with [n] (or [Fn] for FACTS). Do NOT write a sources section or any URLs — the system appends them. Never invent source numbers or domains.
 5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. Do not state whether a deadline has passed — the system adds that warning.
 6. For Polish citizens, full-time first-cycle study is often free — quote paid zł/euro amounts only when the source clearly applies to the user’s mode/level (e.g. niestacjonarne, second cycle, foreigners). Do not invent fee lines (pool, student ID) the user did not ask about.
 7. Describe rules for the user’s category only; mention other categories only as a brief aside.
@@ -743,6 +743,51 @@ NO_LLM = {
 }
 SRC_HDR = {"pl": "Źródła", "en": "Sources", "uk": "Джерела", "mn": "Эх сурвалж"}
 OUTDATED = {"pl": "informacja może być nieaktualna", "en": "may be outdated", "uk": "може бути неактуальною", "mn": "хуучирсан байж болно"}
+_URL_RE = re.compile(r"https?://[^\s)\]\"'<>]+", re.I)
+_SRC_HEAD_RE = re.compile(r"(?im)^\s*(źródła|sources|джерела|источники|эх\s*сурвалж)\s*:?\s*$")
+_SYSTEM_NAME_RE = re.compile(r"(?i)\b(USOS|SIRK|Wirtualn\w+\s+\w+)\b")
+
+def render_sources(hits, lang="pl", max_n=5):
+    """Code-owned sources list in the session language."""
+    lines, seen = [], set()
+    for h in hits or []:
+        u = (h.get("url") or "").strip()
+        if not u or u in seen:
+            continue
+        seen.add(u)
+        warn = ""
+        if outdated(h.get("modified"), u):
+            warn = f" ⚠️ {OUTDATED.get(lang, OUTDATED['pl'])}"
+        lines.append(f"[{len(lines)+1}] {u} – {h.get('modified') or '—'}{warn}")
+        if len(lines) >= max_n:
+            break
+    if not lines:
+        return ""
+    return f"\n\n{SRC_HDR.get(lang, 'Źródła')}:\n" + "\n".join(lines)
+
+def finalize_answer_urls(text, hits, fact_urls=None, lang="pl"):
+    """Strip LLM sources section + unknown URLs; append code-rendered sources."""
+    if not text:
+        text = ""
+    # Cut from sources-like heading to end
+    lines, cut = [], False
+    for line in text.splitlines():
+        if _SRC_HEAD_RE.match(line.strip()):
+            cut = True
+            break
+        lines.append(line)
+    body = "\n".join(lines).rstrip()
+    allowed = {(h.get("url") or "").rstrip("/") for h in (hits or []) if h.get("url")}
+    for u in fact_urls or []:
+        if u:
+            allowed.add(u.rstrip("/"))
+    def _keep(m):
+        u = m.group(0).rstrip(".,;)")
+        return u if u.rstrip("/") in allowed or u in allowed else ""
+    body = _URL_RE.sub(_keep, body)
+    body = re.sub(r"[ \t]{2,}", " ", body)
+    body = re.sub(r"\n{3,}", "\n\n", body).rstrip()
+    return body + render_sources(hits, lang)
 LLM_ERR = {
  "pl": "(Model językowy chwilowo niedostępny – poniżej zestawienie z oficjalnych źródeł.)\n\n",
  "en": "(Language model temporarily unavailable – below is a summary from official sources.)\n\n",
@@ -955,15 +1000,18 @@ def _user_question_for_llm(question, history):
     return f"ORIGINAL QUESTION: {orig}\nLATEST REPLY: {question}"
 
 def _scrub_hallucinations(text, hits_blob=""):
-    """Usuń typowe halucynacje spoza źródeł (USOS). Język sprawdza output_lang_ok."""
+    """Remove system names absent from sources (USOS/SIRK/…)."""
     if not text:
         return text
-    blob = (hits_blob or "").upper()
-    if "USOS" in text.upper() and "USOS" not in blob:
-        text = re.sub(r"(?i)\(?\s*(?:przez|via|through|через)\s+(?:system\s+)?USOS[^)\n]*\)?", "", text)
-        text = re.sub(r"(?i)(?:system\s+)?USOS(?:\s*\([^)]*\))?", "", text)
-        text = re.sub(r"[ \t]{2,}", " ", text)
-    return text
+    blob = hits_blob or ""
+
+    def _repl(m):
+        name = m.group(1)
+        key = name.split()[0]
+        return m.group(0) if re.search(re.escape(key), blob, re.I) else ""
+
+    text = _SYSTEM_NAME_RE.sub(_repl, text)
+    return re.sub(r"[ \t]{2,}", " ", text)
 
 def _attach_state(result, state):
     try:
@@ -1155,6 +1203,8 @@ def answer(question, history, session_lang=None, state_token=None):
                     out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
             out = strip_llm_deadline_notes(out)
             out = _postcheck_amounts(out)
+            fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
+            out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang)
             out += deadline_passed_note(out, lang)
             state.original_question = None
             return _attach_state(dict(clarify=False, mode="llm", sources=srcs, profile=prof, topics=topics, lang=lang, answer=out), state)
@@ -1165,6 +1215,9 @@ def answer(question, history, session_lang=None, state_token=None):
     ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_block)))
     ans = _scrub_hallucinations(ans, _hit_blob(hits[:6]))
     ans = strip_llm_deadline_notes(ans)
+    # fallback already appends SRC_HDR — strip duplicate then re-render from hits
+    fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
+    ans = finalize_answer_urls(ans, hits[:6], fact_urls=fact_urls, lang=lang)
     ans += deadline_passed_note(ans, lang)
     state.original_question = None
     return _attach_state(dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, topics=topics, lang=lang, answer=ans), state)
