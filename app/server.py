@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import rag
-from security import redact_secrets
+from security import redact_secrets, strip_untrusted_wrappers
 
 app = FastAPI(title="Asystent UR", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -83,9 +83,27 @@ def chat(q: Q, r: Request):
         role = h.get("role")
         if role not in ("user", "assistant"):
             continue
-        hist.append({"role": role, "content": redact_secrets(str(h.get("content", ""))[:3000])})
+        hist.append({
+            "role": role,
+            "content": strip_untrusted_wrappers(redact_secrets(str(h.get("content", ""))[:3000])),
+        })
     now = time.time()
     k = ip(r)
+    lang = rag.detect_lang(question, latest=question)
+    limit_msg = {
+        "pl": "Limit: 20 pytań na 10 minut. Spróbuj później.",
+        "en": "Limit: 20 questions per 10 minutes. Please try again later.",
+        "uk": "Ліміт: 20 запитань на 10 хвилин. Спробуйте пізніше.",
+        "ru": "Лимит: 20 вопросов на 10 минут. Попробуйте позже.",
+        "mn": "Хязгаар: 10 минутад 20 асуулт. Дараа дахин оролдоно уу.",
+    }.get(lang, "Limit: 20 questions per 10 minutes. Please try again later.")
+    glob_msg = {
+        "pl": "Dzienny/godzinny limit serwisu wyczerpany. Spróbuj później.",
+        "en": "Service hourly limit reached. Please try again later.",
+        "uk": "Годинний ліміт сервісу вичерпано. Спробуйте пізніше.",
+        "ru": "Часовой лимит сервиса исчерпан. Попробуйте позже.",
+        "mn": "Үйлчилгээний цагийн хязгаар дууссан. Дараа дахин оролдоно уу.",
+    }.get(lang, "Service hourly limit reached. Please try again later.")
     with lock:
         d = hits[k]
         while d and now - d[0] > WIN:
@@ -93,9 +111,9 @@ def chat(q: Q, r: Request):
         while glob and now - glob[0] > 3600:
             glob.popleft()
         if len(d) >= LIMIT:
-            raise HTTPException(429, "Limit: 20 pytań na 10 minut. Spróbuj później.")
+            raise HTTPException(429, limit_msg)
         if len(glob) >= GLOBAL:
-            raise HTTPException(429, "Dzienny/godzinny limit serwisu wyczerpany. Spróbuj później.")
+            raise HTTPException(429, glob_msg)
         d.append(now)
         glob.append(now)
     if not sem.acquire(timeout=60):

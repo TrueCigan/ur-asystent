@@ -80,6 +80,21 @@ TOPIC_POLICY = {
             {"title": r"doktoranc|doktorsk|Szko[lł]a Doktorsk", "w": 5},
         ],
     },
+    "akademik": {
+        "prefer": ["student"],
+        "query_extra": "domy studenckie akademik opłaty za miejsce termin wniosków",
+        "boost_url": r"domy-studenckie|akademik|internet-w-akademikach",
+        "penalize_url": r"rekrutacja\.|czesne|stypendia-socjalne|konferenc",
+        "boost_mult": 3.5,
+        "penalize_mult": 0.08,
+        "canonical": r"domy-studenckie|akademik",
+        "substance": r"akademik|dom\w*\s*studen|zł|opłat|miejsce|termin|wniosek",
+        "force_rules": [
+            {"url": r"domy-studenckie", "w": 20},
+            {"url": r"akademik", "w": 10},
+            {"title": r"Domy studenckie|akademik", "w": 8},
+        ],
+    },
     "oplaty": {
         "prefer": ["rekrutacja", "student", "bip"],
         "query_extra": "opłaty czesne wysokość opłat za usługi edukacyjne zarządzenie",

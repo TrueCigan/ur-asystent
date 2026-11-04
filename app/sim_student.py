@@ -61,6 +61,43 @@ SCENARIOS = [
         "Jak dostać stypendium socjalne?",
         "obywatel polski, nie studiuje inych kierunków i nie posiadam dyplomów, stacjonarnie, 1 stopień",
     ], {"expect_url": "stypendia-socjalne", "forbid_bos_only": True, "max_clarify_turns": 1}),
+    # QA report regressions (BUG-01/02/03/04/05/07)
+    ("QA EN rector undergrad slots", [
+        "how do i get the rector scholarship?",
+        "im from Poland, undergrad, third year",
+        "only one, no. bachelor",
+    ], {"expect_url": "stypendium-rektora", "forbid_bos_only": True, "max_clarify_turns": 2, "expect_lang": "en"}),
+    ("QA EN Pole daily master", [
+        "How to get a social scholarship?",
+        "a Pole, nothing else, daily, master, 1st year",
+    ], {
+        "expect_url": "stypendia-socjalne",
+        "forbid_bos_only": True,
+        "max_clarify_turns": 1,
+        "expect_profile": {"status": "pl", "drugi_kierunek": "nie", "tryb": "stacjonarne", "poziom": "II"},
+    }),
+    ("QA EN no second degree", [
+        "How to get a social scholarship?",
+        "Polish citizen, full-time, no second degree",
+    ], {"expect_profile": {"status": "pl", "tryb": "stacjonarne", "drugi_kierunek": "nie"}, "max_clarify_turns": 2}),
+    ("QA tuition in Polish stays EN", [
+        "Hello, I am Pole studying part-time bachelors. How much do I pay for studies in Polish?",
+    ], {"expect_lang": "en", "max_clarify_turns": 1}),
+    ("QA RU social scholarship", [
+        "Привет, я студент из Украины с картой побыту. Нужна социальная стипендия, как оформить?",
+    ], {"expect_lang": "ru", "expect_mode_contains": "doprecyzowanie"}),
+    ("QA akademik not tuition", [
+        "Dzień dobry, mam orzeczenie o niepełnosprawności. Jakie stypendium mi przysługuje?",
+        "z polski jestem, mgr, jednokierunkowo",
+        "a akademik? ile kosztuje miejsce i do kiedy skladac papiery",
+    ], {"expect_url": "domy-studenckie", "forbid_url_family": "rekrutacja.uniwersytetradom.pl"}),
+    ("QA doktorant no fake rok", [
+        "siema, jestem doktorantem w szkole doktorskiej, ile kasy dostaje sie ze stypendium doktoranckiego??",
+    ], {"forbid_profile": {"rok": "1", "tryb": "stacjonarne"}}),
+    ("QA no wrapper leak", [
+        "Jak dostać stypendium socjalne?",
+        "polak, stacjonarne, I stopień, jeden kierunek",
+    ], {"forbid_substr": "ASSISTANT_MESSAGE", "forbid_substr2": "<<<"}),
     ("Stypendium socjalne PL po ukraińsku", [
         "Як отримати соціальну стипендію?",
         "Я громадянин Польщі, навчаюсь тільки на цьому напрямі, навчаюсь на денній формі, 1 ступінь",
@@ -214,6 +251,20 @@ def check(name, r, rules, blob, clarify_turns=0):
     if rules.get("expect_profile_pobyt"):
         if (r.get("profile") or {}).get("pobyt") != rules["expect_profile_pobyt"]:
             fails.append(f"profile.pobyt={(r.get('profile') or {}).get('pobyt')} want={rules['expect_profile_pobyt']}")
+    if rules.get("expect_lang") and r.get("lang") != rules["expect_lang"]:
+        fails.append(f"lang={r.get('lang')} want={rules['expect_lang']}")
+    if rules.get("expect_profile"):
+        got = r.get("profile") or {}
+        for k, v in rules["expect_profile"].items():
+            if got.get(k) != v:
+                fails.append(f"profile.{k}={got.get(k)} want={v}")
+    if rules.get("forbid_profile"):
+        got = r.get("profile") or {}
+        for k, v in rules["forbid_profile"].items():
+            if got.get(k) == v:
+                fails.append(f"profile.{k} unexpectedly {v}")
+    if rules.get("forbid_substr2") and rules["forbid_substr2"] in blob:
+        fails.append(f"forbidden substr {rules['forbid_substr2']}")
     if rules.get("max_clarify_turns") is not None and clarify_turns > rules["max_clarify_turns"]:
         fails.append(f"clarify_turns={clarify_turns} > {rules['max_clarify_turns']}")
     return fails

@@ -285,7 +285,7 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Użytkownik:** Nie posiadam żadnego dyplomu
 
-**Asystent** _(mode=doprecyzowanie; profile={"status": "cudzoziemiec", "pobyt": "ukr", "drugi_kierunek": "nie"})_:
+**Asystent** _(mode=doprecyzowanie; profile={"status": "cudzoziemiec", "drugi_kierunek": "nie", "pobyt": "ukr"})_:
 
 Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
 1. Studiujesz stacjonarnie czy niestacjonarnie?
@@ -304,9 +304,9 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Użytkownik:** pierwszego stopnia
 
-**Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "drugi_kierunek": "nie", "pobyt": "ukr", "poziom": "I"})_:
+**Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "drugi_kierunek": "nie", "pobyt": "ukr", "tryb": "stacjonarne", "poziom": "I"})_:
 
-Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, drugi kierunek / dyplom: nie, pobyt: ukr, poziom: I):
+Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, drugi kierunek / dyplom: nie, pobyt: ukr, tryb: stacjonarne, poziom: I):
 
 **Tak — według zasad UR obywatele Ukrainy (ochrona czasowa / PESEL UKR) mogą ubiegać się o stypendium socjalne**, jeśli spełniają warunki dochodowe i zasady jednego kierunku.
 - Próg dochodu (oficjalna strona): **2099,70 zł** na osobę w rodzinie.
@@ -324,6 +324,7 @@ Fragmenty ze źródeł:
 [4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
 
 Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
+⚠️ Ten termin (od 01.09.2026 do 05.10.2026) już minął (dziś: 2026-11-04).
 
 
 **ASSERT PASS**
@@ -363,6 +364,7 @@ Fragmenty ze źródeł:
 [4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
 
 Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
+⚠️ Ten termin (od 01.09.2026 do 05.10.2026) już minął (dziś: 2026-11-04).
 
 
 **ASSERT PASS**
@@ -402,6 +404,285 @@ Fragmenty ze źródeł:
 [4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
 
 Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
+⚠️ Ten termin (od 01.09.2026 do 05.10.2026) już minął (dziś: 2026-11-04).
+
+
+**ASSERT PASS**
+
+
+## QA EN rector undergrad slots
+
+**Użytkownik:** how do i get the rector scholarship?
+
+**Asystent** _(mode=doprecyzowanie; profile={})_:
+
+Before I answer – UR rules depend on your situation. Please clarify:
+1. What is your status: Polish citizen, international student (e.g. Pole’s Card, residence permit, refugee/UKR temporary protection), stateless person, or doctoral student?
+2. Are you studying a second programme in parallel, or have you already completed a degree at this level? (benefits usually cover one programme)
+3. Level: first-cycle (bachelor/engineer), second-cycle (master), long-cycle master’s, or doctoral school?
+4. Which year of study are you in?
+
+You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.
+
+**Użytkownik:** im from Poland, undergrad, third year
+
+**Asystent** _(mode=doprecyzowanie; profile={"status": "pl", "poziom": "I", "rok": "3"})_:
+
+Before I answer – UR rules depend on your situation. Please clarify:
+1. Are you studying a second programme in parallel, or have you already completed a degree at this level? (benefits usually cover one programme)
+
+You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.
+
+**Użytkownik:** only one, no. bachelor
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "poziom": "I", "rok": "3", "drugi_kierunek": "nie"})_:
+
+Based on official UR pages (profile: status: pl, level: I, year: 3, second programme / diploma: nie):
+
+**Rector’s scholarship** — from official UR pages:
+
+[1] **Stypendium Rektora – Stypendium-Rektora-2024.pdf**
+„na wielu sesjach należy wskazać sesję z najwyższą punktacją, która jako jedyna będzie podlegać kwalifikacji. Pojęciem „sesji naukowej” obejmuje się na potrzeby punktacji również konferencje, sympozja i festiwale naukowe. Uwaga: każdy ze współautorów jest uprawniony do pełnej liczby punktów (punkty nie są dzielone propo…”
+
+[2] **Stypendium Rektora**
+„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypen…”
+
+[3] **Świadczenia dla studentów – pomoc materialna**
+„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna mies…”
+- Next: open the Rector’s scholarship page and the rules PDF; apply via the channel listed there.
+
+Sources:
+[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/06/Stypendium-Rektora-2024.pdf – 2024-06-27
+[2] https://student.uniwersytetradom.pl/stypendium-rektora/ – 2026-08-24
+[3] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+
+For an individual committee decision, you can ask the Student Service Office after checking the documents above.
+⚠️ This deadline (od 01.09.2026 do 05.10.2026) has already passed (today: 2026-11-04).
+
+
+**ASSERT PASS**
+
+
+## QA EN Pole daily master
+
+**Użytkownik:** How to get a social scholarship?
+
+**Asystent** _(mode=doprecyzowanie; profile={})_:
+
+Before I answer – UR rules depend on your situation. Please clarify:
+1. What is your status: Polish citizen, international student (e.g. Pole’s Card, residence permit, refugee/UKR temporary protection), stateless person, or doctoral student?
+2. Are you studying a second programme in parallel, or have you already completed a degree at this level? (benefits usually cover one programme)
+3. Do you study full-time or part-time?
+4. Level: first-cycle (bachelor/engineer), second-cycle (master), long-cycle master’s, or doctoral school?
+
+You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.
+
+**Użytkownik:** a Pole, nothing else, daily, master, 1st year
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "tryb": "stacjonarne", "poziom": "II", "rok": "1", "drugi_kierunek": "nie"})_:
+
+Based on official UR pages (profile: status: pl, mode: stacjonarne, level: II, year: 1, second programme / diploma: nie):
+
+**Yes — Polish citizens may apply for a social scholarship** if family income is within the threshold and the benefit is taken for one programme only.
+- Income threshold (official page): **2099,70 zł** per family member.
+- Next: open the scholarship page, check documents and deadlines for the current year.
+
+Source excerpts:
+- „lne w roku akademickim 2026/2027 wynosi 2099,70 zł. Termin składania wniosków o świadczenia na cały rok akademicki 2026/2027 od 01…”
+
+Sources:
+[1] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/R-41-2025.pdf – 2025-12-05
+[4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+
+For an individual committee decision, you can ask the Student Service Office after checking the documents above.
+⚠️ This deadline (od 01.09.2026 do 05.10.2026) has already passed (today: 2026-11-04).
+
+
+**ASSERT PASS**
+
+
+## QA EN no second degree
+
+**Użytkownik:** How to get a social scholarship?
+
+**Asystent** _(mode=doprecyzowanie; profile={})_:
+
+Before I answer – UR rules depend on your situation. Please clarify:
+1. What is your status: Polish citizen, international student (e.g. Pole’s Card, residence permit, refugee/UKR temporary protection), stateless person, or doctoral student?
+2. Are you studying a second programme in parallel, or have you already completed a degree at this level? (benefits usually cover one programme)
+3. Do you study full-time or part-time?
+4. Level: first-cycle (bachelor/engineer), second-cycle (master), long-cycle master’s, or doctoral school?
+
+You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.
+
+**Użytkownik:** Polish citizen, full-time, no second degree
+
+**Asystent** _(mode=doprecyzowanie; profile={"status": "pl", "tryb": "stacjonarne", "drugi_kierunek": "nie"})_:
+
+Before I answer – UR rules depend on your situation. Please clarify:
+1. Level: first-cycle (bachelor/engineer), second-cycle (master), long-cycle master’s, or doctoral school?
+
+You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.
+
+
+**ASSERT PASS**
+
+
+## QA tuition in Polish stays EN
+
+**Użytkownik:** Hello, I am Pole studying part-time bachelors. How much do I pay for studies in Polish?
+
+**Asystent** _(mode=doprecyzowanie; profile={"tryb": "niestacjonarne", "poziom": "I"})_:
+
+Before I answer – UR rules depend on your situation. Please clarify:
+1. What is your status: Polish citizen, international student (e.g. Pole’s Card, residence permit, refugee/UKR temporary protection), stateless person, or doctoral student?
+
+You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.
+
+
+**ASSERT PASS**
+
+
+## QA RU social scholarship
+
+**Użytkownik:** Привет, я студент из Украины с картой побыту. Нужна социальная стипендия, как оформить?
+
+**Asystent** _(mode=doprecyzowanie; profile={"status": "cudzoziemiec"})_:
+
+Прежде чем ответить – правила UR зависят от вашей ситуации. Уточните, пожалуйста:
+1. Учитесь ли вы параллельно на втором направлении или уже есть диплом этого уровня? (выплаты обычно только на одном направлении)
+2. Вы учитесь на дневной (стационар) или заочной форме?
+3. Уровень: I ступень (бакалавр/инженер), II ступень (магистр), единый магистр или докторантура?
+
+Можно одной фразой, напр. «гражданин Польши, дневная, I ступень, только это направление, без диплома».
+
+
+**ASSERT PASS**
+
+
+## QA akademik not tuition
+
+**Użytkownik:** Dzień dobry, mam orzeczenie o niepełnosprawności. Jakie stypendium mi przysługuje?
+
+**Asystent** _(mode=doprecyzowanie; profile={"niepelnosprawnosc": "tak"})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Jaki jest Twój status: obywatel Polski, cudzoziemiec (np. Karta Polaka, karta pobytu, uchodźca/ochrona UKR), bezpaństwowiec, czy doktorant Szkoły Doktorskiej?
+2. Czy studiujesz równolegle drugi kierunek albo masz już ukończone studia tego poziomu? (świadczenia zwykle tylko na jednym kierunku)
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** z polski jestem, mgr, jednokierunkowo
+
+**Asystent** _(mode=wyszukiwanie; profile={"niepelnosprawnosc": "tak", "status": "pl", "poziom": "II", "drugi_kierunek": "nie"})_:
+
+Na podstawie oficjalnych stron UR (profil: orzeczenie o niepełnosprawności: tak, status: pl, poziom: II, drugi kierunek / dyplom: nie):
+
+[1] **Do pobrania – Regulamin-korzystania-z-bezplatnego-transportu-swiadczonego-na-rzecz-niepelnosprawnych-studentow-UTH.docx**
+„Regulamin korzystania z bezpłatnego transportu świadczonego na rzecz niepełnosprawnych studentów/doktorantów na Uniwersytecie Technologiczno-Humanistycznym im. Kazimierza Pułaskiego w Radomiu § 1 Ogólne zasady przyznawania form wsparcia są określone w „Regulaminie przyznawania ws…”
+
+[2] **Do pobrania – Wskazowki-dla-osob-prowadzacych-zajecia-dydaktyczne-ze-studentami-z-niepelnosprawnoscia-ruchowa.pdf**
+„Wskazówki dla osób prowadzących zajęcia dydaktyczne ze studentami z niepełnosprawnością ruchową Autorka: Małgorzata Radziszewska 1. Przed studentami z niepełnosprawnością ruchową należy stawiać takie same wymagania jak przed innymi studentami, ponieważ zamierzają oni zdobyć wyższ…”
+
+[3] **Stypendium dla niepełnosprawnych​**
+„o pracy, albo niezdolności do samodzielnej egzystencji, albo o częściowej niezdolności do pracy. Stypendium to jest przyznawane odrębnie i niezależnie od stypendium socjalnego oraz stypendium Rektora. Student ubiegający się o przyznanie stypendium dla osób niepełnosprawnych skład…”
+
+Źródła:
+[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/11/Regulamin-korzystania-z-bezplatnego-transportu-swiadczonego-na-rzecz-niepelnosprawnych-studentow-UTH.docx – 2022-11-10 ⚠️ informacja może być nieaktualna
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/11/Wskazowki-dla-osob-prowadzacych-zajecia-dydaktyczne-ze-studentami-z-niepelnosprawnoscia-ruchowa.pdf – 2022-11-10 ⚠️ informacja może być nieaktualna
+[3] https://student.uniwersytetradom.pl/stypendium-dla-niepelnosprawnych/ – 2026-08-24
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/11/Wskazowki-dla-osob-prowadzacych-zajecia-dydaktyczne-ze-studentami-z-niepelnosprawnoscia-mowy.pdf – 2022-11-10 ⚠️ informacja może być nieaktualna
+
+**Użytkownik:** a akademik? ile kosztuje miejsce i do kiedy skladac papiery
+
+**Asystent** _(mode=wyszukiwanie; profile={"niepelnosprawnosc": "tak", "status": "pl", "poziom": "II", "drugi_kierunek": "nie"})_:
+
+Na podstawie oficjalnych stron UR (profil: orzeczenie o niepełnosprawności: tak, status: pl, poziom: II, drugi kierunek / dyplom: nie):
+
+[1] **Domy studenckie**
+„INFORMACJA O TERMINIE KWATEROWANIA W DOMACH STUDENTA URAD. NA ROK AKADEMICKI 2026/27 Informujemy, że studenci, którym przyznane zostały miejsca w Domach Studenta – mogą kwaterować się w przyznanym akademiku w dniach: 29 i 30 września 2026 r. oraz 1 października 2026r., w godz. od…”
+
+[2] **Domy studenckie – R-22-2026-cennik-oplat-za-akademik-2026.pdf**
+„ZARZĄDZENIE R-22/2026 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 29 czerwca 2026 r. w sprawie: wprowadzenia cennika opłat za zakwaterowanie w domach studenta Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 23 ust. 2 pkt 2 i 10 ustaw…”
+
+[3] **Domy studenckie – akademik_instrukcja_2014v2.pdf**
+„Wypełnianie elektroniczne wniosku o miejsce w akademiku Po zalogowaniu do swojego konta w Wirtualnej Uczelni rozwiń zakładkę Student, a następnie wybierz Akademik. Teraz wybierz Dodaj wniosek. Dokonaj zgodnie ze swoimi preferencjami wyborów kolejno w poniższych polach wniosku ora…”
+
+Źródła:
+[1] https://student.uniwersytetradom.pl/domy-studenckie/ – 2026-10-27
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2026/07/R-22-2026-cennik-oplat-za-akademik-2026.pdf – 2026-07-14
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/akademik_instrukcja_2014v2.pdf – 2022-10-19 ⚠️ informacja może być nieaktualna
+[4] https://student.uniwersytetradom.pl/internet-w-akademikach/ – 2022-10-28 ⚠️ informacja może być nieaktualna
+
+
+**ASSERT PASS**
+
+
+## QA doktorant no fake rok
+
+**Użytkownik:** siema, jestem doktorantem w szkole doktorskiej, ile kasy dostaje sie ze stypendium doktoranckiego??
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "doktorant", "poziom": "SD", "status_doktor": true})_:
+
+Na podstawie oficjalnych stron UR (profil: status: doktorant, poziom: SD):
+
+[1] **Studia doktoranckie**
+„Radom Szczegółowe zasady i kryteria rekrutacji do Szkoły Doktorskiej w UTH Radom Rada Szkoły Doktorskiej – ZARZĄDZENIE R-15/2019 SPRAWDŹ KIERUNKI Techniczne i ścisłe Nietechniczne Techniczne i ścisłe Bezpieczeństwo i jakość produkcji żywności (NOWOŚĆ) Bezpieczeństwo i higiena pra…”
+
+[2] **Stypendia doktoranckie**
+„Stypendia doktoranckie Regulamin przyznawania stypendiów doktoranckich oraz tryb przyznawania ich zwiększenia z dotacji projakościowej UWAGA- Aneks do Zarządzenia ZARZĄDZENIE R-67/2020 w sprawie : uruchomienia środków finansowych na wypłatę stypendiów doktoranckich, ustalenia wys…”
+
+[3] **BIP: Szkoła Doktorska**
+„Wróć Szkoła Doktorska Regulamin Szkoły Doktorskiej UTH Radom Załączniki do Regulaminu: nr 1 - Wniosek o wyznaczenie promotora/ promotora pomocniczego nr 2 - Wniosek o zmianę promotora/ promotora pomocniczego nr 3 - Wniosek o przedłużenie terminu złożenia rozprawy doktorskiej uchw…”
+
+Źródła:
+[1] https://rekrutacja.uniwersytetradom.pl/studia-doktoranckie/ – 2021-11-25 ⚠️ informacja może być nieaktualna
+[2] https://student.uniwersytetradom.pl/stypendia-doktoranckie/ – 2022-11-03 ⚠️ informacja może być nieaktualna
+[3] https://bip.uniwersytetradom.pl/artykul/105-171-szkola-doktorska – — ⚠️ informacja może być nieaktualna
+[4] https://bip.uniwersytetradom.pl/attachments/5568/download/Uchwa%25C5%2582a%2520nr%2520000-9%2F2%2F2026 – 2026-10-29
+
+
+**ASSERT PASS**
+
+
+## QA no wrapper leak
+
+**Użytkownik:** Jak dostać stypendium socjalne?
+
+**Asystent** _(mode=doprecyzowanie; profile={})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Jaki jest Twój status: obywatel Polski, cudzoziemiec (np. Karta Polaka, karta pobytu, uchodźca/ochrona UKR), bezpaństwowiec, czy doktorant Szkoły Doktorskiej?
+2. Czy studiujesz równolegle drugi kierunek albo masz już ukończone studia tego poziomu? (świadczenia zwykle tylko na jednym kierunku)
+3. Studiujesz stacjonarnie czy niestacjonarnie?
+4. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** polak, stacjonarne, I stopień, jeden kierunek
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie"})_:
+
+Na podstawie oficjalnych stron UR (profil: status: pl, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie):
+
+**Tak — obywatel Polski może ubiegać się o stypendium socjalne**, jeśli dochód rodziny nie przekracza progu i świadczenie dotyczy jednego kierunku.
+- Próg dochodu (oficjalna strona): **2099,70 zł** na osobę w rodzinie.
+- Dalej: sprawdź listę dokumentów i terminy na stronie stypendiów na bieżący rok.
+
+Fragmenty ze źródeł:
+- „lne w roku akademickim 2026/2027 wynosi 2099,70 zł. Termin składania wniosków o świadczenia na cały rok akademicki 2026/2027 od 01…”
+
+Źródła:
+[1] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/R-41-2025.pdf – 2025-12-05
+[4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+
+Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
+⚠️ Ten termin (od 01.09.2026 do 05.10.2026) już minął (dziś: 2026-11-04).
 
 
 **ASSERT PASS**
@@ -441,6 +722,7 @@ Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — p
 [4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
 
 Щодо індивідуального рішення комісії можна звернутися до Biuro Obsługi Studenta — після перевірки документів зі списку вище.
+⚠️ Цей термін (od 01.09.2026 do 05.10.2026) уже минув (сьогодні: 2026-11-04).
 
 
 **ASSERT PASS**
@@ -485,6 +767,7 @@ Na podstawie oficjalnych stron UR (profil: status: pl, poziom: I, rok: 2, drugi 
 [4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
 
 Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
+⚠️ Ten termin (od 01.09.2026 do 05.10.2026) już minął (dziś: 2026-11-04).
 
 
 **ASSERT PASS**
@@ -526,6 +809,7 @@ Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — p
 [4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
 
 Щодо індивідуального рішення комісії можна звернутися до Biuro Obsługi Studenta — після перевірки документів зі списку вище.
+⚠️ Цей термін (od 01.09.2026 do 05.10.2026) уже минув (сьогодні: 2026-11-04).
 
 **Użytkownik:** Дякую, а що стосовно ректорської стипендії?
 
@@ -562,6 +846,7 @@ Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — p
 [4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
 
 Щодо індивідуального рішення комісії можна звернутися до Biuro Obsługi Studenta — після перевірки документів зі списку вище.
+⚠️ Цей термін (od 01.09.2026 do 05.10.2026) уже минув (сьогодні: 2026-11-04).
 
 
 **ASSERT PASS**
@@ -606,6 +891,7 @@ Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, poziom: II, rok
 [4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
 
 Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
+⚠️ Ten termin (od 01.09.2026 do 05.10.2026) już minął (dziś: 2026-11-04).
 
 
 **ASSERT PASS**
@@ -653,9 +939,9 @@ Na podstawie oficjalnych stron UR (profil: status: pl, drugi kierunek / dyplom: 
 
 **Użytkownik:** ile wynosi stypendium doktoranckie
 
-**Asystent** _(mode=wyszukiwanie; profile={"status": "doktorant", "poziom": "SD", "tryb": "stacjonarne", "rok": "1", "status_doktor": true})_:
+**Asystent** _(mode=wyszukiwanie; profile={"status": "doktorant", "poziom": "SD", "status_doktor": true})_:
 
-Na podstawie oficjalnych stron UR (profil: status: doktorant, poziom: SD, tryb: stacjonarne, rok: 1):
+Na podstawie oficjalnych stron UR (profil: status: doktorant, poziom: SD):
 
 [1] **Studia doktoranckie**
 „Radom Szczegółowe zasady i kryteria rekrutacji do Szkoły Doktorskiej w UTH Radom Rada Szkoły Doktorskiej – ZARZĄDZENIE R-15/2019 SPRAWDŹ KIERUNKI Techniczne i ścisłe Nietechniczne Techniczne i ścisłe Bezpieczeństwo i jakość produkcji żywności (NOWOŚĆ) Bezpieczeństwo i higiena pra…”
@@ -674,9 +960,9 @@ Na podstawie oficjalnych stron UR (profil: status: doktorant, poziom: SD, tryb: 
 
 **Użytkownik:** jestem doktorantem szkoly doktorskiej obywatel polski
 
-**Asystent** _(mode=wyszukiwanie; profile={"status": "doktorant", "poziom": "SD", "tryb": "stacjonarne", "rok": "1", "status_doktor": true})_:
+**Asystent** _(mode=wyszukiwanie; profile={"status": "doktorant", "poziom": "SD", "status_doktor": true})_:
 
-Na podstawie oficjalnych stron UR (profil: status: doktorant, poziom: SD, tryb: stacjonarne, rok: 1):
+Na podstawie oficjalnych stron UR (profil: status: doktorant, poziom: SD):
 
 [1] **Studia doktoranckie**
 „Radom Szczegółowe zasady i kryteria rekrutacji do Szkoły Doktorskiej w UTH Radom Rada Szkoły Doktorskiej – ZARZĄDZENIE R-15/2019 SPRAWDŹ KIERUNKI Techniczne i ścisłe Nietechniczne Techniczne i ścisłe Bezpieczeństwo i jakość produkcji żywności (NOWOŚĆ) Bezpieczeństwo i higiena pra…”
@@ -1172,7 +1458,7 @@ Na podstawie oficjalnych stron UR (profil: tryb: stacjonarne, poziom: I, rok: 1,
 
 ## Summary
 
-PASS=32 FAIL=0
+PASS=40 FAIL=0
 
 - PASS: Plan Ekonomia i Finanse (messy)
 - PASS: Plan Ekonomia konkretnie
@@ -1184,6 +1470,14 @@ PASS=32 FAIL=0
 - PASS: Stypendium socjalne UKR multi-turn
 - PASS: Stypendium socjalne PL
 - PASS: Stypendium socjalne PL cyfra 1 stopień
+- PASS: QA EN rector undergrad slots
+- PASS: QA EN Pole daily master
+- PASS: QA EN no second degree
+- PASS: QA tuition in Polish stays EN
+- PASS: QA RU social scholarship
+- PASS: QA akademik not tuition
+- PASS: QA doktorant no fake rok
+- PASS: QA no wrapper leak
 - PASS: Stypendium socjalne PL po ukraińsku
 - PASS: Stypendium rektora PL
 - PASS: Switch socjalne → rektora UKR
