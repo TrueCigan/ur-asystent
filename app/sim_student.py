@@ -71,6 +71,18 @@ SCENARIOS = [
         "Jak dostać stypendium rektora?",
         "Polak, jeden kierunek, I stopień, 2 rok",
     ], {"expect_host": "student.uniwersytetradom.pl", "expect_substr": "rektor", "forbid_bos_only": True}),
+    ("Switch socjalne → rektora UKR", [
+        "Як отримати соціальну стипендію?",
+        "тимчасовий захист UKR, паралельно не навчаюсь і диплома не маю, денна форма, 1 ступінь",
+        "Дякую, а що стосовно ректорської стипендії?",
+        "1 рік",
+    ], {
+        "expect_url": "stypendium-rektora",
+        "forbid_url_only_rekrutacja": True,
+        "forbid_bos_only": True,
+        "expect_substr": "rektor",
+        "max_clarify_turns": 2,
+    }),
     ("Stypendium rektora cudzoziemiec", [
         "Czy jako cudzoziemiec mogę dostać stypendium rektora?",
         "Mam kartę pobytu czasowego, studiuję tylko jeden kierunek, II stopień, 1 rok",

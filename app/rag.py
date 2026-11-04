@@ -166,12 +166,12 @@ SLOT_OPTS = {
   ("I", r"\bi\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|bachelor|undergraduate|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
  ],
  "rok": [
-  ("1", r"(\b1\s*(rok|year|курс|жил)\b|\byear\s*1\b|\b1(st)?\s*year\b|\bpierwsz\w*\s*rok|\bfirst\s*year|\bfreshman|\bперш\w*\s*рік|\b(?:na|jestem na)\s+i\s+roku|\bpierwszoroczn|^\s*1\s*$)"),
-  ("2", r"(\b2\s*(rok|year|курс|жил)\b|\byear\s*2\b|\b2(nd)?\s*year\b|\bii\s*rok|\bdrugi\w*\s*rok|\bsecond\s*year|\bsophomore|\bдруг\w*\s*рік|\b(?:na|jestem na)\s+ii\s+roku|^\s*2\s*$)"),
-  ("3", r"(\b3\s*(rok|year|курс|жил)\b|\byear\s*3\b|\b3(rd)?\s*year\b|\biii\s*rok|\btrzeci\w*\s*rok|\bthird\s*year|\bтрет\w*\s*рік|\b(?:na|jestem na)\s+iii\s+roku|^\s*3\s*$)"),
-  ("4", r"(\b4\s*(rok|year|курс|жил)\b|\byear\s*4\b|\b4(th)?\s*year\b|\biv\s*rok|\bczwart\w*\s*rok|\b(?:na|jestem na)\s+iv\s+roku|^\s*4\s*$)"),
-  ("5", r"(\b5\s*(rok|year|курс|жил)\b|\byear\s*5\b|\b5(th)?\s*year\b|\bv\s*rok|\bpi[aą]t\w*\s*rok|^\s*5\s*$)"),
-  ("6", r"(\b6\s*(rok|year|курс|жил)\b|\byear\s*6\b|\b6(th)?\s*year\b|^\s*6\s*$)"),
+  ("1", r"(\b1\s*(rok|year|рік|курс|жил)\b|\byear\s*1\b|\b1(st)?\s*year\b|\bpierwsz\w*\s*rok|\bfirst\s*year|\bfreshman|\bперш\w*\s*рік|\b(?:na|jestem na)\s+i\s+roku|\bpierwszoroczn|^\s*1\s*$)"),
+  ("2", r"(\b2\s*(rok|year|рік|курс|жил)\b|\byear\s*2\b|\b2(nd)?\s*year\b|\bii\s*rok|\bdrugi\w*\s*rok|\bsecond\s*year|\bsophomore|\bдруг\w*\s*рік|\b(?:na|jestem na)\s+ii\s+roku|^\s*2\s*$)"),
+  ("3", r"(\b3\s*(rok|year|рік|курс|жил)\b|\byear\s*3\b|\b3(rd)?\s*year\b|\biii\s*rok|\btrzeci\w*\s*rok|\bthird\s*year|\bтрет\w*\s*рік|\b(?:na|jestem na)\s+iii\s+roku|^\s*3\s*$)"),
+  ("4", r"(\b4\s*(rok|year|рік|курс|жил)\b|\byear\s*4\b|\b4(th)?\s*year\b|\biv\s*rok|\bczwart\w*\s*rok|\b(?:na|jestem na)\s+iv\s+roku|^\s*4\s*$)"),
+  ("5", r"(\b5\s*(rok|year|рік|курс|жил)\b|\byear\s*5\b|\b5(th)?\s*year\b|\bv\s*rok|\bpi[aą]t\w*\s*rok|^\s*5\s*$)"),
+  ("6", r"(\b6\s*(rok|year|рік|курс|жил)\b|\byear\s*6\b|\b6(th)?\s*year\b|^\s*6\s*$)"),
  ],
  "drugi_kierunek": [
   # „nie” najpierw – unikaj fałszywego „tak” przy „nie posiadam dyplomu” / echo pytań clarify
@@ -242,14 +242,14 @@ SLOTS = {k: (SLOT_Q[k]["pl"], {val: rx for val, rx in opts}) for k, opts in SLOT
 
 TOPICS = [
  ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w*\s*materialn|[sś]wiadcze|social\s*scholarship|maintenance\s*grant|need[-\s]?based|стипенд\w*\s*соціал|соціальн\w*\s*стипенд|матеріальн\w*\s*допомог|тэтгэлэг|нийгмийн\s*тэтгэлэг|амьжиргааны", ["status", "drugi_kierunek", "tryb", "poziom"]),
- ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|merit\s*scholarship|academic\s*excellence|стипенд\w*\s*ректор|ректорськ|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom", "rok"]),
+ ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|merit\s*scholarship|academic\s*excellence|стипенд\w*\s*ректор|ректор|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom", "rok"]),
  ("stypendium_niepeln", r"niepe[lł]nospraw|disability\s*scholarship|інвалід|хөгжлийн\s*бэрхшээл", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
  ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|докторант|докторантур", ["status"]),
  ("oplaty", r"op[lł]at|czesne|ile\s*kosztuj|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?|how\s*much|cost\s*of\s*stud|price\s*of\s*stud|оплат|вартіст|кошту|цін[ауи]\s*навч|плата\s*за\s*навч|скільки\s*.{0,20}навч|төлбөр|сургалтын\s*төлбөр|хэд\s*(вэ|төгрөг|zł)", ["status", "tryb", "poziom"]),
  ("erasmus", r"erasmus|wyjazd|wymian|mobilno|exchange\s*program|study\s*abroad|мобільніст|обмін|солилцоо|гадаадад\s*суралц", ["status", "poziom", "rok"]),
  ("plan", r"plan\w*\s*zaj|rozk[lł]ad|harmonogram\s*zaj|zaj[eę]cia\s*w|kiedy\s*mam\s*zaj|timetable|class\s*schedule|course\s*schedule|розклад|розклад\s*занят|хичээлийн\s*хуваарь|хуваарь", ["kierunek", "tryb", "poziom", "rok"]),
  ("cudzoziemcy", r"cudzozie|bezpa[nń]stw|bez\s*obywatel|karta\s*polaka|kart\w*\s*pobytu|legaliz|wiz\w*\b|ochron\w*\s*czasow|international\s*student|foreign\s*student|residence\s*permit|інозем|без\s*громадян|карта\s*поляка|гадаад\s*оюутан|оршин\s*суух", ["status"]),
- ("dwa_kierunki", r"dw[ao]\w*\s*kierun|drugi\w*\s*kierun|r[oó]wnoleg|second\s*(major|program|programme)|double\s*major|друг\w*\s*напрям|паралельн|хоёр\s*мэргэжил|зэрэгцээ", ["status", "drugi_kierunek", "tryb"]),
+ ("dwa_kierunki", r"dw[ao]\w*\s*kierun|drugi\w*\s*kierun|r[oó]wnoleg|second\s*(major|program|programme)|double\s*major|друг\w*\s*напрям|паралельн(?!\w*\s*не)|хоёр\s*мэргэжил|зэрэгцээ", ["status", "drugi_kierunek", "tryb"]),
 ]
 
 TOPIC_PL_QUERY = {
@@ -341,20 +341,74 @@ _BENEFIT_TOPICS = {
     "oplaty", "erasmus", "doktoranckie", "dwa_kierunki", "plan",
 }
 
+def _benefit_topics_in_order(text):
+    """Kolejność wzmianek benefit-tematów w tekście (od lewej)."""
+    found = []
+    for n, rx, s in TOPICS:
+        if n not in _BENEFIT_TOPICS:
+            continue
+        for m in re.finditer(rx, text, re.I):
+            found.append((m.start(), n, s))
+    found.sort(key=lambda x: x[0])
+    # unikalne z zachowaniem pierwszej pozycji; last() bierzemy z końca listy wystąpień
+    return found
+
+def _primary_benefit_topic(question, candidates):
+    """Przy kilku tematach w jednej wiadomości – ostatnia wzmianka / kontrast wygrywa."""
+    if len(candidates) == 1:
+        return candidates[0]
+    q = question or ""
+    names = {n for n, _ in candidates}
+    # „socjalne już jasne, a rektor?” / „interesuje mnie rektora”
+    if "stypendium_rektora" in names and re.search(
+        r"(?i)(rektor|ректор)|(socjal\w*|соціальн\w*).{0,50}(zrozum|jasn|ok|зрозум|ясн).{0,40}(rektor|ректор)"
+        r"|(nie\s+socjal)|(а\s+що\s+стосовно\s+ректор)|(interesuje.{0,20}rektor)",
+        q,
+    ):
+        return next(t for t in candidates if t[0] == "stypendium_rektora")
+    ordered = _benefit_topics_in_order(q)
+    for _pos, n, s in reversed(ordered):
+        if n in names:
+            return (n, s)
+    return candidates[0]
+
+def _recent_benefit_from_history(history_text):
+    """Ostatni benefit-temat z historii (nie pierwszy – inaczej sticky zostaje na socjalne)."""
+    if not history_text:
+        return None
+    # szukaj per wiadomość od końca
+    parts = [p.strip() for p in re.split(r"\n+", history_text) if p.strip()]
+    for part in reversed(parts):
+        hits = [(n, s) for n, rx, s in TOPICS if n in _BENEFIT_TOPICS and re.search(rx, part, re.I)]
+        if hits:
+            return _primary_benefit_topic(part, hits)
+    return None
+
 def needed(question, history_text):
     q = question.lower()
     topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, q, re.I)]
+    # „паралельно не навчаюсь” ≠ pytanie o dwa kierunki
+    if any(n == "dwa_kierunki" for n, _ in topics) and re.search(
+        r"(?i)паралельн\w*\s*не|не\s+навча\w*.{0,20}паралел|nie\s+(studiuj\w*\s*)?r[oó]wnoleg|równolegle\s*nie",
+        q,
+    ):
+        topics = [(n, s) for n, s in topics if n != "dwa_kierunki"]
     hist_topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, history_text.lower(), re.I)]
-    # Odpowiedź profilowa („cudzoziemiec, nie”) nie może zbić tematu ze stypendium na „cudzoziemcy/rekrutacja”
-    benefit_hist = [t for t in hist_topics if t[0] in _BENEFIT_TOPICS]
-    if benefit_hist:
+    benefit_hist_last = _recent_benefit_from_history(history_text)
+    cur_benefit = [(n, s) for n, s in topics if n in _BENEFIT_TOPICS]
+    # Odpowiedź profilowa nie może zbić tematu na cudzoziemcy/rekrutacja ani „dwa kierunki”
+    if cur_benefit:
+        primary = _primary_benefit_topic(question, cur_benefit)
+        others = [(n, s) for n, s in topics if n not in _BENEFIT_TOPICS and n != "cudzoziemcy"]
+        topics = [primary] + others
+    elif benefit_hist_last:
         names = {n for n, _ in topics}
-        if not topics or names <= {"cudzoziemcy"}:
-            topics = [benefit_hist[0]]
+        if not topics or names <= {"cudzoziemcy", "dwa_kierunki"}:
+            topics = [benefit_hist_last]
         else:
-            topics = [(n, s) for n, s in topics if n != "cudzoziemcy"] or topics
+            topics = [(n, s) for n, s in topics if n != "cudzoziemcy"] or [benefit_hist_last]
     elif not topics and hist_topics:
-        topics = hist_topics[:1]
+        topics = [hist_topics[-1]]
     req = []
     for _, s in topics:
         for x in s:
@@ -743,6 +797,29 @@ def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=""):
             lines.append(f"\n{frag_h}")
             for s in sents:
                 lines.append(f"- „{s}…”")
+    elif "stypendium_rektora" in tset:
+        head = {
+            "uk": "\n**Стипендія ректора (stypendium rektora)** — умови з офіційних сторінок UR:",
+            "en": "\n**Rector’s scholarship** — from official UR pages:",
+            "pl": "\n**Stypendium rektora** — na podstawie oficjalnych stron UR:",
+            "mn": "\n**Ректорын тэтгэлэг** — UR-ийн албан ёсны хуудаснаас:",
+        }.get(lang, "\n**Stypendium rektora:**")
+        lines.append(head)
+        if prof.get("rok") == "1":
+            note = {
+                "uk": "- На **1 курсі** критерії часто інші (напр. результати з попередньої школи / олімпіади) — перевірте на сторінці стипендії ректора.",
+                "en": "- In **year 1**, criteria often differ (e.g. previous school results) — check the Rector’s scholarship page.",
+                "pl": "- Na **1 roku** kryteria bywają inne (np. wyniki ze szkoły średniej) – sprawdź stronę stypendium rektora.",
+            }.get(lang, "- Na 1 roku sprawdź osobne kryteria na stronie stypendium rektora.")
+            lines.append(note)
+        for i, h in enumerate(hits[:3], 1):
+            snip = re.sub(r"\s+", " ", h.get("text") or "")[:320]
+            lines.append(f"\n[{i}] **{h.get('title') or 'Źródło'}**\n„{snip}…”")
+        lines.append({
+            "uk": "- Далі: сторінка stypendium rektora + PDF із правилами; заява через канали, вказані на сайті UR.",
+            "en": "- Next: open the Rector’s scholarship page and the rules PDF; apply via the channel listed there.",
+            "pl": "- Dalej: strona stypendium rektora i PDF z regulaminem; wniosek według instrukcji na stronie UR.",
+        }.get(lang, "- Dalej: strona stypendium rektora i PDF z regulaminem."))
     else:
         # ogólny fallback – krótsze cytaty zamiast ściany tekstu
         for i, h in enumerate(hits[:3], 1):

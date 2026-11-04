@@ -427,14 +427,17 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 Na podstawie oficjalnych stron UR (profil: status: pl, poziom: I, rok: 2, drugi kierunek / dyplom: nie):
 
+**Stypendium rektora** — na podstawie oficjalnych stron UR:
+
 [1] **Stypendium Rektora – Stypendium-Rektora-2024.pdf**
-„na wielu sesjach należy wskazać sesję z najwyższą punktacją, która jako jedyna będzie podlegać kwalifikacji. Pojęciem „sesji naukowej” obejmuje się na potrzeby punktacji również konferencje, sympozja i festiwale naukowe. Uwaga: każdy ze współautorów jest uprawniony do pełnej licz…”
+„na wielu sesjach należy wskazać sesję z najwyższą punktacją, która jako jedyna będzie podlegać kwalifikacji. Pojęciem „sesji naukowej” obejmuje się na potrzeby punktacji również konferencje, sympozja i festiwale naukowe. Uwaga: każdy ze współautorów jest uprawniony do pełnej liczby punktów (punkty nie są dzielone propo…”
 
 [2] **Stypendium Rektora**
-„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń,…”
+„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypen…”
 
 [3] **Świadczenia dla studentów – pomoc materialna**
-„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla ka…”
+„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna mies…”
+- Dalej: strona stypendium rektora i PDF z regulaminem; wniosek według instrukcji na stronie UR.
 
 Źródła:
 [1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/06/Stypendium-Rektora-2024.pdf – 2024-06-27
@@ -443,6 +446,83 @@ Na podstawie oficjalnych stron UR (profil: status: pl, poziom: I, rok: 2, drugi 
 [4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
 
 Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
+
+
+**ASSERT PASS**
+
+
+## Switch socjalne → rektora UKR
+
+**Użytkownik:** Як отримати соціальну стипендію?
+
+**Asystent** _(mode=doprecyzowanie; profile={})_:
+
+Перш ніж відповісти – правила UR залежать від вашої ситуації. Уточніть, будь ласка:
+1. Який ваш статус: громадянин Польщі, іноземець (напр. Карта поляка, карта побуту, біженець/тимчасовий захист UKR), особа без громадянства чи докторант?
+2. Чи навчаєтесь паралельно на другому напрямі або вже маєте диплом цього рівня? (виплати зазвичай лише на одному напрямі)
+3. Ви навчаєтесь на денній (стаціонар) чи заочній формі?
+4. Рівень: І ступінь (бакалавр/інженер), ІІ ступінь (магістр), єдиний магістерський чи докторантура?
+
+Можна однією фразою, напр. «громадянин Польщі, денна, І ступінь, тільки цей напрям, без диплома».
+
+**Użytkownik:** тимчасовий захист UKR, паралельно не навчаюсь і диплома не маю, денна форма, 1 ступінь
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie", "pobyt": "ukr"})_:
+
+На основі офіційних сторінок UR (профіль: статус: cudzoziemiec, форма: stacjonarne, рівень: I, другий напрям / диплом: nie, перебування: ukr):
+
+**Так — за правилами UR громадяни України (зокрема захист / PESEL UKR) можуть претендувати на соціальну стипендію**, якщо виконуються умови доходу та один напрям навчання.
+- Поріг доходу (з офіційної сторінки): **2099,70 zł** на особу в сім’ї.
+- Для громадян України потрібна **заява (Załącznik nr 8)** — PDF у джерелах.
+- Далі: відкрийте сторінку стипендій, перевірте список документів і терміни на поточний навчальний рік.
+
+Уривки з джерел:
+- „lne w roku akademickim 2026/2027 wynosi 2099,70 zł. Termin składania wniosków o świadczenia na cały rok akademicki 2026/2027 od 01…”
+- „j albo korzystają z ochrony czasowej albo ochrony uzupełniającej na terytorium Rzeczypospolitej Polskiej, posiadacze certyfikatu poświad…”
+
+Джерела:
+[1] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2023/09/Zalacznik-Nr-8-Ukraina-1.pdf – 2023-09-12
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+
+Щодо індивідуального рішення комісії можна звернутися до Biuro Obsługi Studenta — після перевірки документів зі списку вище.
+
+**Użytkownik:** Дякую, а що стосовно ректорської стипендії?
+
+**Asystent** _(mode=doprecyzowanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie", "pobyt": "ukr"})_:
+
+Перш ніж відповісти – правила UR залежать від вашої ситуації. Уточніть, будь ласка:
+1. На якому ви році навчання?
+
+Можна однією фразою, напр. «громадянин Польщі, денна, І ступінь, тільки цей напрям, без диплома».
+
+**Użytkownik:** 1 рік
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie", "pobyt": "ukr", "rok": "1"})_:
+
+На основі офіційних сторінок UR (профіль: статус: cudzoziemiec, форма: stacjonarne, рівень: I, другий напрям / диплом: nie, перебування: ukr, рік: 1):
+
+**Стипендія ректора (stypendium rektora)** — умови з офіційних сторінок UR:
+- На **1 курсі** критерії часто інші (напр. результати з попередньої школи / олімпіади) — перевірте на сторінці стипендії ректора.
+
+[1] **Stypendium Rektora – Stypendium-Rektora-2024.pdf**
+„na wielu sesjach należy wskazać sesję z najwyższą punktacją, która jako jedyna będzie podlegać kwalifikacji. Pojęciem „sesji naukowej” obejmuje się na potrzeby punktacji również konferencje, sympozja i festiwale naukowe. Uwaga: każdy ze współautorów jest uprawniony do pełnej liczby punktów (punkty nie są dzielone propo…”
+
+[2] **Stypendium Rektora**
+„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypen…”
+
+[3] **Świadczenia dla studentów – pomoc materialna**
+„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna mies…”
+- Далі: сторінка stypendium rektora + PDF із правилами; заява через канали, вказані на сайті UR.
+
+Джерела:
+[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/06/Stypendium-Rektora-2024.pdf – 2024-06-27
+[2] https://student.uniwersytetradom.pl/stypendium-rektora/ – 2026-08-24
+[3] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+
+Щодо індивідуального рішення комісії можна звернутися до Biuro Obsługi Studenta — після перевірки документів зі списку вище.
 
 
 **ASSERT PASS**
@@ -467,14 +547,18 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, poziom: II, rok: 1, drugi kierunek / dyplom: nie, pobyt: pobyt_czasowy):
 
+**Stypendium rektora** — na podstawie oficjalnych stron UR:
+- Na **1 roku** kryteria bywają inne (np. wyniki ze szkoły średniej) – sprawdź stronę stypendium rektora.
+
 [1] **Stypendium Rektora – Stypendium-Rektora-2024.pdf**
-„na wielu sesjach należy wskazać sesję z najwyższą punktacją, która jako jedyna będzie podlegać kwalifikacji. Pojęciem „sesji naukowej” obejmuje się na potrzeby punktacji również konferencje, sympozja i festiwale naukowe. Uwaga: każdy ze współautorów jest uprawniony do pełnej licz…”
+„na wielu sesjach należy wskazać sesję z najwyższą punktacją, która jako jedyna będzie podlegać kwalifikacji. Pojęciem „sesji naukowej” obejmuje się na potrzeby punktacji również konferencje, sympozja i festiwale naukowe. Uwaga: każdy ze współautorów jest uprawniony do pełnej liczby punktów (punkty nie są dzielone propo…”
 
 [2] **Stypendium Rektora**
-„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń,…”
+„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypen…”
 
 [3] **Świadczenia dla studentów – pomoc materialna**
-„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla ka…”
+„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna mies…”
+- Dalej: strona stypendium rektora i PDF z regulaminem; wniosek według instrukcji na stronie UR.
 
 Źródła:
 [1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/06/Stypendium-Rektora-2024.pdf – 2024-06-27
@@ -1049,7 +1133,7 @@ Na podstawie oficjalnych stron UR (profil: tryb: stacjonarne, poziom: I, rok: 1,
 
 ## Summary
 
-PASS=30 FAIL=0
+PASS=31 FAIL=0
 
 - PASS: Plan Ekonomia i Finanse (messy)
 - PASS: Plan Ekonomia konkretnie
@@ -1062,6 +1146,7 @@ PASS=30 FAIL=0
 - PASS: Stypendium socjalne PL
 - PASS: Stypendium socjalne PL po ukraińsku
 - PASS: Stypendium rektora PL
+- PASS: Switch socjalne → rektora UKR
 - PASS: Stypendium rektora cudzoziemiec
 - PASS: Stypendium niepełnosprawnych
 - PASS: Doktorant stypendium
