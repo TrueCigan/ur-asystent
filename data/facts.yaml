@@ -9,7 +9,6 @@
   academic_year: "2026/2027"   # TODO(verify)
   applies_to: {status: [pl, cudzoziemiec], poziom: [I, II, jednolite]}
   candidates_seen:
-    - {value: 3560.60, url: "https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/R-41-2025.pdf", doc_modified: 2025-12-05}
     - {value: 3667.00, url: "https://student.uniwersytetradom.pl/stypendium-rektora/", doc_modified: 2026-08-24}
   source: {url: null, ordinance: null, checked: null}
   status: TODO(verify)
