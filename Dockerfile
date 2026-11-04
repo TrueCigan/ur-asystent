@@ -5,7 +5,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY app app
 # gotowy, skompresowany indeks (data/index.npz + data/meta.json.gz) – bez budowania na serwerze
-COPY data/index.npz data/meta.json.gz data/
+COPY data/index.npz data/meta.json.gz data/facts.yaml data/
 RUN useradd -m u && chown -R u /srv
 USER u
 EXPOSE 10000

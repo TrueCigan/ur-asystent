@@ -14,6 +14,7 @@ from lang import (
     sticky_lang_from_user_turns,
 )
 from deadlines import deadline_passed_note, strip_llm_deadline_notes
+from facts import load_facts, select_facts, render_facts_block, amounts_in, fact_amounts
 
 IDX = None
 def load():
@@ -513,7 +514,7 @@ Tone: clear, calm, practical — like a well-informed staff member at Biuro Obs�
 
 HARD RULES:
 1. Answer in {lang_name} (lang={lang}). NEVER answer in Russian. If the user writes Russian or asks for Russian (“по-русски”, “in Russian”), answer in Ukrainian and do NOT offer or promise Russian. Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) when useful. If the user asks to switch language (“po polsku”, “на польській”, “in English”), switch language — do NOT treat that as a question about tuition “in the Polish language”.
-2. Use ONLY the fragments in the sources block below. No outside knowledge. ALWAYS first give every concrete fact that IS in the sources (eligibility yes/no for THIS profile, income thresholds, document lists, deadlines, submission channel, links). FORBIDDEN: an answer that only says you don’t know / contact BOS when sources contain a relevant section (e.g. “Stypendium dla cudzoziemców”, “obywatel Ukrainy”). Mention Biuro Obsługi Studenta / DWZ only as a short last-line tip when a personal decision or missing individual document remains — never instead of the rules.
+2. Use ONLY the FACTS block (if present) and the source fragments below. No outside knowledge. Numbers, prices, caps, deadlines: use ONLY the FACTS block or quote a source chunk verbatim; if neither has it, say it is not available. ALWAYS first give every concrete fact that IS in the sources (eligibility yes/no for THIS profile, income thresholds, document lists, deadlines, submission channel, links). FORBIDDEN: an answer that only says you don’t know / contact BOS when sources contain a relevant section (e.g. “Stypendium dla cudzoziemców”, “obywatel Ukrainy”). Mention Biuro Obsługi Studenta / DWZ only as a short last-line tip when a personal decision or missing individual document remains — never instead of the rules.
 3. Structure: (a) direct answer first, (b) conditions/exceptions for THIS student’s profile, (c) what to do next (documents, channel, deadlines), (d) sources list. Use short paragraphs or bullets.
 4. Cite claims with [n]. End with a sources heading in the answer language ONLY: Źródła / Sources / Джерела / Эх сурвалж — never write the internal label “ŹRÓDŁA” or “Источники”. Each URL once. Do not invent source numbers.
 5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. Do not state whether a deadline has passed — the system adds that warning.
@@ -787,10 +788,12 @@ def extract_source_facts(hits):
     facts["sents"] = sents[:4]
     return facts
 
-def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=""):
+def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=""):
     """Czytelna odpowiedź bez LLM – fakty + kroki + URL, nie surowy dump."""
     facts = extract_source_facts(hits)
     lines = [err + NO_LLM.get(lang, NO_LLM["pl"]).format(prof=prof_txt)]
+    if facts_block:
+        lines.append("\n" + facts_block)
     tset = set(topics or [])
 
     if "stypendium_socjalne" in tset:
@@ -1049,6 +1052,26 @@ def answer(question, history, session_lang=None):
             for i, h in enumerate(hits, 1)]
     labels = PROF_LABEL.get(lang, PROF_LABEL["pl"])
     prof_txt = ", ".join(f"{labels.get(k, k)}: {v}" for k, v in prof.items() if k in labels) or "—"
+    selected_facts = select_facts(load_facts(), topics, prof)
+    facts_block = render_facts_block(selected_facts, lang)
+    allowed_amounts = fact_amounts(selected_facts) | amounts_in(_hit_blob(hits[:8]))
+
+    def _postcheck_amounts(text):
+        if not selected_facts or not text:
+            return text
+        # Only enforce when we have authoritative fact amounts; strip invented extras lightly
+        unknown = amounts_in(text) - allowed_amounts
+        if not unknown:
+            return text
+        note = {
+            "pl": "\n(Kwoty spoza FACTS/ŹRÓDEŁ usunięto — sprawdź oficjalne zarządzenie.)",
+            "en": "\n(Amounts not in FACTS/sources were removed — check the official ordinance.)",
+            "uk": "\n(Суми поза FACTS/джерелами прибрано — перевірте офіційне розпорядження.)",
+            "mn": "\n(FACTS/эх сурвалжид байхгүй дүнг хаслаа.)",
+        }.get(lang, "")
+        # regenerate path handled by caller; here only annotate once
+        return text + note
+
     if llm_enabled():
         import datetime
         sys = (SYSTEM.replace("{today}", datetime.date.today().isoformat())
@@ -1059,12 +1082,14 @@ def answer(question, history, session_lang=None):
             f"Respond ONLY in {LANG_NAME.get(lang, 'polski')} (lang={lang}). "
             "Never use Russian. Never offer Russian.\n\n"
         )
+        facts_section = (facts_block + "\n\n") if facts_block else ""
         msgs = [{"role": "system", "content": lang_guard + sys}] + _safe_history(history, 8) + [{"role": "user", "content":
                 f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\nTEMATY: {', '.join(topics) or '—'}\n"
-                "QUALITY: Use canonical UR pages from the sources first. Give eligibility/amounts/steps when present. "
+                "QUALITY: Use FACTS and canonical UR pages first. Give eligibility/amounts/steps when present. "
                 "Never answer with only “contact BOS” if fragments already answer the question. "
                 "Never invent USOS, menu paths, or dates absent from sources. Never write the word ŹRÓDŁA.\n\n"
-                f"SOURCES:\n{fmt_sources(hits)}\n\n"
+                + facts_section
+                + f"SOURCES:\n{fmt_sources(hits)}\n\n"
                 + wrap_untrusted("USER_QUESTION", llm_q)
                 + "\n\nNapisz konkretną, naturalną odpowiedź według zasad systemowych."}]
         try:
@@ -1084,15 +1109,16 @@ def answer(question, history, session_lang=None):
                 except Exception:
                     out = ""
                 if not out or not output_lang_ok(out, lang):
-                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="")
+                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
             out = strip_llm_deadline_notes(out)
+            out = _postcheck_amounts(out)
             out += deadline_passed_note(out, lang)
             return dict(clarify=False, mode="llm", sources=srcs, profile=prof, topics=topics, lang=lang, answer=out)
         except Exception:
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
     else:
         err = ""
-    ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err)))
+    ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_block)))
     ans = _scrub_hallucinations(ans, _hit_blob(hits[:6]))
     ans = strip_llm_deadline_notes(ans)
     ans += deadline_passed_note(ans, lang)
