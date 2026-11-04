@@ -2,6 +2,7 @@ import os, sys, time, collections, threading
 sys.path.insert(0, os.path.dirname(__file__))
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import rag
 app = FastAPI(title="Asystent UR", docs_url=None, redoc_url=None, openapi_url=None)
@@ -39,3 +40,5 @@ def healthz(): return {"ok": True}
 def status():
     if rag.IDX is None: rag.load()
     return {"chunks": len(rag.IDX["chunks"]), "llm": rag.llm_enabled(), "provider": os.getenv("LLM_PROVIDER", "none")}
+
+app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="assets")

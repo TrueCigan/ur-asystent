@@ -9,10 +9,6 @@ SC = [
  ("Plan zajęć WTEiI", ["Gdzie znajdę plan zajęć na WTEiI?", "Informatyka, I stopień, 1 rok, stacjonarne."]),
  ("Bezpaństwowiec", ["Jakie prawa ma osoba bez obywatelstwa studiująca na UR? Czy może studiować bezpłatnie?", "Jestem bezpaństwowcem ze statusem uchodźcy, studia stacjonarne, I stopień."]),
  ("Stypendium doktoranckie", ["Ile wynosi stypendium doktoranckie?", "Jestem doktorantem w Szkole Doktorskiej, obywatel Polski."]),
- ("Cena – stacjonarne, Polak", ["Ile kosztują studia stacjonarne na UR?", "Jestem Polakiem, I stopień, stacjonarne."]),
- ("Cena – niestacjonarne", ["Jaka jest cena studiów niestacjonarnych na kierunku Administracja?", "Obywatel Polski, niestacjonarne, I stopień."]),
- ("Czesne – cudzoziemiec stacjonarnie", ["Czy cudzoziemiec płaci czesne za studia stacjonarne?", "Jestem z Indii, mam wizę studencką, stacjonarne, I stopień, po angielsku."]),
- ("Stypendium doktoranckie – kwota 2024+", ["Ile wynosi stypendium doktoranckie przed i po ocenie śródokresowej?", "Jestem doktorantem Szkoły Doktorskiej UR."]),
  ("Dwa kierunki", ["Czy mogę pobierać stypendium socjalne na dwóch kierunkach jednocześnie?", "Jestem Polką, studiuję równolegle drugi kierunek, oba stacjonarne, I stopień."]),
 ]
 out = [f"# Wyniki testów – Asystent UR\n\nTryb LLM: {'włączony (' + os.getenv('LLM_PROVIDER','') + ')' if rag.llm_enabled() else 'wyłączony – tryb wyszukiwania (brak klucza LLM)'}\n"]

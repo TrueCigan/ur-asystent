@@ -55,12 +55,10 @@ def char_vec(counts, voc, idf):
 def build():
     fp = os.path.join(D, "docs.jsonl")
     f = open(fp, encoding="utf-8") if os.path.exists(fp) else gzip.open(fp + ".gz", "rt", encoding="utf-8")
-    chunks = []; seen = set()
+    chunks = []
     for l in f:
         d = json.loads(l)
         for i, c in enumerate(chunk(d["text"])):
-            if (d["url"], c) in seen: continue  # powtórzone fragmenty (np. podwójny tekst PDF)
-            seen.add((d["url"], c))
             chunks.append(dict(url=d["url"], title=d["title"], modified=d["modified"], source=d["source"],
                                kind=d["kind"], scanned=d.get("scanned", False), text=c, i=i))
     N = len(chunks)

@@ -1,35 +1,420 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2468AB">
 <title>Asystent studenta – Uniwersytet Radomski</title>
 <style>
-body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f3f5f9;color:#1d2433}
-header{background:#003a70;color:#fff;padding:14px 22px}header h1{margin:0;font-size:20px}header p{margin:4px 0 0;font-size:13px;opacity:.85}
-#wrap{max-width:860px;margin:0 auto;padding:16px}
-#chat{background:#fff;border-radius:10px;min-height:420px;padding:16px;box-shadow:0 1px 4px #0002;overflow-y:auto;max-height:68vh}
-.m{margin:10px 0;padding:10px 14px;border-radius:10px;white-space:pre-wrap;line-height:1.45;font-size:14.5px}
-.u{background:#e3edf9;margin-left:15%}.a{background:#f6f6f6;margin-right:8%;border-left:4px solid #003a70}.a.c{border-left-color:#e59b00;background:#fff8e6}
-.src{font-size:12.5px;margin-top:8px}.src a{color:#003a70}.old{color:#b25b00;font-weight:600}
-form{display:flex;gap:8px;margin-top:12px}input{flex:1;padding:12px;border:1px solid #bbc;border-radius:8px;font-size:15px}
-button{background:#003a70;color:#fff;border:0;padding:0 20px;border-radius:8px;font-size:15px;cursor:pointer}
-.chips{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}.chips span{background:#fff;border:1px solid #c9d3e3;border-radius:14px;padding:4px 10px;font-size:12.5px;cursor:pointer}
-footer{font-size:12px;color:#667;margin-top:10px}#st{float:right}
-</style></head><body>
-<header><h1>🎓 Asystent studenta UR</h1><p>Odpowiedzi wyłącznie na podstawie oficjalnych stron Uniwersytetu Radomskiego – zawsze ze źródłem i datą aktualizacji.</p></header>
-<div id="wrap"><div id="chat"><div class="m a">Dzień dobry! Pomogę znaleźć informacje o stypendiach, opłatach, Erasmus+, regulaminach i planach zajęć. Jeśli zasady zależą od Twojej sytuacji (np. obywatelstwo, tryb studiów, drugi kierunek), najpierw zadam kilka pytań. W czym mogę pomóc?</div></div>
-<div class="chips"><span>Jak dostać stypendium socjalne?</span><span>Stypendium rektora dla cudzoziemca</span><span>Wyjazd na Erasmus+</span><span>Plan zajęć WTEiI</span><span>Opłaty za studia</span></div>
-<form id="f"><input id="q" maxlength="500" placeholder="Zadaj pytanie po polsku…" autocomplete="off"><button>Wyślij</button></form>
-<footer>Prototyp – nie jest oficjalnym serwisem UR. W sprawach indywidualnych skontaktuj się z Biurem Obsługi Studenta. <span id="st"></span></footer></div>
+  :root {
+    --blue: #2468AB;
+    --blue-deep: #1a4f86;
+    --ink: #1c2834;
+    --muted: #5c6d7e;
+    --line: #e3ebf3;
+    --paper: #f5f8fb;
+    --ease: cubic-bezier(.22, 1, .36, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: "Segoe UI", system-ui, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  button, input { font-family: inherit; }
+
+  .hostbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 28px;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+  }
+  .hostbar img { width: 54px; height: auto; display: block; }
+  .hostbar strong { display: block; font-size: 15px; letter-spacing: .01em; color: var(--blue-deep); }
+  .hostbar span { font-size: 13px; color: var(--muted); }
+  main.host {
+    max-width: 720px;
+    padding: 64px 28px 120px;
+  }
+  main.host h1 {
+    margin: 0 0 12px;
+    font-size: 34px;
+    font-weight: 650;
+    letter-spacing: -.02em;
+    color: var(--blue-deep);
+  }
+  main.host p { margin: 0; max-width: 46ch; font-size: 17px; line-height: 1.5; color: #3d4d5e; }
+
+  #veil {
+    position: fixed;
+    inset: 0;
+    background: #f6f8fb;
+    z-index: 4;
+    transition: opacity .5s ease;
+  }
+  body.chat-open #veil { opacity: 0; pointer-events: none; }
+
+  #launcher {
+    position: fixed;
+    z-index: 6;
+    left: 50%;
+    top: 46%;
+    transform: translate(-50%, -50%);
+    width: min(460px, 92vw);
+    border: 0;
+    background: transparent;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #launcher:focus-visible { outline: 2px solid var(--blue); outline-offset: 10px; border-radius: 12px; }
+  #launcher .crest { width: min(228px, 56vw); animation: crest-in .95s var(--ease) both; }
+  #launcher .crest img, #launcher .word { width: 100%; height: auto; display: block; }
+  #launcher .word { width: min(342px, 84vw); margin-top: 2px; animation: rise .7s var(--ease) .34s both; }
+  #launcher .hint {
+    margin-top: 22px;
+    color: var(--blue-deep);
+    font-size: 12.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    animation: rise .55s ease .72s both;
+  }
+  #launcher .hint::before {
+    content: "";
+    display: block;
+    width: 64px;
+    height: 2px;
+    margin: 0 auto 12px;
+    background: var(--blue);
+    transform-origin: center;
+    animation: draw .5s var(--ease) .55s both;
+  }
+  #launcher.leaving { pointer-events: none; }
+  #launcher.leaving .crest { visibility: hidden; }
+  #launcher.leaving .word, #launcher.leaving .hint { animation: fade .32s ease forwards; }
+
+  @keyframes crest-in {
+    from { opacity: 0; transform: scale(.86); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes draw {
+    from { transform: scaleX(0); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+  @keyframes fade { to { opacity: 0; } }
+
+  #panel {
+    position: fixed;
+    z-index: 7;
+    right: 20px;
+    bottom: 20px;
+    width: min(400px, calc(100vw - 24px));
+    height: min(640px, calc(100dvh - 24px));
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(22, 62, 102, .18), 0 0 0 1px rgba(36, 104, 171, .08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #panel[hidden] { display: none; }
+  #panel header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px 10px 12px;
+    border-bottom: 1px solid transparent;
+    flex: none;
+  }
+  #panel header img { width: 52px; height: auto; display: block; flex: 0 0 auto; }
+  #panel header .titles, #panel #close { opacity: 0; }
+  #panel.ready header { border-bottom-color: var(--line); }
+  #panel.ready header .titles, #panel.ready #close { opacity: 1; transition: opacity .3s ease; }
+  #panel header strong { display: block; font-size: 14px; color: var(--blue-deep); }
+  #panel header .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+  #close {
+    margin-left: auto;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--blue-deep);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  #close:hover { background: #eef4fa; }
+  #chat { flex: 1; overflow-y: auto; padding: 14px 14px 8px; }
+  .m { margin: 8px 0; padding: 10px 12px; border-radius: 12px; white-space: pre-wrap; line-height: 1.45; font-size: 14.5px; }
+  .u { background: #e7f1fa; margin-left: 16%; }
+  .a { background: #f4f7fa; margin-right: 4%; border-left: 3px solid var(--blue); }
+  .a.c { border-left-color: #c4841d; background: #fff8ec; }
+  .m a { color: var(--blue-deep); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 12px 0; flex: none; }
+  .chips button {
+    background: #fff;
+    border: 1px solid #d3deea;
+    color: var(--blue-deep);
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .chips button:hover { background: #f3f8fc; }
+  form { display: flex; gap: 8px; padding: 10px 12px 4px; flex: none; }
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid #d3deea;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+  input:focus { outline: 2px solid rgba(36, 104, 171, .28); border-color: var(--blue); }
+  form button {
+    background: var(--blue);
+    color: #fff;
+    border: 0;
+    border-radius: 10px;
+    padding: 0 16px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  form button:hover { background: var(--blue-deep); }
+  footer { flex: none; font-size: 11px; line-height: 1.4; color: #708090; padding: 4px 14px 12px; }
+  #st { display: block; margin-top: 2px; }
+  #panel .fold { opacity: 0; transform: translateY(8px); }
+  #panel.ready .fold { opacity: 1; transform: none; transition: opacity .35s ease, transform .35s var(--ease); }
+
+  @media (max-width: 640px) {
+    main.host { padding-top: 36px; }
+    main.host h1 { font-size: 28px; }
+    #panel { right: 8px; bottom: 8px; left: 8px; width: auto; height: min(720px, calc(100dvh - 16px)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <header class="hostbar">
+    <img src="/assets/logo-mark.png" alt="">
+    <div>
+      <strong>Uniwersytet Radomski</strong>
+      <span>im. Kazimierza Pułaskiego</span>
+    </div>
+  </header>
+  <main class="host">
+    <h1>Asystent studenta</h1>
+    <p>Podgląd osadzenia na stronie uczelni. Odpowiedzi pochodzą z oficjalnych stron UR i zawierają źródło oraz datę aktualizacji.</p>
+  </main>
+
+  <div id="veil"></div>
+  <button id="launcher" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Uniwersytet Radomski. Otwórz asystenta studenta">
+    <span class="crest"><img src="/assets/logo-mark.png" alt="" draggable="false"></span>
+    <img class="word" src="/assets/logo-word.png" alt="" draggable="false">
+    <span class="hint">Kliknij, aby zapytać</span>
+  </button>
+
+  <section id="panel" role="dialog" aria-label="Asystent studenta" hidden>
+    <header>
+      <img src="/assets/logo-mark.png" alt="">
+      <div class="titles">
+        <strong>Asystent studenta</strong>
+        <span class="sub">Uniwersytet Radomski</span>
+      </div>
+      <button id="close" type="button" aria-label="Zamknij">×</button>
+    </header>
+    <div id="chat" class="fold">
+      <div class="m a">Dzień dobry. Pomogę znaleźć informacje o stypendiach, opłatach, Erasmus+, regulaminach i planach zajęć. Jeśli zasady zależą od sytuacji — obywatelstwo, tryb studiów, drugi kierunek — najpierw zadam kilka pytań.</div>
+    </div>
+    <div class="chips fold">
+      <button type="button">Jak dostać stypendium socjalne?</button>
+      <button type="button">Stypendium rektora dla cudzoziemca</button>
+      <button type="button">Wyjazd na Erasmus+</button>
+      <button type="button">Plan zajęć WTEiI</button>
+      <button type="button">Opłaty za studia</button>
+    </div>
+    <form id="f" class="fold">
+      <input id="q" maxlength="500" placeholder="Zadaj pytanie po polsku…" autocomplete="off">
+      <button type="submit">Wyślij</button>
+    </form>
+    <footer class="fold">Prototyp – nie jest oficjalnym serwisem UR. W sprawach indywidualnych: Biuro Obsługi Studenta.<span id="st"></span></footer>
+  </section>
+
 <script>
-const H=[];const chat=document.getElementById('chat');
-function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
-function add(cls,html){const d=document.createElement('div');d.className='m '+cls;d.innerHTML=html;chat.appendChild(d);chat.scrollTop=1e9;return d}
-async function send(q){add('u',esc(q));const w=add('a','Szukam w materiałach UR…');
- const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history:H})});const j=await r.json();if(!r.ok)j.answer='⚠️ '+(j.detail||'Błąd serwera');
- let h=esc(j.answer).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^#+\s*(.+)$/gm,'<b>$1</b>').replace(/^\* /gm,'• ');
- if(false){h+='<div class="src"><b>Źródła:</b><br>'+j.sources.slice(0,5).map(s=>`[${s.n}] <a href="${s.url}" target="_blank">${esc(s.title)}</a> – ${s.modified||'brak daty'} ${s.outdated?'<span class=old>⚠️ może być nieaktualne</span>':''}`).join('<br>')+'</div>'}
- h=h.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank">$1</a>');
- w.innerHTML=h;if(j.clarify)w.classList.add('c');H.push({role:'user',content:q},{role:'assistant',content:j.answer});}
-document.getElementById('f').onsubmit=e=>{e.preventDefault();const q=document.getElementById('q');if(q.value.trim()){send(q.value.trim());q.value=''}};
-document.querySelectorAll('.chips span').forEach(s=>s.onclick=()=>send(s.textContent));
-fetch('/api/status').then(r=>r.json()).then(j=>document.getElementById('st').textContent=`Indeks: ${j.chunks} fragmentów · LLM: ${j.llm?j.provider:'wyłączony (tryb wyszukiwania)'}`);
-(async()=>{const p=new URLSearchParams(location.search);for(const k of ['q1','q2','q3']){if(p.get(k))await send(p.get(k))}})();
-</script></body></html>
+const H = [];
+const chat = document.getElementById('chat');
+const panel = document.getElementById('panel');
+const launcher = document.getElementById('launcher');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let busy = false;
+
+function esc(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function add(cls, html) {
+  const d = document.createElement('div');
+  d.className = 'm ' + cls;
+  d.innerHTML = html;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+function render(text) {
+  return esc(text)
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/^#+\s*(.+)$/gm, '<b>$1</b>')
+    .replace(/^\* /gm, '• ')
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+}
+
+function finishOpen() {
+  panel.classList.add('ready');
+  ['left', 'top', 'right', 'bottom', 'width', 'height', 'transition', 'borderRadius'].forEach(p => panel.style[p] = '');
+  const header = panel.querySelector('header');
+  const headerImg = header.querySelector('img');
+  header.style.padding = '';
+  header.style.transition = '';
+  headerImg.style.width = '';
+  headerImg.style.transition = '';
+  busy = false;
+  document.getElementById('q').focus();
+}
+
+function dockRect() {
+  const margin = window.innerWidth <= 640 ? 8 : 20;
+  const width = Math.min(400, window.innerWidth - margin * 2);
+  const height = Math.min(640, window.innerHeight - margin * 2);
+  return { left: window.innerWidth - margin - width, top: window.innerHeight - margin - height, width, height };
+}
+
+function openPanel(animate) {
+  if (busy || !panel.hidden) return;
+  busy = true;
+  launcher.classList.add('leaving');
+  launcher.setAttribute('aria-expanded', 'true');
+  document.body.classList.add('chat-open');
+  panel.hidden = false;
+
+  const motion = animate && !reduce;
+  if (!motion) { finishOpen(); return; }
+
+  const from = launcher.querySelector('.crest').getBoundingClientRect();
+  const dock = dockRect();
+  const header = panel.querySelector('header');
+  const headerImg = header.querySelector('img');
+  const ease = 'cubic-bezier(.22,1,.36,1)';
+
+  panel.style.right = 'auto';
+  panel.style.bottom = 'auto';
+  panel.style.left = from.left + 'px';
+  panel.style.top = from.top + 'px';
+  panel.style.width = from.width + 'px';
+  panel.style.height = from.height + 'px';
+  panel.style.borderRadius = '28px';
+  panel.style.transition = 'none';
+  header.style.transition = 'none';
+  header.style.padding = '0px';
+  headerImg.style.transition = 'none';
+  headerImg.style.width = from.width + 'px';
+  void panel.offsetWidth;
+  requestAnimationFrame(() => {
+    const move = `left .68s ${ease}, top .68s ${ease}, width .68s ${ease}, height .68s ${ease}, border-radius .68s ${ease}`;
+    panel.style.transition = move;
+    panel.style.left = dock.left + 'px';
+    panel.style.top = dock.top + 'px';
+    panel.style.width = dock.width + 'px';
+    panel.style.height = dock.height + 'px';
+    panel.style.borderRadius = '18px';
+    header.style.transition = `padding .68s ${ease}`;
+    header.style.padding = '10px 10px 10px 12px';
+    headerImg.style.transition = `width .68s ${ease}`;
+    headerImg.style.width = '52px';
+  });
+  const timer = setTimeout(finishOpen, 820);
+  panel.addEventListener('transitionend', function done(e) {
+    if (e.target !== panel || e.propertyName !== 'width') return;
+    panel.removeEventListener('transitionend', done);
+    clearTimeout(timer);
+    finishOpen();
+  });
+}
+
+function closePanel() {
+  if (panel.hidden || busy) return;
+  const hide = () => {
+    panel.hidden = true;
+    panel.classList.remove('ready');
+    panel.style.cssText = '';
+    document.body.classList.remove('chat-open');
+    launcher.classList.remove('leaving');
+    launcher.setAttribute('aria-expanded', 'false');
+    launcher.querySelectorAll('.crest, .word, .hint').forEach(el => { el.style.animation = 'none'; });
+    void launcher.offsetWidth;
+    launcher.querySelectorAll('.crest, .word, .hint').forEach(el => { el.style.animation = ''; });
+    launcher.focus();
+  };
+  if (reduce) { hide(); return; }
+  busy = true;
+  panel.classList.remove('ready');
+  panel.style.transformOrigin = 'bottom right';
+  panel.style.transition = 'transform .28s ease, opacity .28s ease';
+  panel.style.transform = 'scale(.94)';
+  panel.style.opacity = '0';
+  setTimeout(() => { busy = false; hide(); }, 280);
+}
+
+async function send(q) {
+  add('u', esc(q));
+  const w = add('a', 'Szukam w materiałach UR…');
+  let j = {};
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question: q, history: H})
+    });
+    j = await r.json();
+    if (!r.ok) j.answer = '⚠️ ' + (j.detail || 'Błąd serwera');
+  } catch (e) {
+    j.answer = '⚠️ Brak połączenia z serwerem.';
+  }
+  w.innerHTML = render(j.answer || '');
+  if (j.clarify) w.classList.add('c');
+  H.push({role: 'user', content: q}, {role: 'assistant', content: j.answer || ''});
+  chat.scrollTop = chat.scrollHeight;
+}
+
+document.getElementById('f').onsubmit = (e) => {
+  e.preventDefault();
+  const q = document.getElementById('q');
+  if (!q.value.trim()) return;
+  send(q.value.trim());
+  q.value = '';
+};
+document.querySelectorAll('.chips button').forEach(b => b.onclick = () => send(b.textContent));
+launcher.onclick = () => openPanel(true);
+document.getElementById('close').onclick = closePanel;
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
+
+fetch('/api/status').then(r => r.json()).then(j => {
+  document.getElementById('st').textContent = `Indeks: ${j.chunks} fragmentów · LLM: ${j.llm ? j.provider : 'wyłączony'}`;
+}).catch(() => {});
+
+const queued = ['q1', 'q2', 'q3'].map(k => new URLSearchParams(location.search).get(k)).filter(Boolean);
+if (queued.length) {
+  openPanel(false);
+  (async () => { for (const q of queued) await send(q); })();
+}
+</script>
+</body>
+</html>

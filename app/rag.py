@@ -50,31 +50,6 @@ def search(q, k=8, prefer=None):
         if len(out) >= k: break
     return out
 
-def search_in(q, pred, k=3, money=""):
-    """Najlepsze fragmenty tylko z dokumentów spełniających pred(chunk) – do 'przypinania' kluczowych aktów."""
-    if IDX is None: load()
-    ch = IDX["chunks"]; idx = [i for i, c in enumerate(ch) if pred(c)]
-    if not idx: return []
-    bm = _bm25(q)[idx]; vec = _char(q)[idx]
-    sc = bm / (bm.max() or 1) + vec / (vec.max() or 1)
-    if money:  # premia za fragmenty z kwotami i nazwą kierunku z pytania (tabele opłat)
-        STOP = ("studi", "kierun", "jaka", "jakie", "ile", "kosztu", "cena", "ceny", "opłat", "oplat", "czesn", "stacjon", "niestac", "uniwer", "radom", "jestem", "płaci", "cudzoz", "mogę", "pierws", "drugie")
-        words = [w for w in re.findall(r"\w{5,}", money.lower()) if not w.startswith(STOP)]
-        for j, i in enumerate(idx):
-            t = ch[i]["text"].lower()
-            if "zł" in t or "euro" in t: sc[j] += 0.2 + sum(0.8 for w in words if w[:-1] in t)
-    out, seen = [], set()
-    for j in np.argsort(-sc):
-        key = ch[idx[j]]["text"][:150]
-        if key in seen: continue
-        seen.add(key); out.append(dict(ch[idx[j]], score=float(sc[j])))
-        if len(out) >= k: break
-    return out
-
-FEE_EXP = " opłaty czesne wysokość opłat za usługi edukacyjne za semestr kierunek studiów zarządzenie rektora"
-FEE_DOCS = ("R-08-2026", "R-13-2025", "rekrutacja.uniwersytetradom.pl/oplaty", "rekrutacja-cudzoziemcow-oplaty")
-DOC_DOCS = ("gov.pl/web/nauka/stypendium-doktoranckie", "stypendia-doktoranckie", "Regulamin%20Szko", "Regulamin Szkoły Doktorskiej")
-
 # ---------- profil studenta i doprecyzowanie ----------
 SLOTS = {
  "status": ("Jaki jest Twój status: student z obywatelstwem polskim, cudzoziemiec (podaj, czy masz np. Kartę Polaka, kartę pobytu stałego/czasowego, status uchodźcy lub ochronę czasową/UKR), osoba bez obywatelstwa (bezpaństwowiec), czy doktorant/doktorantka Szkoły Doktorskiej?",
@@ -91,7 +66,7 @@ TOPICS = [
  ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w* ocen", ["status", "drugi_kierunek", "poziom", "rok"]),
  ("stypendium_niepeln", r"niepe[lł]nospraw", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
  ("doktoranckie", r"doktorant|doktorsk|doktoranck", ["status"]),
- ("oplaty", r"op[lł]at|czesne|ile kosztuj|koszt\w*|cen[aęy]\b|cennik|p[lł]atn|p[lł]aci[cć]|bezp[lł]atn", ["status", "tryb", "poziom"]),
+ ("oplaty", r"op[lł]at|czesne|ile kosztuj|p[lł]aci[cć]|bezp[lł]atn", ["status", "tryb", "poziom"]),
  ("erasmus", r"erasmus|wyjazd|wymian|mobilno", ["status", "poziom", "rok"]),
  ("plan", r"plan\w* zaj|rozk[lł]ad|harmonogram zaj|zaj[eę]cia w|kiedy mam zaj", ["kierunek", "tryb"]),
  ("cudzoziemcy", r"cudzozie|bezpa[nń]stw|bez obywatel|karta polaka|kart\w* pobytu|legaliz|wiz\w*\b|ochron\w* czasow", ["status"]),
@@ -133,8 +108,6 @@ ZASADY (bezwzględne):
 8. W liście „Źródła:” każdy URL podaj tylko raz (z datą aktualizacji). Nie wymyślaj numerów źródeł, których nie ma w sekcji ŹRÓDŁA.
 5. DOPRECYZOWANIE: zasady różnią się w zależności od sytuacji studenta (obywatelstwo/status cudzoziemca lub bezpaństwowca, Szkoła Doktorska, tryb stacjonarny/niestacjonarny, poziom i rok studiów, studiowanie równolegle drugiego kierunku lub posiadanie dyplomu, niepełnosprawność, kierunek/grupa). Jeżeli odpowiedź od tego zależy, a w PROFILU STUDENTA brakuje potrzebnych danych, NIE odpowiadaj merytorycznie – najpierw zadaj krótkie, ponumerowane pytania doprecyzowujące (tylko te potrzebne), a odpowiedz po otrzymaniu odpowiedzi.
 6. Gdy różne kategorie studentów mają różne zasady, opisz zasady tylko dla kategorii użytkownika; ewentualne wyjątki zaznacz krótko.
-9. OPŁATY: rozróżniaj – studia stacjonarne w języku polskim są co do zasady bezpłatne dla obywateli polskich (i osób zrównanych z nimi wg art. 324 ust. 2 ustawy, np. obywatele UE, Karta Polaka, pobyt stały, status uchodźcy); czesne dotyczy studiów niestacjonarnych, studiów w języku obcym oraz cudzoziemców na zasadach odpłatności – ale pisz to tylko, jeśli wynika ze źródeł, z cytatem. Podawaj kwoty z najnowszego zarządzenia (np. R-8/2026 dla roku 2026/2027) i wspomnij o opłatach dodatkowych (np. powtarzanie przedmiotu, legitymacja), jeśli są w źródłach.
-10. STYPENDIUM DOKTORANCKIE: jeśli brak aktualnego aktu UR z kwotą, podaj ustawowe minimum ze strony Ministerstwa (gov.pl) jako źródło ogólnokrajowe i zaznacz, że szczegóły ustala UR/Szkoła Doktorska.
 7. Nie udzielasz porad prawnych; w sprawach indywidualnych odsyłasz do właściwej jednostki UR. Nie zmyślaj adresów URL."""
 
 def fmt_sources(hits):
@@ -184,34 +157,6 @@ def llm_enabled():
     if p == "gemini": return bool(os.getenv("GEMINI_API_KEY") or os.getenv("LLM_API_KEY"))
     return bool(p) and (bool(os.getenv("LLM_API_KEY")) or p == "ollama")
 
-def fix_citations(txt, srcs):
-    """Numeruje cytowania kolejno 1..k wg pierwszego wystąpienia, usuwa listę źródeł modelu i dokleja własną (zgodną z numerami)."""
-    body = re.split(r"\n\s*(?:\*\*|#+\s*)?Źródła\s*:?(?:\*\*)?\s*:?\s*\n", txt)[0].rstrip()
-    by_n = {s["n"]: s for s in srcs}; order = []
-    for grp in re.findall(r"\[([\d,\s–-]+)\]", body):
-        for x in re.findall(r"\d+", grp):
-            x = int(x)
-            if x in by_n and x not in order: order.append(x)
-    # te same URL-e -> jeden numer
-    url_num, remap, used = {}, {}, []
-    for x in order:
-        u = by_n[x]["url"]
-        if u not in url_num:
-            url_num[u] = len(used) + 1; used.append(dict(by_n[x], n=url_num[u]))
-        remap[x] = url_num[u]
-    def sub(m):
-        nums = []
-        for x in re.findall(r"\d+", m.group(1)):
-            y = remap.get(int(x))
-            if y and y not in nums: nums.append(y)
-        return "[" + ", ".join(map(str, sorted(nums))) + "]" if nums else ""
-    body = re.sub(r"\[([\d,\s–-]+)\]", sub, body)
-    body = re.sub(r" +([.,;:])", r"\1", body)
-    if used:
-        body += "\n\nŹródła:\n" + "\n".join(
-            f"[{u['n']}] {u['title']} – {u['url']} (aktualizacja: {u['modified'] or 'brak daty'})" + (" ⚠️ może być nieaktualne" if u["outdated"] else "") for u in used)
-    return body, used
-
 PROF_PL = {"status": "status", "tryb": "tryb", "poziom": "poziom", "rok": "rok", "drugi_kierunek": "drugi kierunek / dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek/grupa"}
 
 def answer(question, history):
@@ -233,20 +178,7 @@ def answer(question, history):
     tp = [t for t in topics if t != "cudzoziemcy"] or topics
     prefer = sorted({x for t in tp for x in PREF.get(t, [])})
     if tp is not topics: q = re.sub(r"(?i)\b(jako\s+)?cudzoziem\w*", " ", q)
-    if "oplaty" in topics: q += FEE_EXP + (" studia niestacjonarne" if prof.get("tryb") == "niestacjonarne" else " studia stacjonarne cudzoziemcy język polski")
-    if "doktoranckie" in topics: q += " stypendium doktoranckie wysokość szkoła doktorska"
     hits = search(q, k=8, prefer=prefer)
-    pins = []
-    if "oplaty" in topics:
-        pins += search_in(q, lambda c: any(d in c["url"] for d in FEE_DOCS[:2]), 3, money=base_q)
-        pins += search_in(q, lambda c: any(d in c["url"] for d in FEE_DOCS[2:]), 1)
-    if "doktoranckie" in topics:
-        pins += search_in(q, lambda c: any(d in c["url"] or d in c["title"] for d in DOC_DOCS), 3)
-    if "stypendium_rektora" in topics:
-        pins += search_in(q, lambda c: "Stypendium-Rektora-2024" in c["url"], 1)
-    if pins:
-        seen_ = {(p["url"], p["text"][:80]) for p in pins}
-        hits = (pins + [h for h in hits if (h["url"], h["text"][:80]) not in seen_])[:8]
     if "plan" in topics:
         files = sorted({(c["title"], c["url"], c["modified"]) for c in IDX["chunks"] if c["source"] == "wteii" and c["kind"] == "file"})
         lst = "\n".join(f"- {t.split(' – ')[-1]} → {u} (aktualizacja: {m})" for t, u, m in files)
@@ -259,8 +191,7 @@ def answer(question, history):
         msgs = [{"role": "system", "content": SYSTEM.replace("{today}", datetime.date.today().isoformat())}] + history[-8:] + [{"role": "user", "content":
                 f"PROFIL STUDENTA (z rozmowy): {prof_txt}\n\nŹRÓDŁA:\n{fmt_sources(hits)}\n\nPYTANIE: {question}"}]
         try:
-            txt, used = fix_citations(call_llm(msgs), srcs)
-            return dict(clarify=False, mode="llm", sources=used, profile=prof, answer=txt)
+            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, answer=call_llm(msgs))
         except Exception as e:
             err = f"(Błąd LLM: {e}. Pokazuję tryb wyszukiwania.)\n\n"
     else:
