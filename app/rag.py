@@ -162,8 +162,8 @@ SLOT_OPTS = {
  "poziom": [
   ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|phd\b|doktoranc|докторантур|докторант(?!\w)"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
-  ("II", r"\bii\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
-  ("I", r"\bi\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|bachelor|undergraduate|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
+  ("II", r"\bii\s*stop|\b2\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
+  ("I", r"\bi\s*stop|\b1\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|bachelor|undergraduate|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
  ],
  "rok": [
   ("1", r"(\b1\s*(rok|year|рік|курс|жил)\b|\byear\s*1\b|\b1(st)?\s*year\b|\bpierwsz\w*\s*rok|\bfirst\s*year|\bfreshman|\bперш\w*\s*рік|\b(?:na|jestem na)\s+i\s+roku|\bpierwszoroczn|^\s*1\s*$)"),

@@ -57,6 +57,10 @@ SCENARIOS = [
         "jak dostac stypendium socjalneeee",
         "jestem polakiem stacjonarne I stopien tylko jeden kierunek",
     ], {"expect_url": "stypendia-socjalne", "forbid_bos_only": True, "forbid_url_only_rekrutacja": True}),
+    ("Stypendium socjalne PL cyfra 1 stopień", [
+        "Jak dostać stypendium socjalne?",
+        "obywatel polski, nie studiuje inych kierunków i nie posiadam dyplomów, stacjonarnie, 1 stopień",
+    ], {"expect_url": "stypendia-socjalne", "forbid_bos_only": True, "max_clarify_turns": 1}),
     ("Stypendium socjalne PL po ukraińsku", [
         "Як отримати соціальну стипендію?",
         "Я громадянин Польщі, навчаюсь тільки на цьому напрямі, навчаюсь на денній формі, 1 ступінь",

@@ -368,6 +368,45 @@ Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — p
 **ASSERT PASS**
 
 
+## Stypendium socjalne PL cyfra 1 stopień
+
+**Użytkownik:** Jak dostać stypendium socjalne?
+
+**Asystent** _(mode=doprecyzowanie; profile={})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Jaki jest Twój status: obywatel Polski, cudzoziemiec (np. Karta Polaka, karta pobytu, uchodźca/ochrona UKR), bezpaństwowiec, czy doktorant Szkoły Doktorskiej?
+2. Czy studiujesz równolegle drugi kierunek albo masz już ukończone studia tego poziomu? (świadczenia zwykle tylko na jednym kierunku)
+3. Studiujesz stacjonarnie czy niestacjonarnie?
+4. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** obywatel polski, nie studiuje inych kierunków i nie posiadam dyplomów, stacjonarnie, 1 stopień
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie"})_:
+
+Na podstawie oficjalnych stron UR (profil: status: pl, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie):
+
+**Tak — obywatel Polski może ubiegać się o stypendium socjalne**, jeśli dochód rodziny nie przekracza progu i świadczenie dotyczy jednego kierunku.
+- Próg dochodu (oficjalna strona): **2099,70 zł** na osobę w rodzinie.
+- Dalej: sprawdź listę dokumentów i terminy na stronie stypendiów na bieżący rok.
+
+Fragmenty ze źródeł:
+- „lne w roku akademickim 2026/2027 wynosi 2099,70 zł. Termin składania wniosków o świadczenia na cały rok akademicki 2026/2027 od 01…”
+
+Źródła:
+[1] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/R-41-2025.pdf – 2025-12-05
+[4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+
+Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
+
+
+**ASSERT PASS**
+
+
 ## Stypendium socjalne PL po ukraińsku
 
 **Użytkownik:** Як отримати соціальну стипендію?
@@ -1133,7 +1172,7 @@ Na podstawie oficjalnych stron UR (profil: tryb: stacjonarne, poziom: I, rok: 1,
 
 ## Summary
 
-PASS=31 FAIL=0
+PASS=32 FAIL=0
 
 - PASS: Plan Ekonomia i Finanse (messy)
 - PASS: Plan Ekonomia konkretnie
@@ -1144,6 +1183,7 @@ PASS=31 FAIL=0
 - PASS: Stypendium socjalne PESEL UKR
 - PASS: Stypendium socjalne UKR multi-turn
 - PASS: Stypendium socjalne PL
+- PASS: Stypendium socjalne PL cyfra 1 stopień
 - PASS: Stypendium socjalne PL po ukraińsku
 - PASS: Stypendium rektora PL
 - PASS: Switch socjalne → rektora UKR
