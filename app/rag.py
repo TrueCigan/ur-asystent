@@ -26,7 +26,7 @@ def _char(q):
     return IDX["X"] @ w
 
 # ---------- wyszukiwanie hybrydowe (BM25 + wektory, fuzja RRF) ----------
-def search(q, k=8, prefer=None):
+def search(q, k=8, prefer=None, topics=None, profile=None):
     if IDX is None: load()
     ch = IDX["chunks"]; n = len(ch)
     bm = _bm25(q)
@@ -38,9 +38,23 @@ def search(q, k=8, prefer=None):
     sc = np.zeros(n)
     for r in ranks:
         sc[r[:200]] += 1.0 / (60 + np.arange(1, min(200, n) + 1))
+    topics = set(topics or [])
+    status = (profile or {}).get("status")
     for i, c in enumerate(ch):
+        title = (c.get("title") or "").lower()
+        text = c.get("text") or ""
         if (c["modified"] or "0") < "2024": sc[i] *= 0.6
         if prefer and c["source"] in prefer: sc[i] *= 1.6
+        # opłaty: trzymaj zarządzenia z tabelami, odsuń szum konferencji
+        if "oplaty" in topics:
+            if re.search(r"konferenc|monografia|isbn|mstudia", title): sc[i] *= 0.12
+            if re.search(r"usługi edukacyjne|wysokość opłat|akty-prawne-opłat|opłaty\b", title): sc[i] *= 2.5
+            if re.search(r"\br-\d{1,3}-\d{4}\b", title) and re.search(r"\d[\d\s]*zł", text[:1500], re.I): sc[i] *= 2.2
+            if "cudzoziem" in title:
+                sc[i] *= 2.6 if status == "cudzoziemiec" else (0.2 if status == "pl" else 1.0)
+            elif status == "pl" and re.search(r"\d[\d\s]*zł", text[:1500], re.I) and re.search(r"opłat|czesne|r-\d+", title):
+                sc[i] *= 1.8
+            if c.get("source") == "bip" and re.search(r"opłat|czesne", title): sc[i] *= 1.5
     out, per_url = [], {}
     for i in np.argsort(-sc):
         c = ch[i]
@@ -53,7 +67,13 @@ def search(q, k=8, prefer=None):
 # ---------- język (PL / EN / UK / MN) ----------
 LANG_NAME = {"pl": "polski", "en": "English", "uk": "українська", "mn": "монгол"}
 
-def detect_lang(*parts):
+def detect_lang(*parts, latest=""):
+    # jawna prośba o język odpowiedzi w bieżącej wiadomości
+    if latest:
+        if re.search(r"(po\s*polsku|in\s*polish|на\s*польськ|по\s*польськ|польською|польш\s*хэлээр)", latest, re.I): return "pl"
+        if re.search(r"(in\s*english|po\s*angielsku|англійськ|english\s*please)", latest, re.I): return "en"
+        if re.search(r"(українськ|in\s*ukrainian|по\s*україн)", latest, re.I): return "uk"
+        if re.search(r"(монгол|in\s*mongolian|по\s*монгольськ)", latest, re.I): return "mn"
     text = "\n".join(p for p in parts if p) or ""
     if re.search(r"[өүӨҮ]", text): return "mn"
     if re.search(r"[іїєґІЇЄҐ]", text): return "uk"
@@ -63,7 +83,7 @@ def detect_lang(*parts):
     if re.search(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", text): return "pl"
     if re.search(r"\b(the|and|how|what|when|where|scholarship|tuition|fees?|i'?m|i am|full[- ]time|part[- ]time|bachelor|master'?s?|phd|doctoral|citizen|foreign)\b", text, re.I): return "en"
     if re.search(r"\b(jak|czy|stypendium|opłat|jestem|studiuj|cudzoziem|rektor|zajęć)\b", text, re.I): return "pl"
-    if re.search(r"\b(як|чи|стипенд|оплат|громадян|інозем|навчан)\b", text, re.I): return "uk"
+    if re.search(r"\b(як|чи|стипенд|оплат|громадян|інозем|навчан|кошту)\b", text, re.I): return "uk"
     return "pl"
 
 # ---------- profil studenta i doprecyzowanie (PL/EN/UK/MN) ----------
@@ -153,7 +173,7 @@ TOPICS = [
  ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|merit\s*scholarship|academic\s*excellence|стипенд\w*\s*ректор|ректорськ|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom", "rok"]),
  ("stypendium_niepeln", r"niepe[lł]nospraw|disability\s*scholarship|інвалід|хөгжлийн\s*бэрхшээл", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
  ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|докторант|докторантур", ["status"]),
- ("oplaty", r"op[lł]at|czesne|ile\s*kosztuj|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?|how\s*much\s*(does|do|is)|cost\s*of\s*stud|оплат|вартість\s*навчан|плата\s*за\s*навчан|төлбөр|сургалтын\s*төлбөр|хэд\s*вэ", ["status", "tryb", "poziom"]),
+ ("oplaty", r"op[lł]at|czesne|ile\s*kosztuj|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?|how\s*much|cost\s*of\s*stud|price\s*of\s*stud|оплат|вартіст|кошту|цін[ауи]\s*навч|плата\s*за\s*навч|скільки\s*.{0,20}навч|төлбөр|сургалтын\s*төлбөр|хэд\s*(вэ|төгрөг|zł)", ["status", "tryb", "poziom"]),
  ("erasmus", r"erasmus|wyjazd|wymian|mobilno|exchange\s*program|study\s*abroad|мобільніст|обмін|солилцоо|гадаадад\s*суралц", ["status", "poziom", "rok"]),
  ("plan", r"plan\w*\s*zaj|rozk[lł]ad|harmonogram\s*zaj|zaj[eę]cia\s*w|kiedy\s*mam\s*zaj|timetable|class\s*schedule|course\s*schedule|розклад|розклад\s*занят|хичээлийн\s*хуваарь|хуваарь", ["kierunek", "tryb"]),
  ("cudzoziemcy", r"cudzozie|bezpa[nń]stw|bez\s*obywatel|karta\s*polaka|kart\w*\s*pobytu|legaliz|wiz\w*\b|ochron\w*\s*czasow|international\s*student|foreign\s*student|residence\s*permit|інозем|без\s*громадян|карта\s*поляка|гадаад\s*оюутан|оршин\s*суух", ["status"]),
@@ -165,7 +185,7 @@ TOPIC_PL_QUERY = {
  "stypendium_rektora": "stypendium rektora średnia ocen",
  "stypendium_niepeln": "stypendium dla osób niepełnosprawnych",
  "doktoranckie": "stypendium doktoranckie szkoła doktorska",
- "oplaty": "opłaty czesne koszt studiów",
+ "oplaty": "opłaty czesne koszt studiów wysokość opłat za usługi edukacyjne zarządzenie semestr zł",
  "erasmus": "Erasmus wymiana mobilność",
  "plan": "plan zajęć rozkład WTEiI",
  "cudzoziemcy": "cudzoziemcy rekrutacja karta pobytu",
@@ -222,7 +242,7 @@ def clarify_text(lang, missing):
 
 SYSTEM = """You are an information assistant for students of Kazimierz Pułaski University of Radom (Uniwersytet Radomski, UR).
 HARD RULES:
-1. Answer in {lang_name}. The user language code is {lang}. Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) as in the sources when useful, but explain in the user language.
+1. Answer in {lang_name}. The user language code is {lang}. Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) as in the sources when useful, but explain in the user language. If the user asks to switch language (e.g. “po polsku”, “на польській”), change the answer language — do NOT interpret that as a question about tuition “in the Polish language”. For Polish citizens, full-time first-cycle studies are often free; quote paid amounts only when the source clearly applies to the user’s mode/level (e.g. niestacjonarne / second cycle / foreigners).
 2. Use ONLY the source fragments in ŹRÓDŁA / SOURCES. No outside knowledge. If missing, say clearly that indexed UR materials do not cover it and point to Biuro Obsługi Studenta, Dział Współpracy Zagranicznej, or Szkoła Doktorska.
 3. Ground every claim with [n]. End with a “Sources:” / “Źródła:” / “Джерела:” / “Эх сурвалж:” list (matching the answer language) with URL and update date.
 4. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts/deadlines only if present in sources, with the academic year / ordinance (e.g. R-41/2025). Today: {today}. If a deadline has passed, say so.
@@ -302,7 +322,7 @@ LLM_ERR = {
 def answer(question, history):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang)"""
     hist_user = "\n".join(m["content"] for m in history if m["role"] == "user")
-    lang = detect_lang(question, hist_user)
+    lang = detect_lang(question, hist_user, latest=question)
     topics, prof, missing = needed(question, hist_user)
     if missing:
         return dict(clarify=True, mode="doprecyzowanie", sources=[], profile=prof, lang=lang,
@@ -313,13 +333,17 @@ def answer(question, history):
         if prev: base_q = prev[-1] + " " + question
     q = base_q + " " + " ".join(str(v) for k, v in prof.items() if k in ("status",) and v in ("cudzoziemiec", "bezpanstwowiec", "doktorant"))
     q += " " + " ".join(TOPIC_PL_QUERY[t] for t in topics if t in TOPIC_PL_QUERY)
-    PREF = {"plan": ["wteii"], "erasmus": ["dwz"], "cudzoziemcy": ["rekrutacja", "dwz", "student"], "oplaty": ["rekrutacja", "student"],
+    if "oplaty" in topics and prof.get("status") == "pl":
+        q += " opłaty obywatel polski studia stacjonarne"
+    elif "oplaty" in topics and prof.get("status") == "cudzoziemiec":
+        q += " opłaty cudzoziemców rekrutacja"
+    PREF = {"plan": ["wteii"], "erasmus": ["dwz"], "cudzoziemcy": ["rekrutacja", "dwz", "student"], "oplaty": ["rekrutacja", "student", "bip"],
             "doktoranckie": ["student"], "stypendium_socjalne": ["student"], "stypendium_rektora": ["student"], "dwa_kierunki": ["student"]}
     tp = [t for t in topics if t != "cudzoziemcy"] or topics
     prefer = sorted({x for t in tp for x in PREF.get(t, [])})
     if tp is not topics:
         q = re.sub(r"(?i)\b(jako\s+)?cudzoziem\w*|international\s+student|foreign\s+student|інозем\w*|гадаад\s+оюутан", " ", q)
-    hits = search(q, k=8, prefer=prefer)
+    hits = search(q, k=8, prefer=prefer, topics=topics, profile=prof)
     if "plan" in topics:
         files = sorted({(c["title"], c["url"], c["modified"]) for c in IDX["chunks"] if c["source"] == "wteii" and c["kind"] == "file"})
         lst = "\n".join(f"- {t.split(' – ')[-1]} → {u} (aktualizacja: {m})" for t, u, m in files)
