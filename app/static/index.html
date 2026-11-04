@@ -315,6 +315,7 @@
 
 <script>
 const H = [];
+let sessionLang = sessionStorage.getItem('ur_session_lang') || null;
 const chat = document.getElementById('chat');
 const panel = document.getElementById('panel');
 const launcher = document.getElementById('launcher');
@@ -521,13 +522,19 @@ function closePanel() {
 
 async function askApi(q) {
   try {
+    const payload = {question: q, history: H};
+    if (sessionLang) payload.session_lang = sessionLang;
     const r = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({question: q, history: H})
+      body: JSON.stringify(payload)
     });
     const j = await r.json();
     if (!r.ok) return { answer: '⚠️ ' + (j.detail || 'Błąd serwera'), clarify: false };
+    if (j.lang) {
+      sessionLang = j.lang;
+      try { sessionStorage.setItem('ur_session_lang', j.lang); } catch (_) {}
+    }
     return j;
   } catch (e) {
     return { answer: '⚠️ Brak połączenia z serwerem.', clarify: false };

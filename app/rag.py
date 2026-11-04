@@ -9,6 +9,10 @@ from topic_policy import (
     TOPIC_POLICY, apply_policy_scores, force_topic_hits, hits_match_canonical,
     query_extras, prefer_sources, policy_for,
 )
+from lang import (
+    LANG_NAME, map_policy, resolve_session_lang, output_lang_ok,
+    sticky_lang_from_user_turns,
+)
 
 IDX = None
 def load():
@@ -80,82 +84,21 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
             break
     return out
 
-# ---------- język (PL / EN / UK / MN) — RU wejście → odpowiedź UK (polityka produktu) ----------
-LANG_NAME = {"pl": "polski", "en": "English", "uk": "українська", "mn": "монгол"}
+# ---------- język (PL / EN / UK / MN) — sticky sesja; RU → UK (polityka) ----------
+# LANG_NAME imported from lang.py
 
-def detect_lang(*parts, latest=""):
-    """Język odpowiedzi. Rosyjski input/prośba → uk (nigdy nie odpowiadamy po rosyjsku)."""
-    def _finalize(lang):
-        return "uk" if lang == "ru" else lang
-
-    if latest:
-        if re.search(
-            r"(?i)(?:odpowiedz|answer|reply|respond|write|switch|переключ|пиши|хариул).{0,25}"
-            r"(?:po\s*polsku|in\s*polish|польськ|польш\s*хэлээр)"
-            r"|(?:po\s*polsku|польською|польш\s*хэлээр)\s*(?:proszę|please|будь\s*ласка)?\s*$",
-            latest,
-        ):
-            return "pl"
-        if re.search(
-            r"(?i)(?:odpowiedz|answer|reply|respond|write|switch|переключ|пиши).{0,25}"
-            r"(?:in\s*english|po\s*angielsku|англійськ|английск)"
-            r"|(?:in\s*english|english\s*please|po\s*angielsku)\s*$",
-            latest,
-        ):
-            return "en"
-        if re.search(
-            r"(?i)(?:odpowiedz|answer|reply|переключ|пиши).{0,25}"
-            r"(?:українськ|ukrainian|по\s*україн|на\s*украин)"
-            r"|(?:українськ|по\s*україн)\w*\s*$",
-            latest,
-        ):
-            return "uk"
-        # Prośba o rosyjski → ukraiński (polityka)
-        if re.search(
-            r"(?i)(?:odpowiedz|answer|reply|переключ|пиши|можешь|можеш).{0,30}"
-            r"(?:русск|russian|по\s*русск|на\s*русск)|(?:по\s*русски|in\s*russian|а\s+по-русски)",
-            latest,
-        ):
-            return "uk"
-        if re.search(
-            r"(?i)(?:odpowiedz|answer|хариул).{0,25}(?:монгол|mongolian)"
-            r"|(?:монгол\s*хэлээр|in\s*mongolian)\s*$",
-            latest,
-        ):
-            return "mn"
-    for text in ([latest] if latest else []) + [p for p in parts if p and p != latest]:
-        if not text:
+def detect_lang(*parts, latest="", session_lang=None):
+    """Compat wrapper for harness + callers. Sticky session language; never returns ru."""
+    turns = []
+    for p in parts:
+        if not p or p == latest:
             continue
-        if re.search(r"[өүӨҮ]", text):
-            return "mn"
-        if re.search(r"[іїєґІЇЄҐ]", text):
-            return "uk"
-        if re.search(r"[а-яА-ЯёЁ]", text):
-            if re.search(r"тэтгэлэг|оюутан|суралц|төлбөр|иргэн|мэргэжил|докторант", text, re.I):
-                return "mn"
-            # rosyjski (bez іїєґ) → odpowiadamy ukraińskim
-            if re.search(
-                r"[ыэъ]|\bчто\b|нужна|оформить|стипендия|побыт|привет|сколько|дедлайн|общежит|"
-                r"\bкак\b|студент\s+из",
-                text, re.I,
-            ):
-                return "uk"
-            return "uk"
-        if re.search(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", text):
-            return "pl"
-        if re.search(
-            r"\b(the|and|how|what|when|where|scholarship|tuition|fees?|i'?m|i am|"
-            r"full[- ]time|part[- ]time|bachelor|master'?s?|phd|doctoral|citizen|foreign)\b",
-            text, re.I,
-        ):
-            return "en"
-        if re.search(r"\b(jak|czy|stypendium|opłat|jestem|studiuj|cudzoziem|rektor|zajęć)\b", text, re.I):
-            return "pl"
-        if re.search(r"\b(як|чи|стипенд|оплат|громадян|інозем|навчан|кошту)\b", text, re.I):
-            return "uk"
-        if re.search(r"\b(как|нужна|стипендия|оформить|студент)\b", text, re.I):
-            return "uk"
-    return "pl"
+        turns.extend(t for t in re.split(r"\n+", p) if t.strip())
+    state = map_policy(session_lang) if session_lang else None
+    for t in turns:
+        state = resolve_session_lang(state, t)
+    msg = latest if latest is not None and latest != "" else (turns[-1] if turns else "")
+    return resolve_session_lang(state, msg) if msg or state else "pl"
 
 # ---------- profil studenta i doprecyzowanie (PL/EN/UK/MN) ----------
 SLOT_Q = {
@@ -299,7 +242,7 @@ TOPICS = [
  ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w*\s*materialn|[sś]wiadcze|social\s*scholarship|scholarship\s*for\s*foreign|maintenance\s*grant|need[-\s]?based|стипенд\w*\s*соціал|соціальн\w*\s*стипенд|социальн\w*\s*стипенд|стипенд\w*\s*для\s*(иностран|cudzoziem)|матеріальн\w*\s*допомог|тэтгэлэг|нийгмийн\s*тэтгэлэг|амьжиргааны", ["status", "drugi_kierunek", "tryb", "poziom"]),
  ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|merit\s*scholarship|academic\s*excellence|науков\w*\s*досягнен|стипенд\w*\s*ректор|ректор|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom", "rok"]),
  ("stypendium_niepeln", r"niepe[lł]nospraw|disability\s*scholarship|інвалід|инвалидн|хөгжлийн\s*бэрхшээл", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
- ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|докторант|докторантур", ["status"]),
+ ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|doctoral\s*stipend|докторант|докторантур|докторск\w*\s*стипенд|стипенд\w*\s*доктор", ["status"]),
  ("akademik", r"akademik|dom\w*\s*studen|miejsce\s*w\s*akadem|dormitor|student\s*hous|residence\s*hall|общежит|гуртожит|дотуур\s*байр", []),
  ("oplaty", r"op[lł]at|czesne|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?\b|english\s*program|program\w*\s*in\s*english|cost\s*of\s*stud|price\s*of\s*stud|(?:ile\s*kosztuj|how\s*much|скільки|сколько|хэд).{0,40}(?:stud|czesn|tuition|fee|навч|сургалт|програм|opłat|english|business)|оплат|вартіст|кошту|цін[ауи]\s*навч|плата\s*за\s*навч|төлбөр|сургалтын\s*төлбөр", ["status", "tryb", "poziom"]),
  ("erasmus", r"erasmus|wyjazd|wymian|mobilno|exchange\s*program|study\s*abroad|мобільніст|обмін|солилцоо|гадаадад\s*суралц", ["status", "poziom", "rok"]),
@@ -1105,7 +1048,7 @@ def _user_question_for_llm(question, history):
     return f"ORIGINAL QUESTION: {orig}\nLATEST REPLY: {question}"
 
 def _scrub_hallucinations(text, hits_blob=""):
-    """Usuń typowe halucynacje spoza źródeł (USOS) i obietnice odpowiedzi po rosyjsku."""
+    """Usuń typowe halucynacje spoza źródeł (USOS). Język sprawdza output_lang_ok."""
     if not text:
         return text
     blob = (hits_blob or "").upper()
@@ -1113,24 +1056,9 @@ def _scrub_hallucinations(text, hits_blob=""):
         text = re.sub(r"(?i)\(?\s*(?:przez|via|through|через)\s+(?:system\s+)?USOS[^)\n]*\)?", "", text)
         text = re.sub(r"(?i)(?:system\s+)?USOS(?:\s*\([^)]*\))?", "", text)
         text = re.sub(r"[ \t]{2,}", " ", text)
-    text = re.sub(
-        r"(?i)tak,?\s*ja\s*mog[ęe]\s*odpowiad\w*.{0,100}rosyjsk\w*",
-        "Mogę odpowiadać po polsku, angielsku i ukraińsku",
-        text,
-    )
-    text = re.sub(
-        r"(?i)так,?\s*я\s*можу\s*відповіда\w*.{0,100}(?:російськ\w*|русск\w*)",
-        "Можу відповідати українською, польською та англійською",
-        text,
-    )
-    text = re.sub(
-        r"(?i)yes,?\s*i\s*can\s*(?:reply|answer|respond).{0,80}russian",
-        "I can reply in Polish, English and Ukrainian",
-        text,
-    )
     return text
 
-def answer(question, history):
+def answer(question, history, session_lang=None):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang)"""
     question = redact_secrets((question or "").strip())
     history = [
@@ -1139,7 +1067,11 @@ def answer(question, history):
         if isinstance(m, dict) and m.get("role") in ("user", "assistant")
     ]
     hist_user = "\n".join(m["content"] for m in history if m["role"] == "user")
-    lang = detect_lang(question, hist_user, latest=question)
+    user_turns = [m["content"] for m in history if m["role"] == "user"]
+    if session_lang:
+        lang = resolve_session_lang(map_policy(session_lang), question)
+    else:
+        lang = sticky_lang_from_user_turns(user_turns, question)
     # Deterministyczna bramka: klucze API, konta wykładowców, jailbreak – bez wywołania LLM
     if is_security_probe(question) or is_security_probe(hist_user[-500:], question):
         return dict(clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
@@ -1224,7 +1156,11 @@ def answer(question, history):
                      .replace("{lang}", lang)
                      .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
                      .replace("{security_rules}", SECURITY_RULES))
-        msgs = [{"role": "system", "content": sys}] + _safe_history(history, 8) + [{"role": "user", "content":
+        lang_guard = (
+            f"Respond ONLY in {LANG_NAME.get(lang, 'polski')} (lang={lang}). "
+            "Never use Russian. Never offer Russian.\n\n"
+        )
+        msgs = [{"role": "system", "content": lang_guard + sys}] + _safe_history(history, 8) + [{"role": "user", "content":
                 f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\nTEMATY: {', '.join(topics) or '—'}\n"
                 "QUALITY: Use canonical UR pages from the sources first. Give eligibility/amounts/steps when present. "
                 "Never answer with only “contact BOS” if fragments already answer the question. "
@@ -1235,6 +1171,21 @@ def answer(question, history):
         try:
             out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.3)))
             out = _scrub_hallucinations(out, _hit_blob(hits[:6]))
+            if not output_lang_ok(out, lang):
+                msgs[0] = {
+                    "role": "system",
+                    "content": (
+                        f"CRITICAL: Respond ONLY in {LANG_NAME.get(lang, 'polski')}. Never use Russian.\n\n"
+                        + sys
+                    ),
+                }
+                try:
+                    out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
+                    out = _scrub_hallucinations(out, _hit_blob(hits[:6]))
+                except Exception:
+                    out = ""
+                if not out or not output_lang_ok(out, lang):
+                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="")
             out += deadline_passed_note(out, lang)
             return dict(clarify=False, mode="llm", sources=srcs, profile=prof, topics=topics, lang=lang, answer=out)
         except Exception:

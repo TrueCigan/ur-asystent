@@ -22,6 +22,7 @@ sem = threading.Semaphore(3)
 class Q(BaseModel):
     question: str = Field(..., min_length=1, max_length=MAXQ)
     history: list = Field(default_factory=list)
+    session_lang: str | None = Field(default=None, max_length=8)
 
 def _public_ip(s: str):
     s = (s or "").strip()
@@ -89,7 +90,8 @@ def chat(q: Q, r: Request):
         })
     now = time.time()
     k = ip(r)
-    lang = rag.detect_lang(question, latest=question)
+    hist_user = "\n".join(m["content"] for m in hist if m["role"] == "user")
+    lang = rag.detect_lang(question, hist_user, latest=question, session_lang=q.session_lang)
     limit_msg = {
         "pl": "Limit: 20 pytań na 10 minut. Spróbuj później.",
         "en": "Limit: 20 questions per 10 minutes. Please try again later.",
@@ -117,7 +119,7 @@ def chat(q: Q, r: Request):
     if not sem.acquire(timeout=60):
         raise HTTPException(503, "Serwer zajęty, spróbuj za chwilę.")
     try:
-        return rag.answer(question, hist)
+        return rag.answer(question, hist, session_lang=q.session_lang)
     except HTTPException:
         raise
     except Exception:
