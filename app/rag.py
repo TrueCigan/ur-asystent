@@ -13,6 +13,7 @@ from lang import (
     LANG_NAME, map_policy, resolve_session_lang, output_lang_ok,
     sticky_lang_from_user_turns,
 )
+from deadlines import deadline_passed_note, strip_llm_deadline_notes
 
 IDX = None
 def load():
@@ -515,7 +516,7 @@ HARD RULES:
 2. Use ONLY the fragments in the sources block below. No outside knowledge. ALWAYS first give every concrete fact that IS in the sources (eligibility yes/no for THIS profile, income thresholds, document lists, deadlines, submission channel, links). FORBIDDEN: an answer that only says you don’t know / contact BOS when sources contain a relevant section (e.g. “Stypendium dla cudzoziemców”, “obywatel Ukrainy”). Mention Biuro Obsługi Studenta / DWZ only as a short last-line tip when a personal decision or missing individual document remains — never instead of the rules.
 3. Structure: (a) direct answer first, (b) conditions/exceptions for THIS student’s profile, (c) what to do next (documents, channel, deadlines), (d) sources list. Use short paragraphs or bullets.
 4. Cite claims with [n]. End with a sources heading in the answer language ONLY: Źródła / Sources / Джерела / Эх сурвалж — never write the internal label “ŹRÓDŁA” or “Источники”. Each URL once. Do not invent source numbers.
-5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. If a deadline already passed, say so explicitly ONCE.
+5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. Do not state whether a deadline has passed — the system adds that warning.
 6. For Polish citizens, full-time first-cycle study is often free — quote paid zł/euro amounts only when the source clearly applies to the user’s mode/level (e.g. niestacjonarne, second cycle, foreigners). Do not invent fee lines (pool, student ID) the user did not ask about.
 7. Describe rules for the user’s category only; mention other categories only as a brief aside.
 8. ONLY when PROFIL has pobyt=ukr or the user explicitly said PESEL UKR / ochrona czasowa / тимчасовий захист: if sources mention citizens of Ukraine under the special act, you MUST state that they may apply for stypendium socjalne, plus income threshold, required oświadczenie/documents, and how to submit — do not claim “no provisions”. Do NOT invent “ochrona czasowa” for mere karta pobytu or Ukrainian citizenship without that basis.
@@ -742,108 +743,6 @@ LLM_ERR = {
  "uk": "(Мовна модель тимчасово недоступна – нижче стислий виклад з офіційних джерел.)\n\n",
  "mn": "(Хэлний загвар түр ажиллахгүй байна – доор албан ёсны эх сурвалжаас товчлол.)\n\n",
 }
-
-_MONTH_NUM = {
-    "jan": 1, "january": 1, "sty": 1, "stycznia": 1, "styczeń": 1, "січ": 1, "січня": 1,
-    "feb": 2, "february": 2, "lut": 2, "lutego": 2, "лют": 2, "лютого": 2,
-    "mar": 3, "march": 3, "marca": 3, "берез": 3, "березня": 3,
-    "apr": 4, "april": 4, "kwi": 4, "kwietnia": 4, "квіт": 4, "квітня": 4,
-    "may": 5, "maja": 5, "май": 5, "трав": 5, "травня": 5,
-    "jun": 6, "june": 6, "cze": 6, "czerwca": 6, "черв": 6, "червня": 6,
-    "jul": 7, "july": 7, "lip": 7, "lipca": 7, "лип": 7, "липня": 7,
-    "aug": 8, "august": 8, "sie": 8, "sierpnia": 8, "серп": 8, "серпня": 8,
-    "sep": 9, "sept": 9, "september": 9, "wrz": 9, "września": 9, "вер": 9, "вересня": 9,
-    "oct": 10, "october": 10, "paź": 10, "paz": 10, "października": 10, "жовп": 10, "жовтня": 10,
-    "nov": 11, "november": 11, "lis": 11, "listopada": 11, "лист": 11, "листопада": 11,
-    "dec": 12, "december": 12, "gru": 12, "grudnia": 12, "груд": 12, "грудня": 12,
-}
-
-def _fmt_deadline_date(d, lang="pl"):
-    if lang == "en":
-        return d.strftime("%d %b %Y")
-    return d.strftime("%d.%m.%Y")
-
-def _deadline_msg(disp, today, lang):
-    return {
-        "pl": f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()}).",
-        "en": f"⚠️ This deadline ({disp}) has already passed (today: {today.isoformat()}).",
-        "uk": f"⚠️ Цей термін ({disp}) уже минув (сьогодні: {today.isoformat()}).",
-        "mn": f"⚠️ Энэ хугацаа ({disp}) өнгөрсөн (өнөөдөр: {today.isoformat()}).",
-    }.get(lang) or {
-        "pl": f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()}).",
-    }["pl"]
-
-def deadline_passed_note(text, lang="pl"):
-    """Ostrzeżenie o minionym terminie: zakresy, pojedyncze daty, nazwy miesięcy (BUG-R2-05)."""
-    import datetime
-    if not text:
-        return ""
-    # nie duplikuj, jeśli LLM już napisał ostrzeżenie
-    if re.search(
-        r"(?i)⚠️.*(minął|passed|минув|өнгөрсөн)|termin już minął|deadline.{0,40}already\s+passed|"
-        r"термін.{0,40}минув|no applications accepted after",
-        text,
-    ):
-        return ""
-    today = datetime.date.today()
-    found = {}  # end_date -> display
-
-    def _add(end, disp):
-        if end < today:
-            found[end] = disp
-
-    for m in re.finditer(
-        r"(?:od\s+)?(\d{1,2})[./](\d{1,2})[./](\d{4})\s*(?:[–—−\-]|do)\s*(?:do\s+)?(\d{1,2})[./](\d{1,2})[./](\d{4})",
-        text, re.I,
-    ):
-        try:
-            start = datetime.date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
-            end = datetime.date(int(m.group(6)), int(m.group(5)), int(m.group(4)))
-        except ValueError:
-            continue
-        disp = f"{_fmt_deadline_date(start, lang)} – {_fmt_deadline_date(end, lang)}"
-        _add(end, disp)
-
-    for m in re.finditer(r"(?<!\d)(\d{1,2})[./](\d{1,2})[./](\d{4})(?!\d)", text):
-        # pomiń daty już w zakresach (proste: każdą pojedynczą też sprawdzamy; dedupe po end)
-        try:
-            d = datetime.date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
-        except ValueError:
-            continue
-        # nie nadpisuj ładniejszego zakresu tą samą datą końcową
-        if d not in found:
-            _add(d, _fmt_deadline_date(d, lang))
-
-    for m in re.finditer(
-        r"(?:by\s+|until\s+|do\s+|до\s+)?(\d{1,2})\s+([A-Za-zÀ-žа-яА-ЯіІїЇєЄґҐ]+)\s+(\d{4})",
-        text, re.I,
-    ):
-        mon = re.sub(r"[^a-zа-яіїєґ]", "", m.group(2).lower())
-        # skróty PL: paź → paz already; жовтня → жовп via startswith
-        num = _MONTH_NUM.get(mon)
-        if num is None:
-            for k, v in _MONTH_NUM.items():
-                if mon.startswith(k) or k.startswith(mon[:3]):
-                    num = v
-                    break
-        if not num:
-            continue
-        try:
-            d = datetime.date(int(m.group(3)), num, int(m.group(1)))
-        except ValueError:
-            continue
-        if d not in found:
-            _add(d, _fmt_deadline_date(d, lang))
-
-    if not found:
-        return ""
-    notes = [_deadline_msg(disp, today, lang) for _, disp in sorted(found.items())]
-    # jeden komunikat na unikalny tekst
-    uniq = []
-    for n in notes:
-        if n not in uniq:
-            uniq.append(n)
-    return "\n" + "\n".join(uniq)
 
 def _hit_blob(hits):
     return "\n".join((h.get("text") or "") for h in hits)
@@ -1186,6 +1085,7 @@ def answer(question, history, session_lang=None):
                     out = ""
                 if not out or not output_lang_ok(out, lang):
                     out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="")
+            out = strip_llm_deadline_notes(out)
             out += deadline_passed_note(out, lang)
             return dict(clarify=False, mode="llm", sources=srcs, profile=prof, topics=topics, lang=lang, answer=out)
         except Exception:
@@ -1194,5 +1094,6 @@ def answer(question, history, session_lang=None):
         err = ""
     ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err)))
     ans = _scrub_hallucinations(ans, _hit_blob(hits[:6]))
+    ans = strip_llm_deadline_notes(ans)
     ans += deadline_passed_note(ans, lang)
     return dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, topics=topics, lang=lang, answer=ans)
