@@ -1,6 +1,10 @@
 """Logika asystenta: doprecyzowanie sytuacji studenta, wyszukiwanie hybrydowe, odpowiedź z cytatami (PL/EN/UK/MN)."""
 import os, re, gzip, json, math, collections, numpy as np, scipy.sparse as sp, httpx
 from index import tokens, norm, D, char_ngrams, char_vec
+from security import (
+    SECURITY_RULES, is_security_probe, refuse_message, wrap_untrusted,
+    redact_secrets, safe_error,
+)
 
 IDX = None
 def load():
@@ -248,8 +252,9 @@ Rules:
 - 1–2 sentence intro why you ask, then a short numbered list (max {n} questions).
 - Invite a single-sentence reply with an example fitting the topic ({topics}).
 - No URLs, no invented rules, no legal advice.
+{security_rules}
 Known profile so far: {profile}
-User question: {question}"""
+"""
 
 SYSTEM = """You are a helpful campus information assistant for students of Kazimierz Pułaski University of Radom (Uniwersytet Radomski, UR).
 Tone: clear, calm, practical — like a well-informed staff member at Biuro Obsługi Studenta. Not a bureaucratic form, not a chatbot script.
@@ -262,7 +267,9 @@ HARD RULES:
 5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. If a deadline already passed, say so.
 6. For Polish citizens, full-time first-cycle study is often free — quote paid zł/euro amounts only when the source clearly applies to the user’s mode/level (e.g. niestacjonarne, second cycle, foreigners).
 7. Describe rules for the user’s category only; mention other categories only as a brief aside.
-8. No legal advice; for individual cases refer to the proper UR unit. Do not invent URLs."""
+8. No legal advice; for individual cases refer to the proper UR unit. Do not invent URLs.
+
+{security_rules}"""
 
 SLOT_LABEL = {
  "pl": {"status": "status / obywatelstwo", "tryb": "tryb studiów", "poziom": "poziom studiów", "rok": "rok studiów", "drugi_kierunek": "drugi kierunek lub dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek / grupa"},
@@ -283,13 +290,27 @@ def clarify_answer(lang, missing, question, history, topics, prof):
                           .replace("{n}", str(len(missing)))
                           .replace("{topics}", ", ".join(topics) or "general")
                           .replace("{profile}", prof_txt)
-                          .replace("{question}", question))
-        msgs = [{"role": "system", "content": sys}] + history[-6:] + [{"role": "user", "content": question}]
+                          .replace("{security_rules}", SECURITY_RULES))
+        msgs = [{"role": "system", "content": sys}] + _safe_history(history, 6) + [
+            {"role": "user", "content": wrap_untrusted("USER_QUESTION", question)}
+        ]
         try:
-            return call_llm(msgs, temperature=0.35), "doprecyzowanie-llm"
+            return redact_secrets(call_llm(msgs, temperature=0.35)), "doprecyzowanie-llm"
         except Exception:
             pass
     return clarify_text(lang, missing), "doprecyzowanie"
+
+def _safe_history(history, n=8):
+    out = []
+    for m in history[-n:]:
+        role = m.get("role")
+        if role not in ("user", "assistant"):
+            continue
+        content = redact_secrets(str(m.get("content", ""))[:3000])
+        if role == "user":
+            content = wrap_untrusted("USER_MESSAGE", content)
+        out.append({"role": role, "content": content})
+    return out
 
 def fmt_sources(hits):
     out = []
@@ -317,7 +338,7 @@ def call_llm(messages, temperature=0.25):
                     last = e; break
                 if r.status_code == 200:
                     return r.json()["choices"][0]["message"]["content"]
-                last = f"{m}: HTTP {r.status_code}"
+                last = f"HTTP {r.status_code}"
                 if r.status_code == 429: time.sleep(min(60, 5 * 2 ** att)); continue
                 if r.status_code in (500, 503) and att < 1: time.sleep(4); continue
                 break  # 404/400/powtarzające się 503 -> następny model
@@ -326,12 +347,19 @@ def call_llm(messages, temperature=0.25):
         r = httpx.post("https://api.anthropic.com/v1/messages", timeout=120,
             headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
             json={"model": model or "claude-sonnet-4-5", "max_tokens": 1400, "system": messages[0]["content"], "messages": messages[1:], "temperature": temperature})
-        r.raise_for_status(); return r.json()["content"][0]["text"]
+        if r.status_code >= 400:
+            raise RuntimeError(f"Anthropic niedostępny (HTTP {r.status_code})")
+        return r.json()["content"][0]["text"]
     base = {"openai": "https://api.openai.com/v1", "xai": "https://api.x.ai/v1", "ollama": "http://localhost:11434/v1"}.get(prov) or os.getenv("LLM_BASE_URL")
     base = os.getenv("LLM_BASE_URL", base)
+    # block clearly non-http(s) bases to reduce SSRF risk if env is mis-set
+    if not (base or "").startswith(("https://", "http://localhost", "http://127.0.0.1")):
+        raise RuntimeError("LLM_BASE_URL niedozwolony")
     r = httpx.post(base + "/chat/completions", timeout=120, headers={"Authorization": f"Bearer {key}"},
                    json={"model": model or "gpt-4o-mini", "messages": messages, "temperature": temperature})
-    r.raise_for_status(); return r.json()["choices"][0]["message"]["content"]
+    if r.status_code >= 400:
+        raise RuntimeError(f"LLM niedostępny (HTTP {r.status_code})")
+    return r.json()["choices"][0]["message"]["content"]
 
 def llm_enabled():
     p = os.getenv("LLM_PROVIDER", "").lower()
@@ -361,8 +389,18 @@ LLM_ERR = {
 
 def answer(question, history):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang)"""
+    question = redact_secrets((question or "").strip())
+    history = [
+        {"role": m.get("role"), "content": redact_secrets(str(m.get("content", ""))[:3000])}
+        for m in (history or [])
+        if isinstance(m, dict) and m.get("role") in ("user", "assistant")
+    ]
     hist_user = "\n".join(m["content"] for m in history if m["role"] == "user")
     lang = detect_lang(question, hist_user, latest=question)
+    # Deterministyczna bramka: klucze API, konta wykładowców, jailbreak – bez wywołania LLM
+    if is_security_probe(question) or is_security_probe(hist_user[-500:], question):
+        return dict(clarify=False, mode="security", sources=[], profile={}, lang=lang,
+                    answer=refuse_message(lang))
     topics, prof, missing = needed(question, hist_user)
     if missing:
         text, mode = clarify_answer(lang, missing, question, history, topics, prof)
@@ -396,13 +434,17 @@ def answer(question, history):
         import datetime
         sys = (SYSTEM.replace("{today}", datetime.date.today().isoformat())
                      .replace("{lang}", lang)
-                     .replace("{lang_name}", LANG_NAME.get(lang, "polski")))
-        msgs = [{"role": "system", "content": sys}] + history[-8:] + [{"role": "user", "content":
-                f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\nTEMATY: {', '.join(topics) or '—'}\n\nŹRÓDŁA:\n{fmt_sources(hits)}\n\nPYTANIE: {question}\n\nNapisz konkretną, naturalną odpowiedź według zasad systemowych."}]
+                     .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
+                     .replace("{security_rules}", SECURITY_RULES))
+        msgs = [{"role": "system", "content": sys}] + _safe_history(history, 8) + [{"role": "user", "content":
+                f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\nTEMATY: {', '.join(topics) or '—'}\n\nŹRÓDŁA:\n{fmt_sources(hits)}\n\n"
+                + wrap_untrusted("USER_QUESTION", question)
+                + "\n\nNapisz konkretną, naturalną odpowiedź według zasad systemowych."}]
         try:
-            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, lang=lang, answer=call_llm(msgs, temperature=0.3))
+            out = redact_secrets(call_llm(msgs, temperature=0.3))
+            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, lang=lang, answer=out)
         except Exception as e:
-            err = LLM_ERR.get(lang, LLM_ERR["pl"]).format(e=e)
+            err = LLM_ERR.get(lang, LLM_ERR["pl"]).format(e=safe_error(e))
     else:
         err = ""
     warn_l = OUTDATED.get(lang, OUTDATED["pl"])
@@ -412,4 +454,5 @@ def answer(question, history):
         snip = re.sub(r"\s+", " ", h["text"])[:500]
         lines.append(f"\n[{s['n']}] **{s['title']}** ({s['modified'] or '—'}{warn})\n„{snip}…”")
     lines.append(f"\n{SRC_HDR.get(lang, 'Źródła')}:\n" + "\n".join(f"[{s['n']}] {s['url']} – {s['modified'] or '—'}" for s in srcs[:4]))
-    return dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, lang=lang, answer="\n".join(lines))
+    return dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, lang=lang,
+                answer=redact_secrets("\n".join(lines)))

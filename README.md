@@ -26,3 +26,6 @@ cd app && python crawl.py && python index.py   # nowe data/index.npz + data/meta
 ```
 
 Zmienne: `GEMINI_API_KEY` (wymagany), `LLM_PROVIDER=gemini`, opcjonalnie `LLM_MODEL`.
+
+## Bezpieczeństwo
+Klucza API nie umieszczaj w repozytorium. Asystent odmawia próśb o klucze/hasła/konta wykładowców oraz jailbreak („ignore previous instructions”). Odpowiedzi i błędy są filtrowane pod kątem wycieku sekretów; `/api/status` nie ujawnia env.
