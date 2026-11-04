@@ -507,10 +507,14 @@ def plan_file_hits(faculty, profile=None, k=12):
 def fmt_sources(hits):
     out = []
     for n, h in enumerate(hits, 1):
-        out.append(f"[{n}] {h['title']} | URL: {h['url']} | aktualizacja: {h['modified'] or 'brak daty'} | nieaktualne: {'TAK' if outdated(h['modified']) else 'nie'}\n{h['text'][:2500]}")
+        out.append(f"[{n}] {h['title']} | URL: {h['url']} | aktualizacja: {h['modified'] or 'brak daty'} | nieaktualne: {'TAK' if outdated(h['modified'], h.get('url') or '') else 'nie'}\n{h['text'][:2500]}")
     return "\n\n".join(out)
 
-def outdated(m): return (not m) or m[:4] < "2024"
+def outdated(m, url=""):
+    """Formularze (Załącznik UKR) mogą mieć starą datę pliku, a nadal być obowiązujące."""
+    if url and re.search(r"Zalacznik-Nr-8-Ukraina|zalacznik.*ukrain|oswiadczen", url, re.I):
+        return False
+    return (not m) or m[:4] < "2024"
 
 def merge_forced_hits(hits, forced, k=12):
     if not forced:
@@ -560,9 +564,11 @@ def call_llm(messages, temperature=0.25):
                 if r.status_code == 200:
                     return r.json()["choices"][0]["message"]["content"]
                 last = f"HTTP {r.status_code}"
-                if r.status_code == 429: time.sleep(min(60, 5 * 2 ** att)); continue
-                if r.status_code in (500, 503) and att < 1: time.sleep(4); continue
-                break  # 404/400/powtarzające się 503 -> następny model
+                if r.status_code == 429:
+                    time.sleep(min(60, 5 * 2 ** att)); continue
+                if r.status_code in (500, 503) and att < 3:
+                    time.sleep(min(20, 2 * 2 ** att)); continue
+                break  # 404/400 / wyczerpane retry -> następny model
         raise RuntimeError(f"Gemini niedostępny ({last})")
     if prov == "anthropic":
         r = httpx.post("https://api.anthropic.com/v1/messages", timeout=120,
@@ -594,19 +600,146 @@ PROF_LABEL = {
  "mn": {"status": "статус", "tryb": "хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил / диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил/бүлэг", "pobyt": "оршин суух"},
 }
 NO_LLM = {
- "pl": "**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: {prof}). Zweryfikuj w źródle:",
- "en": "**No-LLM mode** – top matching excerpts from official UR pages (profile: {prof}). Verify in the source:",
- "uk": "**Режим без мовної моделі** – найближчі фрагменти з офіційних сторінок UR (профіль: {prof}). Перевірте в джерелі:",
- "mn": "**Хэлний загваргүй горим** – UR-ийн албан ёсны хуудаснуудаас олдсон хэсгүүд (профайл: {prof}). Эх сурвалжаас шалгана уу:",
+ "pl": "Na podstawie oficjalnych stron UR (profil: {prof}):",
+ "en": "Based on official UR pages (profile: {prof}):",
+ "uk": "На основі офіційних сторінок UR (профіль: {prof}):",
+ "mn": "UR-ийн албан ёсны хуудаснууд дээр үндэслэн (профайл: {prof}):",
 }
 SRC_HDR = {"pl": "Źródła", "en": "Sources", "uk": "Джерела", "mn": "Эх сурвалж"}
 OUTDATED = {"pl": "informacja może być nieaktualna", "en": "may be outdated", "uk": "може бути неактуальною", "mn": "хуучирсан байж болно"}
 LLM_ERR = {
- "pl": "(Błąd LLM: {e}. Pokazuję tryb wyszukiwania.)\n\n",
- "en": "(LLM error: {e}. Showing search mode.)\n\n",
- "uk": "(Помилка LLM: {e}. Показую режим пошуку.)\n\n",
- "mn": "(LLM алдаа: {e}. Хайлтын горим.)\n\n",
+ "pl": "(Model językowy chwilowo niedostępny – poniżej zestawienie z oficjalnych źródeł.)\n\n",
+ "en": "(Language model temporarily unavailable – below is a summary from official sources.)\n\n",
+ "uk": "(Мовна модель тимчасово недоступна – нижче стислий виклад з офіційних джерел.)\n\n",
+ "mn": "(Хэлний загвар түр ажиллахгүй байна – доор албан ёсны эх сурвалжаас товчлол.)\n\n",
 }
+
+def _hit_blob(hits):
+    return "\n".join((h.get("text") or "") for h in hits)
+
+def extract_source_facts(hits):
+    """Wyciągnij konkretne fakty z fragmentów (na fallback bez LLM)."""
+    blob = _hit_blob(hits)
+    facts = {}
+    m = re.search(r"(?:wynosi|wysokość[^.]{0,40}?)\s*([0-9][0-9\s]*(?:,\d+)?)\s*zł", blob, re.I)
+    if not m:
+        m = re.search(r"(2099(?:[.,]\d+)?)\s*zł", blob, re.I)
+    if m:
+        facts["income_cap"] = re.sub(r"\s+", "", m.group(1)) + " zł"
+    m = re.search(r"(termin[^.]{0,20}wniosk[^.]{0,80}|od\s*\d{2}[./]\d{2}[./]\d{4}\s*do\s*\d{2}[./]\d{2}[./]\d{4})", blob, re.I)
+    if m:
+        facts["deadline"] = re.sub(r"\s+", " ", m.group(0)).strip()
+    if re.search(r"Wirtualny Dziekanat", blob, re.I):
+        facts["submit"] = "Wirtualny Dziekanat"
+    if re.search(r"obywatel Ukrainy|ochrony czasowej|PESEL\s*UKR|Załącznik\s*Nr\s*8|Zalacznik-Nr-8-Ukraina", blob, re.I):
+        facts["ukr_ok"] = True
+    if re.search(r"Stypendium dla cudzoziemc|cudzoziemc\w*\s*(mogą|może)\s*ubiega", blob, re.I):
+        facts["foreign_ok"] = True
+    urls = []
+    for h in hits:
+        u = h.get("url") or ""
+        if u and u not in urls:
+            urls.append(u)
+        if len(urls) >= 5:
+            break
+    facts["urls"] = urls
+    # kluczowe zdania
+    sents = []
+    for pat in [
+        r".{0,40}2099(?:[.,]\d+)?\s*zł.{0,80}",
+        r".{0,30}obywatel Ukrainy.{0,120}",
+        r".{0,20}Wirtualny Dziekanat.{0,80}",
+        r".{0,20}ochrony czasowej.{0,100}",
+    ]:
+        m = re.search(pat, blob, re.I | re.S)
+        if m:
+            sents.append(re.sub(r"\s+", " ", m.group(0)).strip())
+    facts["sents"] = sents[:4]
+    return facts
+
+def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=""):
+    """Czytelna odpowiedź bez LLM – fakty + kroki + URL, nie surowy dump."""
+    facts = extract_source_facts(hits)
+    lines = [err + NO_LLM.get(lang, NO_LLM["pl"]).format(prof=prof_txt)]
+    tset = set(topics or [])
+
+    if "stypendium_socjalne" in tset:
+        if lang == "uk":
+            if prof.get("pobyt") == "ukr" or facts.get("ukr_ok"):
+                lines.append(
+                    "\n**Так — за правилами UR громадяни України (зокрема захист / PESEL UKR) можуть претендувати "
+                    "на соціальну стипендію**, якщо виконуються умови доходу та один напрям навчання."
+                )
+            else:
+                lines.append("\n**Соціальна стипендія** залежить від доходу сім’ї та статусу студента (див. джерела нижче).")
+            if facts.get("income_cap"):
+                lines.append(f"- Поріг доходу (з офіційної сторінки): **{facts['income_cap']}** на особу в сім’ї.")
+            if facts.get("submit"):
+                lines.append(f"- Подання заяви: **{facts['submit']}** (і документи за списком на сторінці стипендій).")
+            if any("Zalacznik-Nr-8-Ukraina" in u for u in facts.get("urls", [])):
+                lines.append("- Для громадян України потрібна **заява (Załącznik nr 8)** — PDF у джерелах.")
+            lines.append("- Далі: відкрийте сторінку стипендій, перевірте список документів і терміни на поточний навчальний рік.")
+        elif lang == "en":
+            if prof.get("pobyt") == "ukr" or facts.get("ukr_ok"):
+                lines.append(
+                    "\n**Yes — under UR rules, citizens of Ukraine (temporary protection / PESEL UKR) may apply "
+                    "for a social scholarship** if income and single-programme rules are met."
+                )
+            else:
+                lines.append("\n**Social scholarship** depends on family income and student status (see sources).")
+            if facts.get("income_cap"):
+                lines.append(f"- Income threshold (official page): **{facts['income_cap']}** per family member.")
+            if facts.get("submit"):
+                lines.append(f"- Submit via **{facts['submit']}** with the required documents.")
+            lines.append("- Next: open the scholarship page, check documents and deadlines for the current year.")
+        else:  # pl / mn fallback → pl structure
+            if prof.get("pobyt") == "ukr" or facts.get("ukr_ok"):
+                lines.append(
+                    "\n**Tak — według zasad UR obywatele Ukrainy (ochrona czasowa / PESEL UKR) mogą ubiegać się "
+                    "o stypendium socjalne**, jeśli spełniają warunki dochodowe i zasady jednego kierunku."
+                )
+            else:
+                lines.append("\n**Stypendium socjalne** zależy od dochodu rodziny i statusu studenta (szczegóły w źródłach).")
+            if facts.get("income_cap"):
+                lines.append(f"- Próg dochodu (oficjalna strona): **{facts['income_cap']}** na osobę w rodzinie.")
+            if facts.get("submit"):
+                lines.append(f"- Złożenie wniosku: **{facts['submit']}** + wymagane dokumenty.")
+            if any("Zalacznik-Nr-8-Ukraina" in u for u in facts.get("urls", [])):
+                lines.append("- Dla obywateli Ukrainy: **oświadczenie – Załącznik nr 8** (PDF w źródłach).")
+            lines.append("- Dalej: sprawdź listę dokumentów i terminy na stronie stypendiów na bieżący rok.")
+        if facts.get("sents"):
+            frag_h = {"pl": "Fragmenty ze źródeł:", "en": "Source excerpts:", "uk": "Уривки з джерел:", "mn": "Эх сурвалжийн хэсэг:"}.get(lang, "Fragmenty ze źródeł:")
+            lines.append(f"\n{frag_h}")
+            for s in facts["sents"]:
+                lines.append(f"- „{s}…”")
+    else:
+        # ogólny fallback – krótsze cytaty zamiast ściany tekstu
+        for i, h in enumerate(hits[:3], 1):
+            snip = re.sub(r"\s+", " ", h.get("text") or "")[:280]
+            lines.append(f"\n[{i}] **{h.get('title') or 'Źródło'}**\n„{snip}…”")
+
+    src_lines, seen_u = [], set()
+    for h in hits:
+        u = h.get("url") or ""
+        if not u or u in seen_u:
+            continue
+        seen_u.add(u)
+        warn = ""
+        if outdated(h.get("modified"), u):
+            warn = f" ⚠️ {OUTDATED.get(lang, OUTDATED['pl'])}"
+        src_lines.append(f"[{len(src_lines)+1}] {u} – {h.get('modified') or '—'}{warn}")
+        if len(src_lines) >= 4:
+            break
+    lines.append(f"\n{SRC_HDR.get(lang, 'Źródła')}:\n" + "\n".join(src_lines))
+    tip = {
+        "pl": "\nNa indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.",
+        "en": "\nFor an individual committee decision, you can ask the Student Service Office after checking the documents above.",
+        "uk": "\nЩодо індивідуального рішення комісії можна звернутися до Biuro Obsługi Studenta — після перевірки документів зі списку вище.",
+        "mn": "\nХувь хүний шийдвэрийн талаар дээрх баримт бичгээ шалгасны дараа Biuro Obsługi Studenta-аас асууж болно.",
+    }
+    if "stypendium_socjalne" in tset or "stypendium_rektora" in tset:
+        lines.append(tip.get(lang, tip["pl"]))
+    return "\n".join(lines)
 
 def answer(question, history):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang)"""
@@ -690,7 +823,9 @@ def answer(question, history):
                 text="Nie znam jeszcze Twojego kierunku, więc nie wskazuję konkretnego PDF. Oficjalne plany:\n" + catalog,
                 source="student", kind="list",
             )] + hits[:5]
-    srcs = [dict(n=i, title=h["title"], url=h["url"], modified=h["modified"], outdated=outdated(h["modified"]), snippet=h["text"][:400]) for i, h in enumerate(hits, 1)]
+    srcs = [dict(n=i, title=h["title"], url=h["url"], modified=h["modified"],
+                 outdated=outdated(h["modified"], h.get("url") or ""), snippet=h["text"][:400])
+            for i, h in enumerate(hits, 1)]
     labels = PROF_LABEL.get(lang, PROF_LABEL["pl"])
     prof_txt = ", ".join(f"{labels.get(k, k)}: {v}" for k, v in prof.items() if k in labels) or "—"
     if llm_enabled():
@@ -709,16 +844,10 @@ def answer(question, history):
         try:
             out = redact_secrets(call_llm(msgs, temperature=0.3))
             return dict(clarify=False, mode="llm", sources=srcs, profile=prof, lang=lang, answer=out)
-        except Exception as e:
-            err = LLM_ERR.get(lang, LLM_ERR["pl"]).format(e=safe_error(e))
+        except Exception:
+            err = LLM_ERR.get(lang, LLM_ERR["pl"])
     else:
         err = ""
-    warn_l = OUTDATED.get(lang, OUTDATED["pl"])
-    lines = [err + NO_LLM.get(lang, NO_LLM["pl"]).format(prof=prof_txt)]
-    for s, h in zip(srcs[:4], hits[:4]):
-        warn = f" ⚠️ {warn_l}" if s["outdated"] else ""
-        snip = re.sub(r"\s+", " ", h["text"])[:500]
-        lines.append(f"\n[{s['n']}] **{s['title']}** ({s['modified'] or '—'}{warn})\n„{snip}…”")
-    lines.append(f"\n{SRC_HDR.get(lang, 'Źródła')}:\n" + "\n".join(f"[{s['n']}] {s['url']} – {s['modified'] or '—'}" for s in srcs[:4]))
+    ans = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err)
     return dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, lang=lang,
-                answer=redact_secrets("\n".join(lines)))
+                answer=redact_secrets(ans))

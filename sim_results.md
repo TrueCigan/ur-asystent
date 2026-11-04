@@ -20,19 +20,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"kierunek": "weif_wydzial", "tryb": "stacjonarne", "poziom": "I", "rok": "1"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: kierunek/grupa: weif_wydzial, tryb: stacjonarne, poziom: I, rok: 1). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: kierunek/grupa: weif_wydzial, tryb: stacjonarne, poziom: I, rok: 1):
 
-[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć. „Ekonomia i Finanse” to nazwa wydziału (WEiF). Konkretne kierunki: Ekonomia, Finanse i rachunkowość, Analityka gospodarcza, Zarządzanie, AI w biznesie – wybierz plik na stronie.** (2026-10-21)
-„- II_FiR_1sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf (aktualizacja: 2026-09-30) - II_Z_1sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/II_Z_1sem_2026_27_st-1.pdf (aktualizacja: 2026-10-16) - I_E_1sem_2026_27_st-2.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_E_1sem_2026_27_st-2.pdf (aktualizacja: 2026-10-21) - I_FiR_1sem_2026_27_st-3.pdf → http…”
+[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć. „Ekonomia i Finanse” to nazwa wydziału (WEiF). Konkretne kierunki: Ekonomia, Finanse i rachunkowość, Analityka gospodarcza, Zarządzanie, AI w biznesie – wybierz plik na stronie.**
+„- II_FiR_1sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf (aktualizacja: 2026-09-30) - II_Z_1sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/II_Z_1sem_2026_27_st-1…”
 
-[2] **WEiF – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna inteligencja w biznesie Zarządzanie I stopień I stopień I stopień I stopień I stopień stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne I …”
+[2] **WEiF – Plany zajęć**
+„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna int…”
 
-[3] **WEiF – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„Plany zajęć - Wydział Ekonomii i Finansów Skip to content Plany zajęć Rok akademicki 2026/2027 Rok akademicki 2026/2027 rozpoczyna się 1 października 2026 r. i trwa do 30 września 2027 r. POBIERZ: Zarządzenie R-6/2026 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów.…”
+[3] **WEiF – Plany zajęć**
+„Plany zajęć - Wydział Ekonomii i Finansów Skip to content Plany zajęć Rok akademicki 2026/2027 Rok akademicki 2026/2027 rozpoczyna się 1 października 2026 r. i trwa do 30 września 2027 r. POBIERZ: Zarządzenie R-6/2026 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z d…”
 
-[4] **WEiF – Plan zajęć – I_FiR_3sem_2026_27_st-1.pdf** (2026-09-30)
-„29.09.2026 Zatwierdził Dziekan WEiF: Prof. Piotr Misztal Finanse i rachunkowość: rok II, semestr 3 – studia stacjonarne I stopnia r.a. 2026/2027 – semestr zimowy Grupa 01 poniedziałek wtorek środa czwartek piątek 08.15-09.00 Podstawy ekonometrii (w) dr Z. Śleszyński, s. 208 Finanse UE (w) dr K. Kalinowska (zdalnie) Międzynarodowe stosunki ekonomiczne i finansowe (ćw.) Prof. P. Misztal, s. 20
+Źródła:
+[1] https://weif.uniwersytetradom.pl/plany-zajec/ – 2026-10-21
+[2] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/I_FiR_3sem_2026_27_st-1.pdf – 2026-09-30
+[3] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf – 2026-09-30
+[4] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_FiR_1sem_2026_27_st-3.pdf – 2026-10-07
 
 
 **ASSERT PASS**
@@ -55,23 +58,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"kierunek": "ekonomia", "tryb": "stacjonarne", "poziom": "I", "rok": "1"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: kierunek/grupa: ekonomia, tryb: stacjonarne, poziom: I, rok: 1). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: kierunek/grupa: ekonomia, tryb: stacjonarne, poziom: I, rok: 1):
 
-[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć.** (2026-10-21)
-„- I_E_1sem_2026_27_st-2.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_E_1sem_2026_27_st-2.pdf (aktualizacja: 2026-10-21) - I_E_5sem_2026_27_st.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_E_5sem_2026_27_st.pdf (aktualizacja: 2026-10-07) - II_FiR_1sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf (aktualizacja: 2026-09-30) - II_Z_1sem_2026_27_st-1.pdf → https://wei…”
+[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć.**
+„- I_E_1sem_2026_27_st-2.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_E_1sem_2026_27_st-2.pdf (aktualizacja: 2026-10-21) - I_E_5sem_2026_27_st.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_E_5sem_2026_27_st.pdf (aktual…”
 
-[2] **WEiF – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna inteligencja w biznesie Zarządzanie I stopień I stopień I stopień I stopień I stopień stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne I …”
+[2] **WEiF – Plany zajęć**
+„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna int…”
 
-[3] **WEiF – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„Plany zajęć - Wydział Ekonomii i Finansów Skip to content Plany zajęć Rok akademicki 2026/2027 Rok akademicki 2026/2027 rozpoczyna się 1 października 2026 r. i trwa do 30 września 2027 r. POBIERZ: Zarządzenie R-6/2026 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów.…”
-
-[4] **WEiF – Plan zajęć – R-06-2026_Organizacja-roku-akademickiego-2026-2027.pdf** (2026-09-18)
-„do 30 czerwca 2027 r. okres wakacji - od 1 lipca do 31 sierpnia 2027 r. jesienna sesja poprawkowa - od 1 września do 19 września 2027 r. 28 maja - dodatkowym dniem wolnym od zajęć dydaktycznych okres rejestracji i podejmowania indywidualnych decyzji - od 20 września do 30 września 2027 r. *9 czerwca (środa) obowiązują zajęcia wg rozkładu z piątku Maj Czerwiec WrzesieńKwiecieńMarzec Semestr letni Rok akademicki 2026/2027…”
+[3] **WEiF – Plany zajęć**
+„Plany zajęć - Wydział Ekonomii i Finansów Skip to content Plany zajęć Rok akademicki 2026/2027 Rok akademicki 2026/2027 rozpoczyna się 1 października 2026 r. i trwa do 30 września 2027 r. POBIERZ: Zarządzenie R-6/2026 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z d…”
 
 Źródła:
 [1] https://weif.uniwersytetradom.pl/plany-zajec/ – 2026-10-21
-[2] https://weif.uniwersytetradom.pl/plany-zajec/ –
+[2] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/R-06-2026_Organizacja-roku-akademickiego-2026-2027.pdf – 2026-09-18
+[3] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/II_Z_1sem_2026_27_st-1.pdf – 2026-10-16
+[4] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_IAwB_3sem_2026_27_st.pdf – 2026-10-07
 
 
 **ASSERT PASS**
@@ -94,25 +96,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"kierunek": "finanse", "tryb": "stacjonarne", "poziom": "I", "rok": "2"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: kierunek/grupa: finanse, tryb: stacjonarne, poziom: I, rok: 2). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: kierunek/grupa: finanse, tryb: stacjonarne, poziom: I, rok: 2):
 
-[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć.** (2026-10-21)
-„- II_FiR_3sem_2026_27_st.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/II_FiR_3sem_2026_27_st.pdf (aktualizacja: 2026-10-16) - I_FiR_3sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/I_FiR_3sem_2026_27_st-1.pdf (aktualizacja: 2026-09-30) - II_FiR_1sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf (aktualizacja: 2026-09-30) - I_FiR_1sem_2026_27_st-3.pdf → …”
+[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć.**
+„- II_FiR_3sem_2026_27_st.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/II_FiR_3sem_2026_27_st.pdf (aktualizacja: 2026-10-16) - I_FiR_3sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/I_FiR_3sem_2026_27_st-1.p…”
 
-[2] **WEiF – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna inteligencja w biznesie Zarządzanie I stopień I stopień I stopień I stopień I stopień stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne I …”
+[2] **WEiF – Plany zajęć**
+„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna int…”
 
-[3] **WEiF – Plan zajęć – I_FiR_1sem_2026_27_st-3.pdf** (2026-10-07)
+[3] **WEiF – Plan zajęć – I_FiR_1sem_2026_27_st-3.pdf**
 „07.10.2026 Zatwierdził Dziekan WEiF: Prof. Piotr Misztal Finanse i rachunkowość: rok I, semestr 1 – studia stacjonarne I stopnia r.a. 2026/2027 – semestr zimowy poniedziałek wtorek środa czwartek piątek 08.15-09.00 8.00-9.30 WF (Hala Sportowa, ul. Chrobrego 27)…”
-
-[4] **WEiF – Plan zajęć – II_FiR_1sem_2026_27_st-1.pdf** (2026-09-30)
-„29.09.2026 Zatwierdził Dziekan WEiF: Prof. Piotr Misztal Finanse i rachunkowość: rok I, semestr 1 – studia stacjonarne II stopnia r.a. 2026/2027 – semestr zimowy poniedziałek wtorek środa czwartek piątek 08.15-09.00 Finanse międzynarodowe (ćw.) dr G. Olszewska, s. 263 Statystyka w finansach (w) dr E. Falkiewicz, s. 263 Makroekonomia II (w) Prof. P. Misztal, s. 219…”
 
 Źródła:
 [1] https://weif.uniwersytetradom.pl/plany-zajec/ – 2026-10-21
-[2] https://weif.uniwersytetradom.pl/plany-zajec/ – —
-[3] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_FiR_1sem_2026_27_st-3.pdf – 2026-10-07
-[4] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf – 2026-09-30
+[2] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_FiR_1sem_2026_27_st-3.pdf – 2026-10-07
+[3] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf – 2026-09-30
+[4] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/I_FiR_3sem_2026_27_st-1.pdf – 2026-09-30
 
 
 **ASSERT PASS**
@@ -135,25 +134,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"kierunek": "informatyka", "tryb": "stacjonarne", "poziom": "I", "rok": "1"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: kierunek/grupa: informatyka, tryb: stacjonarne, poziom: I, rok: 1). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: kierunek/grupa: informatyka, tryb: stacjonarne, poziom: I, rok: 1):
 
-[1] **WTEiI – lista plików z planami zajęć. Kody plików WTEiI: IN=Informatyka, IT=Informatyka techniczna, E=Elektrotechnika (NIE Ekonomia!), TiL/TIL=Transport i logistyka.** (2026-11-04)
-„- IN_I-1.pdf → https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/09/IN_I-1.pdf (aktualizacja: 2026-09-29) - IN_II-1.pdf → https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/10/IN_II-1.pdf (aktualizacja: 2026-10-09) - IN_III-1.pdf → https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/10/IN_III-1.pdf (aktualizacja: 2026-10-30) - IN_IV.pdf → https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/10/IN_IV.pdf (aktualizacja: 2026-10-02) - E-…”
+[1] **WTEiI – lista plików z planami zajęć. Kody plików WTEiI: IN=Informatyka, IT=Informatyka techniczna, E=Elektrotechnika (NIE Ekonomia!), TiL/TIL=Transport i logistyka.**
+„- IN_I-1.pdf → https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/09/IN_I-1.pdf (aktualizacja: 2026-09-29) - IN_II-1.pdf → https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/10/IN_II-1.pdf (aktualizacja: 2026-10-09) - IN_III-1.pdf → https://wteii.u…”
 
-[2] **WTEiI – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„Plany zajęć - Wydział Transportu, Elektrotechniki i Informatyki Skip to content Plany zajęć Semestr zimowy 2026/2027 Opublikowano: Studia stacjonarne: 28.09.2026 r. 13.11 (aktualizacja 30.10.2026 9:24) Studia niestacjonarne I-go stopnia: 15.10.2026 r. wszystkie zjazdy (aktualizacja 03.11.2026 15:20) Studia niestacjonarne II-go stopnia: 14.10.2026 r. WSZYSTKIE ZJAZDY Dla niektórych zajęć została utrzymana forma zdalna, tj. tylko przez aplikację MS Teams. Opublikowane plany zajęć mogą ulec zmianie…”
+[2] **WTEiI – Plany zajęć**
+„Plany zajęć - Wydział Transportu, Elektrotechniki i Informatyki Skip to content Plany zajęć Semestr zimowy 2026/2027 Opublikowano: Studia stacjonarne: 28.09.2026 r. 13.11 (aktualizacja 30.10.2026 9:24) Studia niestacjonarne I-go stopnia: 15.10.2026 r. wszystkie zjazdy (aktualizac…”
 
-[3] **WTEiI – Plan zajęć – IT_III.pdf** (2026-10-22)
-„9:15-20:00 -X- -X- -X- --- -X- 19:15-20:00 Plan zajęć wygenerowany przez FET 7.4.7 w 22.10.2026 10:37 AiESS - Administracja i eksploatacja systemów sieciowych (Wykład rozpoczyna się od 26.11.2026 r.) Zaj. zdal. - zajęcia prowadzone w formie zdalnej (MS Teams) 106_O, 207_O, 402_O, 404_O, 612_O - sale w budynku „Olimp”, ul Malczewskiego 20A…”
-
-[4] **WTEiI – Plan zajęć – IT_I.pdf** (2026-10-09)
-„boratorium- sale 115/36 - początek zajęć w sali 115; sala 36/115 - początek zajęć w sali 36 Prof. B. Rusyn - zajęcia w terminach 5,6.X; 26,27.X; 9,10.XI; 23,24.XI; 7,8.XII; 21,22.XII; 11,12.I; 25,26.I Tydz. Parz. - zajęcia w tygodniach parzystych zgodnie z organizacją roku akademickiego 2026/2027 106_O, 404_O - sale w budynku „Olimp”, ul Malczewskiego 20A…”
+[3] **WTEiI – Plan zajęć – IT_III.pdf**
+„9:15-20:00 -X- -X- -X- --- -X- 19:15-20:00 Plan zajęć wygenerowany przez FET 7.4.7 w 22.10.2026 10:37 AiESS - Administracja i eksploatacja systemów sieciowych (Wykład rozpoczyna się od 26.11.2026 r.) Zaj. zdal. - zajęcia prowadzone w formie zdalnej (MS Teams) 106_O, 207_O, 402_O,…”
 
 Źródła:
 [1] https://wteii.uniwersytetradom.pl/plany-zajec/ – 2026-11-04
-[2] https://wteii.uniwersytetradom.pl/plany-zajec/ – —
-[3] https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/10/IT_III.pdf – 2026-10-22
-[4] https://wteii.un
+[2] https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/10/IT_III.pdf – 2026-10-22
+[3] https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/10/IT_I.pdf – 2026-10-09
+[4] https://wteii.uniwersytetradom.pl/wp-content/uploads/sites/12/2026/09/E_II-1.pdf – 2026-09-29
 
 
 **ASSERT PASS**
@@ -175,23 +171,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"poziom": "jednolite", "kierunek": "prawo", "tryb": "stacjonarne", "rok": "1"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: poziom: jednolite, kierunek/grupa: prawo, tryb: stacjonarne, rok: 1). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: poziom: jednolite, kierunek/grupa: prawo, tryb: stacjonarne, rok: 1):
 
-[1] **WPiA – lista plików z planami zajęć.** (2026-11-02)
-„- PR_-V_IX.pdf → https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/10/PR_-V_IX.pdf (aktualizacja: 2026-10-14) - PR_I-NS-1.pdf → https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/10/PR_I-NS-1.pdf (aktualizacja: 2026-10-16) - PR_III.V-2.pdf → https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/10/PR_III.V-2.pdf (aktualizacja: 2026-10-16) - PR_III_V.pdf → https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/10/PR_III_V.pdf (aktualizacja: 2026-1…”
+[1] **WPiA – lista plików z planami zajęć.**
+„- PR_-V_IX.pdf → https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/10/PR_-V_IX.pdf (aktualizacja: 2026-10-14) - PR_I-NS-1.pdf → https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/10/PR_I-NS-1.pdf (aktualizacja: 2026-10-16) - PR_III.V-2.pdf → https://w…”
 
-[2] **WPiA – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„emestr I (14.10) Rok II, semestr III (14.10) Rok III, semestr V (14.10) Studia niestacjonarne Rok I, semestr I (23.10.) Rok II, semestr III (23.10) Rok III, semestr V (23.10) Administracja II stopnia Studia stacjonarne Rok II, semestr III (14.10) Studia niestacjonarne Rok I, semestr I (23.10) Rok II, semestr III (23.10) Bezpieczeństwo wewnętrzne I stopnia Studia stacjonarne Rok I, semestr I (14.10) Rok II, semestr III (14.10) Rok III, semestr V (14.10) Studia niestacjonarne Rok I, semestr I (23.…”
+[2] **WPiA – Plany zajęć**
+„emestr I (14.10) Rok II, semestr III (14.10) Rok III, semestr V (14.10) Studia niestacjonarne Rok I, semestr I (23.10.) Rok II, semestr III (23.10) Rok III, semestr V (23.10) Administracja II stopnia Studia stacjonarne Rok II, semestr III (14.10) Studia niestacjonarne Rok I, seme…”
 
-[3] **WPiA – Plan zajęć – R-06-2026-organizacja-roku-2026-2027.pdf** (2026-09-14)
-„do 30 czerwca 2027 r. okres wakacji - od 1 lipca do 31 sierpnia 2027 r. jesienna sesja poprawkowa - od 1 września do 19 września 2027 r. 28 maja - dodatkowym dniem wolnym od zajęć dydaktycznych okres rejestracji i podejmowania indywidualnych decyzji - od 20 września do 30 września 2027 r. *9 czerwca (środa) obowiązują zajęcia wg rozkładu z piątku Maj Czerwiec WrzesieńKwiecieńMarzec Semestr letni Rok akademicki 2026/2027…”
-
-[4] **WPiA – Plan zajęć – 10.10.2026_Poradnik_studenta_I_roku_WPiA-1.pdf** (2026-10-12)
-„i roku akademickiego Szczegółowy harmonogram roku akademickiego ustala coroczne zarządzenie Rektora, publikowane w Wirtualnej Uczelni oraz na stronie Uniwersytetu. Zerknij na aktualny harmonogram - https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/09/R-06-2026-organizacja-roku- 2026-2027.pdf • Rok akademicki 2026/2027 – rozpoczyna się 1 października 2026 r. i trwa do 30 września 2027 r. (zarządzenie R-06/2026 z dnia 24 marca 2026 r.). • Rok akademicki 2025/2026 – trwał od 1 paździ…”
+[3] **WPiA – Plan zajęć – R-06-2026-organizacja-roku-2026-2027.pdf**
+„do 30 czerwca 2027 r. okres wakacji - od 1 lipca do 31 sierpnia 2027 r. jesienna sesja poprawkowa - od 1 września do 19 września 2027 r. 28 maja - dodatkowym dniem wolnym od zajęć dydaktycznych okres rejestracji i podejmowania indywidualnych decyzji - od 20 września do 30 wrześni…”
 
 Źródła:
 [1] https://wpia.uniwersytetradom.pl/plany-zajec/ – 2026-11-02
-[2] https:
+[2] https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/09/R-06-2026-organizacja-roku-2026-2027.pdf – 2026-09-14
+[3] https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/10/10.10.2026_Poradnik_studenta_I_roku_WPiA-1.pdf – 2026-10-12
+[4] https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/10/PR_IV_VII-2.pdf – 2026-10-14
 
 
 **ASSERT PASS**
@@ -233,19 +228,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie", "pobyt": "ukr"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie, pobyt: ukr). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie, pobyt: ukr):
 
-[1] **Świadczenia dla studentów – pomoc materialna** (2026-09-08)
-„dotyczące różnych rodzajów świadczeń przyznawanych w Uczelni (a szczególnie jakie dokumenty dołączamy do konkretnych wniosków). Ważne informacje dla wszystkich ubiegających się o świadczenia w uczelni Student kształcący się równocześnie na kilku kierunkach studiów może otrzymywać świadczenia tylko na jednym, wskazanym przez siebie kierunku studiów. Stosowne oświadczenie student zamieszcza na wnioskach o przyznanie świadczenia. Świadczenia przysługują na studiach pierwszego stopnia, studiach drug…”
+[1] **Świadczenia dla studentów – pomoc materialna**
+„dotyczące różnych rodzajów świadczeń przyznawanych w Uczelni (a szczególnie jakie dokumenty dołączamy do konkretnych wniosków). Ważne informacje dla wszystkich ubiegających się o świadczenia w uczelni Student kształcący się równocześnie na kilku kierunkach studiów może otrzymywać…”
 
-[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„wie cennika opłat za zakwaterowanie w domach studenta. 44 Załącznik Nr 7 do Regulaminu (…) OŚWIADCZENIE do stypendium socjalnego dla obywateli Ukrainy/ЗАЯВА для подання заяви на соціальну допомогу. Radom, dnia _________________ r. (дата) ______________________________________ imię i nazwisko studentki/a/Ім’я та прізвище студента/-ки ______________________________________ numer albumu/номер студента ______________________________________ kierunek i rok studiów/спеціальність/напрям і рік навчання …”
+[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf**
+„wie cennika opłat za zakwaterowanie w domach studenta. 44 Załącznik Nr 7 do Regulaminu (…) OŚWIADCZENIE do stypendium socjalnego dla obywateli Ukrainy/ЗАЯВА для подання заяви на соціальну допомогу. Radom, dnia _________________ r. (дата) ______________________________________ imi…”
 
-[3] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„rt. 156b ust. 1 tej ustawy lub posiadający wizę krajową w celu prowadzenia badań naukowych lub prac rozwojowych, 10) obywatel Ukrainy, którego pobyt na terytorium Rzeczypospolitej Polskiej jest uznawany za legalny na podstawie art. 2 ust. 1 ustawy z dnia 12 marca 2022 r. o pomocy obywatelom Ukrainy w związku z konfliktem zbrojnym na terytorium tego państwa (t.j. Dz. U. z 2024 r. poz. 167 z późn. zm.), będący studentem, może ubiegać się o stypendium socjalne, o którym mowa w art. 86 ust. 1 pkt 1 …”
+[3] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf**
+„rt. 156b ust. 1 tej ustawy lub posiadający wizę krajową w celu prowadzenia badań naukowych lub prac rozwojowych, 10) obywatel Ukrainy, którego pobyt na terytorium Rzeczypospolitej Polskiej jest uznawany za legalny na podstawie art. 2 ust. 1 ustawy z dnia 12 marca 2022 r. o pomocy…”
 
-[4] **Stypendium dla niepełnosprawnych​** (2026-08-24)
-„utraty ważności poprzedniego orzeczenia, na podstawie którego było przyznane stypendium w danym roku akademickim, o ile z aktualnego orzeczenia wynikać będzie nieprzerwane trwanie niepełnosprawności. Dopuszcza się możliwość złożenia wniosku w trakcie roku akademickiego w przypadku nabycia uprawnień do stypendium dla niepełnosprawnych lub zmiany orzeczonego stopnia niepełnosprawności w trakcie roku akademickiego. Wysokość
+Źródła:
+[1] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[3] https://student.uniwersytetradom.pl/stypendium-dla-niepelnosprawnych/ – 2026-08-24
+[4] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
 
 
 **ASSERT PASS**
@@ -308,19 +306,24 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "drugi_kierunek": "nie", "pobyt": "ukr", "poziom": "I"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, drugi kierunek / dyplom: nie, pobyt: ukr, poziom: I). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, drugi kierunek / dyplom: nie, pobyt: ukr, poziom: I):
 
-[1] **Stypendia socjalne** (2026-10-01)
-„o sytuacji dochodowej i majątkowej członków rodziny studenta . Osoby, które będą ubiegały się o stypendium socjalne na rok akademicki 2026/2027 mogą skorzystać z tego druku. POBIERZ : Wniosek do MOPS Brak dokumentów poświadczających źródła utrzymania rodziny przy dochodzie nieprzekraczającym kwoty 823 zł skutkuje odmową przyznania stypendium socjalnego. Stypendia socjalne Jakie dokumenty dołączamy do wniosku o stypendium? Czyj dochód wliczamy do stypendium? Co jest dochodem rodziny studenta? Doc…”
+**Tak — według zasad UR obywatele Ukrainy (ochrona czasowa / PESEL UKR) mogą ubiegać się o stypendium socjalne**, jeśli spełniają warunki dochodowe i zasady jednego kierunku.
+- Próg dochodu (oficjalna strona): **2099,70 zł** na osobę w rodzinie.
+- Dla obywateli Ukrainy: **oświadczenie – Załącznik nr 8** (PDF w źródłach).
+- Dalej: sprawdź listę dokumentów i terminy na stronie stypendiów na bieżący rok.
 
-[2] **Stypendia socjalne – Zalacznik-Nr-8-Ukraina-1.pdf** (2023-09-12 ⚠️ informacja może być nieaktualna)
-„Załącznik Nr 8 do Regulaminu świadczeń dla studentów OŚWIADCZENIE do stypendium socjalnego dla obywateli Ukrainy/ ЗАЯВА для подання заяви на соціальну допомогу. Radom, dnia _________________ r. (дата) ______________________________________ imię i nazwisko student-ki/a / Ім’я та прізвище студента/-ки ______________________________________ numer albumu / номер студента ______________________________________ kierunek i rok studiów / спеціальність/напрям і рік навчання OŚWIADCZENIE / ЗАЯВА (należy w…”
+Fragmenty ze źródeł:
+- „lne w roku akademickim 2026/2027 wynosi 2099,70 zł. Termin składania wniosków o świadczenia na cały rok akademicki 2026/2027 od 01…”
+- „j albo korzystają z ochrony czasowej albo ochrony uzupełniającej na terytorium Rzeczypospolitej Polskiej, posiadacze certyfikatu poświad…”
 
-[3] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„ZARZĄDZENIE R-32/2024 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 29 lipca 2024 r. w sprawie: wprowadzenia Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. - Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2023 r. poz. 742, z późn. zm.),  art. 41 ust. 10 - 12 ustawy z dnia 12 marca 2022 r. o pomocy obywatelom Ukrainy w związku z konfliktem zbrojnym na terytorium tego państwa (t…”
+Źródła:
+[1] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2023/09/Zalacznik-Nr-8-Ukraina-1.pdf – 2023-09-12
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
 
-[4] **Świadczenia dla studentów – pomoc materialna – Aneks-01-R-41-2025.pdf** (2025-12-15)
-„ANEKS NR 1 z dnia 11 grudnia 2025 r. Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego do zarządzenia R-41/2025 z dnia 24 listopada 2025 r. w sprawie: ogłoszenia załącznika Nr 1 na rok akademicki 2025/2026 do Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2024 r. po
+Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
 
 
 **ASSERT PASS**
@@ -344,19 +347,23 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: pl, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: pl, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie):
 
-[1] **Stypendia socjalne** (2026-10-01)
-„o sytuacji dochodowej i majątkowej członków rodziny studenta . Osoby, które będą ubiegały się o stypendium socjalne na rok akademicki 2026/2027 mogą skorzystać z tego druku. POBIERZ : Wniosek do MOPS Brak dokumentów poświadczających źródła utrzymania rodziny przy dochodzie nieprzekraczającym kwoty 823 zł skutkuje odmową przyznania stypendium socjalnego. Stypendia socjalne Jakie dokumenty dołączamy do wniosku o stypendium? Czyj dochód wliczamy do stypendium? Co jest dochodem rodziny studenta? Doc…”
+**Tak — według zasad UR obywatele Ukrainy (ochrona czasowa / PESEL UKR) mogą ubiegać się o stypendium socjalne**, jeśli spełniają warunki dochodowe i zasady jednego kierunku.
+- Próg dochodu (oficjalna strona): **2099,70 zł** na osobę w rodzinie.
+- Dalej: sprawdź listę dokumentów i terminy na stronie stypendiów na bieżący rok.
 
-[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„ZARZĄDZENIE R-32/2024 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 29 lipca 2024 r. w sprawie: wprowadzenia Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. - Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2023 r. poz. 742, z późn. zm.),  art. 41 ust. 10 - 12 ustawy z dnia 12 marca 2022 r. o pomocy obywatelom Ukrainy w związku z konfliktem zbrojnym na terytorium tego państwa (t…”
+Fragmenty ze źródeł:
+- „lne w roku akademickim 2026/2027 wynosi 2099,70 zł. Termin składania wniosków o świadczenia na cały rok akademicki 2026/2027 od 01…”
+- „j albo korzystają z ochrony czasowej albo ochrony uzupełniającej na terytorium Rzeczypospolitej Polskiej, posiadacze certyfikatu poświad…”
 
-[3] **Świadczenia dla studentów – pomoc materialna – Aneks-01-R-41-2025.pdf** (2025-12-15)
-„ANEKS NR 1 z dnia 11 grudnia 2025 r. Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego do zarządzenia R-41/2025 z dnia 24 listopada 2025 r. w sprawie: ogłoszenia załącznika Nr 1 na rok akademicki 2025/2026 do Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2024 r. poz. 1571, z późn. zm.),  § 3 ust. 5 i 7 Regulaminu świadczeń dla studentów U…”
+Źródła:
+[1] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/R-41-2025.pdf – 2025-12-05
+[4] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
 
-[4] **Świadczenia dla studentów – pomoc materialna – R-41-2025.pdf** (2025-12-05)
-„ZARZĄDZENIE R-41/2025 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 24 listopada 2025 r. w sprawie: ogłoszenia załącznika Nr 1 na rok akademicki 2025/2026 do Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2024 r. poz. 1571, z późn. zm.),  § 3 ust. 5 i 7 Regulaminu świadczeń dla studentów Uniwersytet
+Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
 
 
 **ASSERT PASS**
@@ -380,22 +387,24 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "poziom": "I", "rok": "2", "drugi_kierunek": "nie"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: pl, poziom: I, rok: 2, drugi kierunek / dyplom: nie). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: pl, poziom: I, rok: 2, drugi kierunek / dyplom: nie):
 
-[1] **Stypendium Rektora** (2026-08-24)
-„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj. kwoty 3667,00 zł (wynagrodzenie to od 01.01.2026 r. wynosi …”
+[1] **Stypendium Rektora – Stypendium-Rektora-2024.pdf**
+„na wielu sesjach należy wskazać sesję z najwyższą punktacją, która jako jedyna będzie podlegać kwalifikacji. Pojęciem „sesji naukowej” obejmuje się na potrzeby punktacji również konferencje, sympozja i festiwale naukowe. Uwaga: każdy ze współautorów jest uprawniony do pełnej licz…”
 
-[2] **Stypendium Rektora – Stypendium-Rektora-2024.pdf** (2024-06-27)
-„A. PUNKTACJA ZA ŚREDNIĄ OCEN Średnia ocen na potrzeby rankingu określana jest z zachowaniem poniższych zasad: a) średnia ocen liczona jest zgodnie z zasadami określonymi w Regulaminie studiów. Stypendium Rektora na podstawie wyników w nauce może być przyznane studentowi, który zaliczył rok i uzyskał średnią ocen nie niższą niż 4,0 (średnia ze średniej ocen z każdego semestru w poprzednim roku akademickim), b) na pierwszym roku studiów II stopnia średnią ocen wylicza się z dwóch ostatnich semestr…”
+[2] **Stypendium Rektora**
+„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń,…”
 
-[3] **Świadczenia dla studentów – pomoc materialna** (2026-09-08)
-„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj. kwoty 3667,00 zł (wynagrodzenie to od 01…”
-
-[4] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„ZARZĄDZENIE R-32/2024 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 29 lipca 2024 r. w sprawie: wprowadzenia Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. - Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2023 r. poz. 742, z późn. zm.),  art. 41 ust. 10 - 12 ustawy z dnia 12 marca 2022 r. o pomocy obywatelom Ukrainy w związku z konfliktem zbrojnym na terytorium tego państwa (t…”
+[3] **Świadczenia dla studentów – pomoc materialna**
+„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla ka…”
 
 Źródła:
-[1] ht
+[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/06/Stypendium-Rektora-2024.pdf – 2024-06-27
+[2] https://student.uniwersytetradom.pl/stypendium-rektora/ – 2026-08-24
+[3] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+
+Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
 
 
 **ASSERT PASS**
@@ -418,19 +427,24 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "poziom": "II", "rok": "1", "drugi_kierunek": "nie", "pobyt": "pobyt_czasowy"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, poziom: II, rok: 1, drugi kierunek / dyplom: nie, pobyt: pobyt_czasowy). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, poziom: II, rok: 1, drugi kierunek / dyplom: nie, pobyt: pobyt_czasowy):
 
-[1] **Stypendium Rektora** (2026-08-24)
-„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj. kwoty 3667,00 zł (wynagrodzenie to od 01.01.2026 r. wynosi …”
+[1] **Stypendium Rektora – Stypendium-Rektora-2024.pdf**
+„na wielu sesjach należy wskazać sesję z najwyższą punktacją, która jako jedyna będzie podlegać kwalifikacji. Pojęciem „sesji naukowej” obejmuje się na potrzeby punktacji również konferencje, sympozja i festiwale naukowe. Uwaga: każdy ze współautorów jest uprawniony do pełnej licz…”
 
-[2] **Stypendium Rektora – Stypendium-Rektora-2024.pdf** (2024-06-27)
-„A. PUNKTACJA ZA ŚREDNIĄ OCEN Średnia ocen na potrzeby rankingu określana jest z zachowaniem poniższych zasad: a) średnia ocen liczona jest zgodnie z zasadami określonymi w Regulaminie studiów. Stypendium Rektora na podstawie wyników w nauce może być przyznane studentowi, który zaliczył rok i uzyskał średnią ocen nie niższą niż 4,0 (średnia ze średniej ocen z każdego semestru w poprzednim roku akademickim), b) na pierwszym roku studiów II stopnia średnią ocen wylicza się z dwóch ostatnich semestr…”
+[2] **Stypendium Rektora**
+„Stypendium Rektora UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń,…”
 
-[3] **Świadczenia dla studentów – pomoc materialna** (2026-09-08)
-„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj. kwoty 3667,00 zł (wynagrodzenie to od 01…”
+[3] **Świadczenia dla studentów – pomoc materialna**
+„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla ka…”
 
-[4] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„ZARZĄDZENIE R-32/2024 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 29 lipca 2024 r. w sprawie: wprowadzenia Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. - Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2023 r. poz. 742, z późn. zm.),  art. 41 ust. 10 - 12 ustawy z dnia 12 marca 2022 r. o pomocy obywatelom Ukrainy w związku z konfliktem zbrojnym na terytorium 
+Źródła:
+[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/06/Stypendium-Rektora-2024.pdf – 2024-06-27
+[2] https://student.uniwersytetradom.pl/stypendium-rektora/ – 2026-08-24
+[3] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+
+Na indywidualną decyzję komisji możesz dopytać Biuro Obsługi Studenta — po sprawdzeniu dokumentów z listy powyżej.
 
 
 **ASSERT PASS**
@@ -453,19 +467,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "drugi_kierunek": "nie", "niepelnosprawnosc": "tak"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: pl, drugi kierunek / dyplom: nie, orzeczenie o niepełnosprawności: tak). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: pl, drugi kierunek / dyplom: nie, orzeczenie o niepełnosprawności: tak):
 
-[1] **Do pobrania – Regulamin-korzystania-z-bezplatnego-transportu-swiadczonego-na-rzecz-niepelnosprawnych-studentow-UTH.docx** (2022-11-10 ⚠️ informacja może być nieaktualna)
-„Regulamin korzystania z bezpłatnego transportu świadczonego na rzecz niepełnosprawnych studentów/doktorantów na Uniwersytecie Technologiczno-Humanistycznym im. Kazimierza Pułaskiego w Radomiu § 1 Ogólne zasady przyznawania form wsparcia są określone w „Regulaminie przyznawania wsparcia oraz dysponowania środkami dotacji na zadania wynikające ze stwarzania studentom i doktorantom będącym osobami niepełnosprawnymi warunków do pełnego udziału w procesie kształcenia na Uniwersytecie Technologiczno-H…”
+[1] **Do pobrania – Regulamin-korzystania-z-bezplatnego-transportu-swiadczonego-na-rzecz-niepelnosprawnych-studentow-UTH.docx**
+„Regulamin korzystania z bezpłatnego transportu świadczonego na rzecz niepełnosprawnych studentów/doktorantów na Uniwersytecie Technologiczno-Humanistycznym im. Kazimierza Pułaskiego w Radomiu § 1 Ogólne zasady przyznawania form wsparcia są określone w „Regulaminie przyznawania ws…”
 
-[2] **Do pobrania – Wskazowki-dla-osob-prowadzacych-zajecia-dydaktyczne-ze-studentami-z-niepelnosprawnoscia-mowy.pdf** (2022-11-10 ⚠️ informacja może być nieaktualna)
-„Wskazówki dla osób prowadzących zajęcia dydaktyczne ze studentami z niepełnosprawnością mowy Autor: Andrzej Wójtowicz 1. Przed studentami z niepełnosprawnością mowy należy stawiać takie same wymagania, jak przed innymi studentami, ponieważ zamierzają oni zdobyć wyższe wykształcenie, a to uczelnia odpowiada za uzyskany przez nich dyplom. 2. Osobom mającym trudności z wymową należy poświęcić więcej czasu i uwagi, utrzymując z nimi kontakt wzrokowy. 3. Należy zachęcać studenta z problemami w mowie …”
+[2] **Do pobrania – Wskazowki-dla-osob-prowadzacych-zajecia-dydaktyczne-ze-studentami-z-niepelnosprawnoscia-ruchowa.pdf**
+„Wskazówki dla osób prowadzących zajęcia dydaktyczne ze studentami z niepełnosprawnością ruchową Autorka: Małgorzata Radziszewska 1. Przed studentami z niepełnosprawnością ruchową należy stawiać takie same wymagania jak przed innymi studentami, ponieważ zamierzają oni zdobyć wyższ…”
 
-[3] **Do pobrania – Wskazowki-dla-osob-prowadzacych-zajecia-dydaktyczne-ze-studentami-z-niepelnosprawnoscia-ruchowa.pdf** (2022-11-10 ⚠️ informacja może być nieaktualna)
-„Wskazówki dla osób prowadzących zajęcia dydaktyczne ze studentami z niepełnosprawnością ruchową Autorka: Małgorzata Radziszewska 1. Przed studentami z niepełnosprawnością ruchową należy stawiać takie same wymagania jak przed innymi studentami, ponieważ zamierzają oni zdobyć wyższe wykształcenie, a to uczelnia odpowiada za uzyskany przez nich dyplom. 2. Należy pamiętać o indywidualnym traktowaniu osób z niepełnosprawnością narządu ruchu - każda osoba ma inne możliwości motoryczne wynikające z rod…”
+[3] **Stypendium dla niepełnosprawnych​**
+„o pracy, albo niezdolności do samodzielnej egzystencji, albo o częściowej niezdolności do pracy. Stypendium to jest przyznawane odrębnie i niezależnie od stypendium socjalnego oraz stypendium Rektora. Student ubiegający się o przyznanie stypendium dla osób niepełnosprawnych skład…”
 
-[4] **Do pobrania – Wskazowki-do-pracy-z-osobami-niepelnosprawnymi-ze-wzgledu-na-ogolny-stan-zdrowia.pdf** (2022-11-10 ⚠️ informacja może być nieaktualna)
-„Wskazówki dla osób prowadzących zajęcia dydaktyczne ze studentami niepełnosprawnymi ze względu na ogólny stan zdrowia Najcz
+Źródła:
+[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/11/Regulamin-korzystania-z-bezplatnego-transportu-swiadczonego-na-rzecz-niepelnosprawnych-studentow-UTH.docx – 2022-11-10 ⚠️ informacja może być nieaktualna
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/11/Wskazowki-dla-osob-prowadzacych-zajecia-dydaktyczne-ze-studentami-z-niepelnosprawnoscia-ruchowa.pdf – 2022-11-10 ⚠️ informacja może być nieaktualna
+[3] https://student.uniwersytetradom.pl/stypendium-dla-niepelnosprawnych/ – 2026-08-24
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/11/Wskazowki-dla-osob-prowadzacych-zajecia-dydaktyczne-ze-studentami-z-niepelnosprawnoscia-mowy.pdf – 2022-11-10 ⚠️ informacja może być nieaktualna
 
 
 **ASSERT PASS**
@@ -477,37 +494,43 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "doktorant", "poziom": "SD", "tryb": "stacjonarne", "rok": "1", "status_doktor": true})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: doktorant, poziom: SD, tryb: stacjonarne, rok: 1). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: doktorant, poziom: SD, tryb: stacjonarne, rok: 1):
 
-[1] **Stypendia doktoranckie** (2022-11-03 ⚠️ informacja może być nieaktualna)
-„Stypendia doktoranckie Regulamin przyznawania stypendiów doktoranckich oraz tryb przyznawania ich zwiększenia z dotacji projakościowej UWAGA- Aneks do Zarządzenia ZARZĄDZENIE R-67/2020 w sprawie : uruchomienia środków finansowych na wypłatę stypendiów doktoranckich, ustalenia wysokości tych stypendiów oraz kwoty ich zwiększenia z dotacji na dofinansowanie zadań projakościowych dla uczestników studiów doktoranckich. Wniosek o przyznanie stypendium doktoranckiego / Wniosek o zwiększenie stypendium…”
+[1] **Studia doktoranckie**
+„Radom Szczegółowe zasady i kryteria rekrutacji do Szkoły Doktorskiej w UTH Radom Rada Szkoły Doktorskiej – ZARZĄDZENIE R-15/2019 SPRAWDŹ KIERUNKI Techniczne i ścisłe Nietechniczne Techniczne i ścisłe Bezpieczeństwo i jakość produkcji żywności (NOWOŚĆ) Bezpieczeństwo i higiena pra…”
 
-[2] **Studia doktoranckie** (2021-11-25 ⚠️ informacja może być nieaktualna)
-„Studia doktoranckie Informujemy, że w roku akademickim 2020/2021 nabór do Szkoły Doktorskiej UTH Rad. nie odbędzie się. Szkoła Doktorska Uniwersytetu Technologiczno-Humanistycznego im.Kazimierza Pułaskiego w Radomiu prowadzi kształcenie w dziedzinie nauk inżynieryjno-technicznych w dyscyplinach naukowych: automatyka, elektronika i elektrotechnika, inżynieria lądowa i transport. Regulamin szkoły doktorskiej Załączniki do Regulaminu: Nr. 1 – Wniosek o wyznaczenie promotora/ promotora pomocniczego …”
+[2] **Stypendia doktoranckie**
+„Stypendia doktoranckie Regulamin przyznawania stypendiów doktoranckich oraz tryb przyznawania ich zwiększenia z dotacji projakościowej UWAGA- Aneks do Zarządzenia ZARZĄDZENIE R-67/2020 w sprawie : uruchomienia środków finansowych na wypłatę stypendiów doktoranckich, ustalenia wys…”
 
-[3] **BIP: Szkoła Doktorska** (— ⚠️ informacja może być nieaktualna)
-„Wróć Szkoła Doktorska Regulamin Szkoły Doktorskiej UTH Radom Załączniki do Regulaminu: nr 1 - Wniosek o wyznaczenie promotora/ promotora pomocniczego nr 2 - Wniosek o zmianę promotora/ promotora pomocniczego nr 3 - Wniosek o przedłużenie terminu złożenia rozprawy doktorskiej uchwała nr 8/10/2019 z dnia 18 października 2019 r. w sprawie uzgodnienia treści Regulaminu Szkoły Doktorskiej Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu Drukuj Zapisz do PDF metryczka Me…”
+[3] **BIP: Szkoła Doktorska**
+„Wróć Szkoła Doktorska Regulamin Szkoły Doktorskiej UTH Radom Załączniki do Regulaminu: nr 1 - Wniosek o wyznaczenie promotora/ promotora pomocniczego nr 2 - Wniosek o zmianę promotora/ promotora pomocniczego nr 3 - Wniosek o przedłużenie terminu złożenia rozprawy doktorskiej uchw…”
 
-[4] **BIP: Uchwała nr 000-2/1/2026 – powołania komisji doktorskich dyscyplin.** (— ⚠️ informacja może być nieaktualna)
-„Wróć Uchwała nr 000-2/1/2026 Dane uchwały nr 000-2/1/2026 Uchwała nr: 000-2/1/2026 Jakiego organu: Senatu Z dnia: 26.02.2026 W sprawie: powołania komisji doktorskich dyscyplin. Zmieniana przez: 000-3/4/2026 , 000-9/3/2026 Status: Obowiązująca Tagi: uchwała senatu Załączniki: Uchwała nr 000-2/1/2026 . Plik w formacie: pdf . Rozmiar pliku: 402 kB . Otwiera się w nowej karcie. Plik w formacie pdf 402 kB metryczka Załącznik Odpowiedzialny za treść: Senat URad. Wytworzył
+Źródła:
+[1] https://rekrutacja.uniwersytetradom.pl/studia-doktoranckie/ – 2021-11-25 ⚠️ informacja może być nieaktualna
+[2] https://student.uniwersytetradom.pl/stypendia-doktoranckie/ – 2022-11-03 ⚠️ informacja może być nieaktualna
+[3] https://bip.uniwersytetradom.pl/artykul/105-171-szkola-doktorska – — ⚠️ informacja może być nieaktualna
+[4] https://bip.uniwersytetradom.pl/attachments/5568/download/Uchwa%25C5%2582a%2520nr%2520000-9%2F2%2F2026 – 2026-10-29
 
 **Użytkownik:** jestem doktorantem szkoly doktorskiej obywatel polski
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "doktorant", "poziom": "SD", "tryb": "stacjonarne", "rok": "1", "status_doktor": true})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: doktorant, poziom: SD, tryb: stacjonarne, rok: 1). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: doktorant, poziom: SD, tryb: stacjonarne, rok: 1):
 
-[1] **Stypendia doktoranckie** (2022-11-03 ⚠️ informacja może być nieaktualna)
-„Stypendia doktoranckie Regulamin przyznawania stypendiów doktoranckich oraz tryb przyznawania ich zwiększenia z dotacji projakościowej UWAGA- Aneks do Zarządzenia ZARZĄDZENIE R-67/2020 w sprawie : uruchomienia środków finansowych na wypłatę stypendiów doktoranckich, ustalenia wysokości tych stypendiów oraz kwoty ich zwiększenia z dotacji na dofinansowanie zadań projakościowych dla uczestników studiów doktoranckich. Wniosek o przyznanie stypendium doktoranckiego / Wniosek o zwiększenie stypendium…”
+[1] **Studia doktoranckie**
+„Radom Szczegółowe zasady i kryteria rekrutacji do Szkoły Doktorskiej w UTH Radom Rada Szkoły Doktorskiej – ZARZĄDZENIE R-15/2019 SPRAWDŹ KIERUNKI Techniczne i ścisłe Nietechniczne Techniczne i ścisłe Bezpieczeństwo i jakość produkcji żywności (NOWOŚĆ) Bezpieczeństwo i higiena pra…”
 
-[2] **Studia doktoranckie** (2021-11-25 ⚠️ informacja może być nieaktualna)
-„Studia doktoranckie Informujemy, że w roku akademickim 2020/2021 nabór do Szkoły Doktorskiej UTH Rad. nie odbędzie się. Szkoła Doktorska Uniwersytetu Technologiczno-Humanistycznego im.Kazimierza Pułaskiego w Radomiu prowadzi kształcenie w dziedzinie nauk inżynieryjno-technicznych w dyscyplinach naukowych: automatyka, elektronika i elektrotechnika, inżynieria lądowa i transport. Regulamin szkoły doktorskiej Załączniki do Regulaminu: Nr. 1 – Wniosek o wyznaczenie promotora/ promotora pomocniczego …”
+[2] **Stypendia doktoranckie**
+„Stypendia doktoranckie Regulamin przyznawania stypendiów doktoranckich oraz tryb przyznawania ich zwiększenia z dotacji projakościowej UWAGA- Aneks do Zarządzenia ZARZĄDZENIE R-67/2020 w sprawie : uruchomienia środków finansowych na wypłatę stypendiów doktoranckich, ustalenia wys…”
 
-[3] **BIP: Szkoła Doktorska** (— ⚠️ informacja może być nieaktualna)
-„Wróć Szkoła Doktorska Regulamin Szkoły Doktorskiej UTH Radom Załączniki do Regulaminu: nr 1 - Wniosek o wyznaczenie promotora/ promotora pomocniczego nr 2 - Wniosek o zmianę promotora/ promotora pomocniczego nr 3 - Wniosek o przedłużenie terminu złożenia rozprawy doktorskiej uchwała nr 8/10/2019 z dnia 18 października 2019 r. w sprawie uzgodnienia treści Regulaminu Szkoły Doktorskiej Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu Drukuj Zapisz do PDF metryczka Me…”
+[3] **BIP: Szkoła Doktorska**
+„Wróć Szkoła Doktorska Regulamin Szkoły Doktorskiej UTH Radom Załączniki do Regulaminu: nr 1 - Wniosek o wyznaczenie promotora/ promotora pomocniczego nr 2 - Wniosek o zmianę promotora/ promotora pomocniczego nr 3 - Wniosek o przedłużenie terminu złożenia rozprawy doktorskiej uchw…”
 
-[4] **BIP: Uchwała nr 000-2/1/2026 – powołania komisji doktorskich dyscyplin.** (— ⚠️ informacja może być nieaktualna)
-„Wróć Uchwała nr 000-2/1/2026 Dane uchwały nr 000-2/1/2026 Uchwała nr: 000-2/1/2026 Jakiego organu: Senatu Z dnia: 26.02.2026 W sprawie: powołania komisji doktorskich dyscyplin. Zmieniana przez: 000-3/4/2026 , 000-9/3/2026 Status: Obowiązująca Tagi: uchwała senatu Załączniki: Uchwała nr 000-2/1/2026 . Plik w formacie: pdf . Rozmiar pliku: 402 kB . Otwiera się w nowej karcie. Plik w formacie pdf 402 kB metryczka Załącznik Odpowiedzialny za treść: Senat URad. Wytworzył
+Źródła:
+[1] https://rekrutacja.uniwersytetradom.pl/studia-doktoranckie/ – 2021-11-25 ⚠️ informacja może być nieaktualna
+[2] https://student.uniwersytetradom.pl/stypendia-doktoranckie/ – 2022-11-03 ⚠️ informacja może być nieaktualna
+[3] https://bip.uniwersytetradom.pl/artykul/105-171-szkola-doktorska – — ⚠️ informacja może być nieaktualna
+[4] https://bip.uniwersytetradom.pl/attachments/5568/download/Uchwa%25C5%2582a%2520nr%2520000-9%2F2%2F2026 – 2026-10-29
 
 
 **ASSERT PASS**
@@ -531,19 +554,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "tak"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: pl, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: tak). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: pl, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: tak):
 
-[1] **Świadczenia dla studentów – pomoc materialna** (2026-09-08)
-„dotyczące różnych rodzajów świadczeń przyznawanych w Uczelni (a szczególnie jakie dokumenty dołączamy do konkretnych wniosków). Ważne informacje dla wszystkich ubiegających się o świadczenia w uczelni Student kształcący się równocześnie na kilku kierunkach studiów może otrzymywać świadczenia tylko na jednym, wskazanym przez siebie kierunku studiów. Stosowne oświadczenie student zamieszcza na wnioskach o przyznanie świadczenia. Świadczenia przysługują na studiach pierwszego stopnia, studiach drug…”
+[1] **Świadczenia dla studentów – pomoc materialna**
+„dotyczące różnych rodzajów świadczeń przyznawanych w Uczelni (a szczególnie jakie dokumenty dołączamy do konkretnych wniosków). Ważne informacje dla wszystkich ubiegających się o świadczenia w uczelni Student kształcący się równocześnie na kilku kierunkach studiów może otrzymywać…”
 
-[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„wie cennika opłat za zakwaterowanie w domach studenta. 44 Załącznik Nr 7 do Regulaminu (…) OŚWIADCZENIE do stypendium socjalnego dla obywateli Ukrainy/ЗАЯВА для подання заяви на соціальну допомогу. Radom, dnia _________________ r. (дата) ______________________________________ imię i nazwisko studentki/a/Ім’я та прізвище студента/-ки ______________________________________ numer albumu/номер студента ______________________________________ kierunek i rok studiów/спеціальність/напрям і рік навчання …”
+[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf**
+„wie cennika opłat za zakwaterowanie w domach studenta. 44 Załącznik Nr 7 do Regulaminu (…) OŚWIADCZENIE do stypendium socjalnego dla obywateli Ukrainy/ЗАЯВА для подання заяви на соціальну допомогу. Radom, dnia _________________ r. (дата) ______________________________________ imi…”
 
-[3] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„kończenia (podać nazwę uczelni, lata i kierunek studiów/studia doktoranckie) _________________________________________________________________ i posiadam tytuł:______________________________________ 3. studiowałem/am na studiach: (obowiązkowo wskazać wszystkie studiowane dotychczas kierunki studiów) NIE TAK studia: I stopnia II stopnia jednolite magisterskie doktoranckie (podać nazwę uczelni, ilość lat i kierunek studiów/studia doktoranckie) ______________________________________________________…”
+[3] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf**
+„kończenia (podać nazwę uczelni, lata i kierunek studiów/studia doktoranckie) _________________________________________________________________ i posiadam tytuł:______________________________________ 3. studiowałem/am na studiach: (obowiązkowo wskazać wszystkie studiowane dotychcz…”
 
-[4] **Akty prawne – 24-zal_-do-uchwaly-t_j_-Regulaminu-studiow2.pdf** (2022-10-24 ⚠️ informacja może być nieaktualna)
-„z, a w przypadku prowadzenia teczki akt osobowych studenta w postaci elektronicznej – kopia przekazanych dokumentów. 5. STUDIA RÓWNOLEGŁE, ZAJĘCIA DODATKOWE, ZAJĘCIA NIEOBJĘTE PROGRAMEM STUDIÓW § 13 1. Student może studiować na więcej niż jednym kierunku studiów, także w innych uczelniach. 2. Podjęcie dodatkowego kierunku studiów (studiów równoległych) na Uniwersytecie dopuszczaln
+Źródła:
+[1] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/24-zal_-do-uchwaly-t_j_-Regulaminu-studiow2.pdf – 2022-10-24 ⚠️ informacja może być nieaktualna
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/06-zal.-do-uchwaly-t.j.-Regulamin-studiow-UTH-Radom.pdf – 2022-10-24 ⚠️ informacja może być nieaktualna
 
 
 **ASSERT PASS**
@@ -566,19 +592,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "niestacjonarne", "poziom": "I"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, tryb: niestacjonarne, poziom: I). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, tryb: niestacjonarne, poziom: I):
 
-[1] **Opłaty za usługi edukacyjne** (2024-03-08)
-„Oplaty za usługi edukacyjne Opłaty przyjmowane są na indywidualne konta bankowe wygenerowane poprzez System e-Uniwersytet (Wirtualna Uczelnia) . Dostęp do Systemu Wirtualna Uczelnia jest możliwy poprzez stronę: Wirtualna Uczelnia Loginem jest numer_albumu@student.uthrad.pl Indywidualny nr konta bankowego umieszczony jest w zakładce: Twoje dane finansowe -> Dane finansowe. (indywidualny numer konta bankowego w formacie 26 cyfrowym XX 1750 1312 5800 0000 00AA AAAA , gdzie XX – 2 cyfry kontrolne, A…”
+[1] **Opłaty za usługi edukacyjne**
+„sem. 2. rata II.) odsetki, powtarzanie przedmiotu wraz z podaniem numeru semestru (odsetki sem. 6, powtarzanie przed.: matematyka sem. 6) basen, legitymacja itp. (basen sem. 5, duplikat legitymacji). W przypadku osób, które studiują na więcej niż jednym kierunku , konieczne jest …”
 
-[2] **Akty prawne – Akty-prawne-oplaty-R-38-2020-1.pdf** (2022-10-26 ⚠️ informacja może być nieaktualna)
-„ZARZĄDZENIE R-38/2020 Rektora Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu z dnia 25 czerwca 2020 r. w sprawie: wysokości opłat za świadczone przez UTH Radom usługi edukacyjne, pobieranych od studentów studiów stacjonarnych i niestacjonarnych oraz opłat wnoszonych za wydanie dokumentów związanych z przebiegiem studiów, w roku akademickim 2020/2021. Na podstawie:  art. 79, art. 80 oraz art. 323 i 324 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym…”
+[2] **Akty prawne – oplaty-za-uslugi-edukacyjne-2018-2019.pdf**
+„ł do każdej raty. Płatność czesnego w ratach należy zadeklarować w Biurze Obsługi Studenta najpóźniej w dniu poprzedzającym termin płatności, o którym mowa w ust. 2. Terminy i wysokości rat wynoszą: Podstawowa opłata Wysokość Terminy płatności semestralna w zł rat semestr zimowy …”
 
-[3] **Akty prawne – Akty-prawne-oplaty-R-38-2020.pdf** (2022-10-26 ⚠️ informacja może być nieaktualna)
-„ZARZĄDZENIE R-38/2020 Rektora Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu z dnia 25 czerwca 2020 r. w sprawie: wysokości opłat za świadczone przez UTH Radom usługi edukacyjne, pobieranych od studentów studiów stacjonarnych i niestacjonarnych oraz opłat wnoszonych za wydanie dokumentów związanych z przebiegiem studiów, w roku akademickim 2020/2021. Na podstawie:  art. 79, art. 80 oraz art. 323 i 324 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym…”
+[3] **Akty prawne – oplaty-za-uslugi-edukacyjne-2019-2020.pdf**
+„ty manipulacyjne w wysokości 10 zł do każdej raty. Płatność czesnego w ratach należy zadeklarować w Biurze Obsługi Studenta najpóźniej w dniu poprzedzającym termin płatności, o którym mowa w ust. 2. 5 Terminy i wysokości rat wynoszą: Podstawowa opłata Wysokość Terminy płatności s…”
 
-[4] **Akty prawne – aneks-oplaty-za-uslugi-edukacyjne-2017.pdf** (2022-10-26 ⚠️ informacja może być nieaktualna)
-„ANEKS NR 2 z dnia 19 lipca 2017 r. Rektora Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu do zarządzenia R-25/2017 z dnia 19 czerwca 2017 r. w sprawie: odpłatności za świadczone przez UTH Radom w roku akademickim 2017/2018 usługi edukacyjne, pobieranych od studentów, doktorantów studiów stacjonarnych i niestacjonarnych oraz opłat wnoszonych za wydanie dokumentów związanych z przebiegiem studiów. Na podstawie: 
+Źródła:
+[1] https://student.uniwersytetradom.pl/oplaty-za-uslugi-edukacyjne/ – 2024-03-08
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/oplaty-za-uslugi-edukacyjne-2018-2019.pdf – 2022-10-26 ⚠️ informacja może być nieaktualna
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/oplaty-za-uslugi-edukacyjne-2019-2020.pdf – 2022-10-26 ⚠️ informacja może być nieaktualna
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/Akty-prawne-oplaty-R-38-2020-1.pdf – 2022-10-26 ⚠️ informacja może być nieaktualna
 
 
 **ASSERT PASS**
@@ -600,19 +629,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"tryb": "stacjonarne", "status": "pl", "poziom": "I"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: tryb: stacjonarne, status: pl, poziom: I). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: tryb: stacjonarne, status: pl, poziom: I):
 
-[1] **Opłaty za usługi edukacyjne** (2024-03-08)
-„Oplaty za usługi edukacyjne Opłaty przyjmowane są na indywidualne konta bankowe wygenerowane poprzez System e-Uniwersytet (Wirtualna Uczelnia) . Dostęp do Systemu Wirtualna Uczelnia jest możliwy poprzez stronę: Wirtualna Uczelnia Loginem jest numer_albumu@student.uthrad.pl Indywidualny nr konta bankowego umieszczony jest w zakładce: Twoje dane finansowe -> Dane finansowe. (indywidualny numer konta bankowego w formacie 26 cyfrowym XX 1750 1312 5800 0000 00AA AAAA , gdzie XX – 2 cyfry kontrolne, A…”
+[1] **Opłaty za usługi edukacyjne**
+„sem. 2. rata II.) odsetki, powtarzanie przedmiotu wraz z podaniem numeru semestru (odsetki sem. 6, powtarzanie przed.: matematyka sem. 6) basen, legitymacja itp. (basen sem. 5, duplikat legitymacji). W przypadku osób, które studiują na więcej niż jednym kierunku , konieczne jest …”
 
-[2] **Akty prawne – Akty-prawne-oplaty-R-38-2020-1.pdf** (2022-10-26 ⚠️ informacja może być nieaktualna)
-„ZARZĄDZENIE R-38/2020 Rektora Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu z dnia 25 czerwca 2020 r. w sprawie: wysokości opłat za świadczone przez UTH Radom usługi edukacyjne, pobieranych od studentów studiów stacjonarnych i niestacjonarnych oraz opłat wnoszonych za wydanie dokumentów związanych z przebiegiem studiów, w roku akademickim 2020/2021. Na podstawie:  art. 79, art. 80 oraz art. 323 i 324 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym…”
+[2] **Akty prawne – oplaty-za-uslugi-edukacyjne-2018-2019.pdf**
+„ł do każdej raty. Płatność czesnego w ratach należy zadeklarować w Biurze Obsługi Studenta najpóźniej w dniu poprzedzającym termin płatności, o którym mowa w ust. 2. Terminy i wysokości rat wynoszą: Podstawowa opłata Wysokość Terminy płatności semestralna w zł rat semestr zimowy …”
 
-[3] **Akty prawne – Akty-prawne-oplaty-R-38-2020.pdf** (2022-10-26 ⚠️ informacja może być nieaktualna)
-„ZARZĄDZENIE R-38/2020 Rektora Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu z dnia 25 czerwca 2020 r. w sprawie: wysokości opłat za świadczone przez UTH Radom usługi edukacyjne, pobieranych od studentów studiów stacjonarnych i niestacjonarnych oraz opłat wnoszonych za wydanie dokumentów związanych z przebiegiem studiów, w roku akademickim 2020/2021. Na podstawie:  art. 79, art. 80 oraz art. 323 i 324 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym…”
+[3] **Akty prawne – oplaty-za-uslugi-edukacyjne-2019-2020.pdf**
+„ty manipulacyjne w wysokości 10 zł do każdej raty. Płatność czesnego w ratach należy zadeklarować w Biurze Obsługi Studenta najpóźniej w dniu poprzedzającym termin płatności, o którym mowa w ust. 2. 5 Terminy i wysokości rat wynoszą: Podstawowa opłata Wysokość Terminy płatności s…”
 
-[4] **Akty prawne – aneks-oplaty-za-uslugi-edukacyjne-2017.pdf** (2022-10-26 ⚠️ informacja może być nieaktualna)
-„ANEKS NR 2 z dnia 19 lipca 2017 r. Rektora Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu do zarządzenia R-25/2017 z dnia 19 czerwca 2017 r. w sprawie: odpłatności za świadczone przez UTH Radom w roku akademickim 2017/2018 usługi edukacyjne, pobieranych od studentów, doktorantów studiów stacjonarnych i niestacjonarnych oraz opłat wnoszonych za wydanie dokumentów związanych z przebiegiem studiów. Na podstawie: – art. 99 ust
+Źródła:
+[1] https://student.uniwersytetradom.pl/oplaty-za-uslugi-edukacyjne/ – 2024-03-08
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/oplaty-za-uslugi-edukacyjne-2018-2019.pdf – 2022-10-26 ⚠️ informacja może być nieaktualna
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/oplaty-za-uslugi-edukacyjne-2019-2020.pdf – 2022-10-26 ⚠️ informacja może być nieaktualna
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/Akty-prawne-oplaty-R-38-2020-1.pdf – 2022-10-26 ⚠️ informacja może być nieaktualna
 
 
 **ASSERT PASS**
@@ -634,22 +666,22 @@ You can reply in one sentence, e.g. “international student with a residence pe
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "poziom": "I"})_:
 
-**No-LLM mode** – top matching excerpts from official UR pages (profile: status: cudzoziemiec, mode: stacjonarne, level: I). Verify in the source:
+Based on official UR pages (profile: status: cudzoziemiec, mode: stacjonarne, level: I):
 
-[1] **Opłaty za usługi edukacyjne** (2024-03-08)
-„Oplaty za usługi edukacyjne Opłaty przyjmowane są na indywidualne konta bankowe wygenerowane poprzez System e-Uniwersytet (Wirtualna Uczelnia) . Dostęp do Systemu Wirtualna Uczelnia jest możliwy poprzez stronę: Wirtualna Uczelnia Loginem jest numer_albumu@student.uthrad.pl Indywidualny nr konta bankowego umieszczony jest w zakładce: Twoje dane finansowe -> Dane finansowe. (indywidualny numer konta bankowego w formacie 26 cyfrowym XX 1750 1312 5800 0000 00AA AAAA , gdzie XX – 2 cyfry kontrolne, A…”
+[1] **Opłaty za usługi edukacyjne**
+„sem. 2. rata II.) odsetki, powtarzanie przedmiotu wraz z podaniem numeru semestru (odsetki sem. 6, powtarzanie przed.: matematyka sem. 6) basen, legitymacja itp. (basen sem. 5, duplikat legitymacji). W przypadku osób, które studiują na więcej niż jednym kierunku , konieczne jest …”
 
-[2] **Akty prawne – Akty-prawne-oplaty-R-38-2020-1.pdf** (2022-10-26 ⚠️ may be outdated)
-„ZARZĄDZENIE R-38/2020 Rektora Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu z dnia 25 czerwca 2020 r. w sprawie: wysokości opłat za świadczone przez UTH Radom usługi edukacyjne, pobieranych od studentów studiów stacjonarnych i niestacjonarnych oraz opłat wnoszonych za wydanie dokumentów związanych z przebiegiem studiów, w roku akademickim 2020/2021. Na podstawie:  art. 79, art. 80 oraz art. 323 i 324 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym…”
+[2] **Akty prawne – oplaty-za-uslugi-edukacyjne-2018-2019.pdf**
+„ł do każdej raty. Płatność czesnego w ratach należy zadeklarować w Biurze Obsługi Studenta najpóźniej w dniu poprzedzającym termin płatności, o którym mowa w ust. 2. Terminy i wysokości rat wynoszą: Podstawowa opłata Wysokość Terminy płatności semestralna w zł rat semestr zimowy …”
 
-[3] **Akty prawne – Akty-prawne-oplaty-R-38-2020.pdf** (2022-10-26 ⚠️ may be outdated)
-„ZARZĄDZENIE R-38/2020 Rektora Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu z dnia 25 czerwca 2020 r. w sprawie: wysokości opłat za świadczone przez UTH Radom usługi edukacyjne, pobieranych od studentów studiów stacjonarnych i niestacjonarnych oraz opłat wnoszonych za wydanie dokumentów związanych z przebiegiem studiów, w roku akademickim 2020/2021. Na podstawie:  art. 79, art. 80 oraz art. 323 i 324 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym…”
-
-[4] **Akty prawne – aneks-oplaty-za-uslugi-edukacyjne-2017.pdf** (2022-10-26 ⚠️ may be outdated)
-„ANEKS NR 2 z dnia 19 lipca 2017 r. Rektora Uniwersytetu Technologiczno-Humanistycznego im. Kazimierza Pułaskiego w Radomiu do zarządzenia R-25/2017 z dnia 19 czerwca 2017 r. w sprawie: odpłatności za świadczone przez UTH Radom w roku akademickim 2017/2018 usługi edukacyjne, pobieranych od studentów, doktorantów studiów stacjonarnych i niestacjonarnych oraz opłat wnoszonych za wydanie dokumentów związanych z przebiegiem studiów. Na podstawie: – art. 99 ust. 1 i 2 ustawy z dnia 27 lipca 2005 r. – …”
+[3] **Akty prawne – oplaty-za-uslugi-edukacyjne-2019-2020.pdf**
+„ty manipulacyjne w wysokości 10 zł do każdej raty. Płatność czesnego w ratach należy zadeklarować w Biurze Obsługi Studenta najpóźniej w dniu poprzedzającym termin płatności, o którym mowa w ust. 2. 5 Terminy i wysokości rat wynoszą: Podstawowa opłata Wysokość Terminy płatności s…”
 
 Sources:
-[
+[1] https://student.uniwersytetradom.pl/oplaty-za-uslugi-edukacyjne/ – 2024-03-08
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/oplaty-za-uslugi-edukacyjne-2018-2019.pdf – 2022-10-26 ⚠️ may be outdated
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/oplaty-za-uslugi-edukacyjne-2019-2020.pdf – 2022-10-26 ⚠️ may be outdated
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/Akty-prawne-oplaty-R-38-2020-1.pdf – 2022-10-26 ⚠️ may be outdated
 
 
 **ASSERT PASS**
@@ -661,44 +693,43 @@ Sources:
 
 **Asystent** _(mode=wyszukiwanie; profile={})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: —). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: —):
 
-[1] **Konferencje Naukowe – E.-Gulinska-P.-Swital-Aktualne-problemy-prawa-i-nauk-o-bezpieczenstwie.pdf** (2024-11-06)
+[1] **Konferencje Naukowe – E.-Gulinska-P.-Swital-Aktualne-problemy-prawa-i-nauk-o-bezpieczenstwie.pdf**
 „powstrzymał się od popełnienia przestępstwa, mimo posiadania świadomości zarówno tego, co może zrobić oraz jak jego zacho- wanie z punktu widzenia wymogów społecznych i prawnych zostanie ocenione [10].…”
 
-[2] **Konferencje Naukowe – Interdyscyplinarne-horyzonty.-Aktualne-problemy-ekonomii-prawa-bezpieczenstwa-pedagogiki-i-sztuki-E.-Gulinska-M.-Orzechowska-Ochnia-1.pdf** (2026-03-09)
-„bienia się utrwa- lają, szkliwo się witryfikuje, zamienia się w niezdzieralną powłokę i chroni ceramikę przed wchłanialnością wody, pod warunkiem, że zostało wypalone w odpowiednio wysoką temperaturę. 3.6. Poprawki Czasem zdarza się, że ceramika z pieca nie „wyjdzie” tak jak oczekiwaliśmy, np. szkliwo da inny efekt niż zamierzony albo spłynie za bardzo (za gruba warstwa) i zanieczyszcza spód kubka, wtedy trzeba zeszlifować to szlifierką z tarczą diamen- tową. Może się zdarzyć również tak, że nie…”
+[2] **Konferencje Naukowe – Interdyscyplinarne-horyzonty.-Aktualne-problemy-ekonomii-prawa-bezpieczenstwa-pedagogiki-i-sztuki-E.-Gulinska-M.-Orzechowska-Ochnia-1.pdf**
+„bienia się utrwa- lają, szkliwo się witryfikuje, zamienia się w niezdzieralną powłokę i chroni ceramikę przed wchłanialnością wody, pod warunkiem, że zostało wypalone w odpowiednio wysoką temperaturę. 3.6. Poprawki Czasem zdarza się, że ceramika z pieca nie „wyjdzie” tak jak ocze…”
 
-[3] **Konferencje Naukowe – Interdyscyplinarne-horyzonty.-Aktualne-problemy-ekonomii-prawa-bezpieczenstwa-pedagogiki-i-sztuki-E.-Gulinska-M.-Orzechowska-Ochnia-1.pdf** (2026-03-09)
-„aturę masa może się stopić. Pamiętajmy również, że glina podczas wypału traci wodę i kurczy się, czyli traci na swojej objętości. W zależności od wła- ściwości gliny może się ona kurczyć od 1% do 20%. 3.4. Zdobienie Teraz przyszedł czas na zdobienie, czyli dekorowanie kubka. Możemy to zrobić, np.: za pomocą angob, tlenków, różnych szablonów, stempli i szkliwa lub technik, np.:  pastelaż – polega na tworzeniu wypukłych i strukturalnych wzorów za po- mocą angoby,  barbotin – malowanie angobą za …”
-
-[4] **WFP – Plan zajęć – Przewodnik_PL.pdf** (2026-10-02)
-„a - czas zdawania egzaminów przedmiotowych. Wykład - Polega na przedstawieniu treści przez prowadzącego zajęcia. Zadaniem słuchaczy jest przyswajanie informacji oraz robienie notatek. Ćwiczenia - Ich celem jest poszerzenie zagadnień przekazywanych na wykładach. Odbywają się w małych grupach, dzięki czemu studenci mogą wykorzystać zdobytą wiedzę w praktyce (np. Podczas dyskusji). Konwersatorium - Polega na dyskusji prowadzącego zajęcia i studentów oraz wspólnym rozwiązywaniu problemów teoretyczny…”
+[3] **Konferencje Naukowe – Interdyscyplinarne-horyzonty.-Aktualne-problemy-ekonomii-prawa-bezpieczenstwa-pedagogiki-i-sztuki-E.-Gulinska-M.-Orzechowska-Ochnia-1.pdf**
+„aturę masa może się stopić. Pamiętajmy również, że glina podczas wypału traci wodę i kurczy się, czyli traci na swojej objętości. W zależności od wła- ściwości gliny może się ona kurczyć od 1% do 20%. 3.4. Zdobienie Teraz przyszedł czas na zdobienie, czyli dekorowanie kubka. Może…”
 
 Źródła:
-[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/11/E.-Gulinska-P.-Swital-Aktualne-problemy-p
+[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/11/E.-Gulinska-P.-Swital-Aktualne-problemy-prawa-i-nauk-o-bezpieczenstwie.pdf – 2024-11-06
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2026/03/Interdyscyplinarne-horyzonty.-Aktualne-problemy-ekonomii-prawa-bezpieczenstwa-pedagogiki-i-sztuki-E.-Gulinska-M.-Orzechowska-Ochnia-1.pdf – 2026-03-09
+[3] https://wfp.uniwersytetradom.pl/wp-content/uploads/sites/21/2026/10/Przewodnik_PL.pdf – 2026-10-02
+[4] https://bip.uniwersytetradom.pl/attachments/5445/download/Opis%2520programu%2520studi%25C3%25B3w%2520Piel%25C4%2599gniarstwo – 2026-07-10
 
 **Użytkownik:** polak, I stopien, 2 rok
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "pl", "poziom": "I", "rok": "2"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: pl, poziom: I, rok: 2). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: pl, poziom: I, rok: 2):
 
-[1] **Konferencje Naukowe – Wspolczesne-problemy-sektora-finansow-wybrane-zagadnienia-J.-Bukowska.pdf** (2024-10-15)
-„nia nielegalnej działalności; przeważnie pie- niądze tego typu pochodzą ze sprzedaży narkotyków, terroryzmu, nielegalnego ha- zardu, prostytucji oraz z nierejestrowanej działalności gospodarczej” [9]. 1 Studentka, I rok, II stopień, Finanse i Rachunkowość, Wydział Ekonomii i Finansów, Uniwersytet Radomski im. K. Pułaskiego. 2 Studentka, I rok, II stopień, Finanse i Rachunkowość, Wydział Ekonomii i Finansów, Uniwersytet Radomski im. K. Pułaskiego. 68 Samo wyrażenie „pranie brudnych pieniędzy” naj…”
+[1] **Konferencje Naukowe – Wspolczesne-problemy-sektora-finansow-wybrane-zagadnienia-J.-Bukowska.pdf**
+„nia nielegalnej działalności; przeważnie pie- niądze tego typu pochodzą ze sprzedaży narkotyków, terroryzmu, nielegalnego ha- zardu, prostytucji oraz z nierejestrowanej działalności gospodarczej” [9]. 1 Studentka, I rok, II stopień, Finanse i Rachunkowość, Wydział Ekonomii i Fina…”
 
-[2] **WPiA – Plan zajęć – BW-I-I-Niestacjonarne-2-stopien.pdf** (2026-10-16)
-„16.10.2026 Bezpieczeństwo wewnętrzne: rok I, semestr 1 – studia niestacjonarne II stopnia r.a. 2026/2027 – semestr zimowy UWAGA: sala 146 Wydziału Nauk Medycznych i Nauk o Zdrowiu! Przeszkolenie z zakresu BHP wykład prowadzony zdalnie z wykorzystaniem metod i technik kształcenia na odległość: 13 XI (piątek) od godz. 17 20.20 dr hab. prof. ucz. M. Lotko…”
+[2] **WPiA – Plan zajęć – BW-I-I-Niestacjonarne-2-stopien.pdf**
+„16.10.2026 Bezpieczeństwo wewnętrzne: rok I, semestr 1 – studia niestacjonarne II stopnia r.a. 2026/2027 – semestr zimowy UWAGA: sala 146 Wydziału Nauk Medycznych i Nauk o Zdrowiu! Przeszkolenie z zakresu BHP wykład prowadzony zdalnie z wykorzystaniem metod i technik kształcenia …”
 
-[3] **Erasmus+ 2022/2023 – ZASADY-wyjazdow-Erasmus-2021-2022.pdf** (2025-09-25)
-„ciel jest zobowiązany do przeprowadzenia co najmniej 8 godzin zajęć dydaktycznych dla studentów uczelni przyjmującej (STA). 4. W Programie Erasmus+ może wziąć udział osoba posiadająca stopień doktora. 5. Koordynator Wydziałowy Programu Erasmus+ składa w Dziale Współpracy z Zagranicą w terminie do 10 września 2021 roku propozycje wyjazdów w ramach Programu Erasmus+ na rok akademicki 2021/2022, zatwierdzone przez Dziekana Wydziału.…”
-
-[4] **WEiF – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna inteligencja w biznesie Zarządzanie I stopień I stopień I stopień I stopień I stopień stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne I …”
+[3] **Erasmus+ 2022/2023 – ZASADY-wyjazdow-Erasmus-2021-2022.pdf**
+„ciel jest zobowiązany do przeprowadzenia co najmniej 8 godzin zajęć dydaktycznych dla studentów uczelni przyjmującej (STA). 4. W Programie Erasmus+ może wziąć udział osoba posiadająca stopień doktora. 5. Koordynator Wydziałowy Programu Erasmus+ składa w Dziale Współpracy z Zagran…”
 
 Źródła:
 [1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/10/Wspolczesne-problemy-sektora-finansow-wybrane-zagadnienia-J.-Bukowska.pdf – 2024-10-15
-[2] https://wpia.uniwersytetradom.pl/
+[2] https://wpia.uniwersytetradom.pl/wp-content/uploads/sites/3/2026/10/BW-I-I-Niestacjonarne-2-stopien.pdf – 2026-10-16
+[3] https://dwz.uniwersytetradom.pl/wp-content/uploads/sites/57/2023/02/ZASADY-wyjazdow-Erasmus-2021-2022.pdf – 2025-09-25
+[4] https://weif.uniwersytetradom.pl/plany-zajec/ – — ⚠️ informacja może być nieaktualna
 
 
 **ASSERT PASS**
@@ -721,22 +752,22 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "poziom": "I", "rok": "2"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, poziom: I, rok: 2). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, poziom: I, rok: 2):
 
-[1] **Erasmus+ 2026/2027** (2026-10-21)
-„Erasmus+ 2026/2027 Dokumenty należy wypełnić komputerowo Wyjazdy studentów na studia Wyjazdy studentów na praktyki Wyjazdy wykładowców Pracownicy - szkolenia For incomming students Wyjazdy studentów na studia Rekrutacja na wyjazdy w ramach programu Erasmus pdf 429 KB Zasady wyjazdów na studia pdf 433 KB Koordynatorzy Wydziałów pdf 407 KB Podanie do Prorektora doc 80 KB Formularz dla studenta studia doc 87 KB Learning Agreement doc 241 KB Green Travel przed wyjazdem docx 15 KB Green Travel po pow…”
+[1] **Erasmus+ – ErasmusplusProgramme-Guide2023-v3_en.pdf**
+„Under this priority, the Programme will support projects that promote educational activities and facilitate the integration of people fleeing the war in Ukraine into their new learning environments. ▪ Environment and fight against climate change: the Programme aims to support, ac…”
 
-[2] **Erasmus+ 2026/2027 – Rekrutacja-na-wyjazdy-w-ramach-programu-Erasmus-1.pdf** (2026-02-27)
-„Rekrutacja na wyjazdy w ramach programu Erasmus+ na studia i praktyki w roku akademickim 2026/2027 Drodzy Studenci, Rozpoczynamy rekrutację na wyjazdy na studia i praktyki w ramach Programu Erasmus+ w roku akademickim 2026/2027. Egzaminy z języków Studium Języków Obcych przeprowadzi egzaminy z języka angielskiego i języka niemieckiego dla studentów – kandydatów Uniwersytetu Radomskiego, którzy będą ubiegać się o wyjazd na studia i praktyki w ramach Programu Erasmus+ w roku akademickim 2026/2027.…”
+[2] **Erasmus+ – Erasmus-Policy-Statement-2020-Karta-ECHE.pdf**
+„uation of scientific disciplines by Evaluation Team of Ministry of Science and Higher Education), better results of students – during exams, higher quality of the students projects, master thesis etc. Quantitative: number of our students – participants of Erasmus + Programme, num…”
 
-[3] **Erasmus+ 2026/2027 – Rekrutacja-na-wyjazdy-w-ramach-programu-Erasmus.pdf** (2026-02-27)
-„Rekrutacja na wyjazdy w ramach programu Erasmus+ na studia i praktyki w roku akademickim 2026/2027 Drodzy Studenci, Rozpoczynamy rekrutację na wyjazdy na studia i praktyki w ramach Programu Erasmus+ w roku akademickim 2026/2027. Egzaminy z języków Studium Języków Obcych przeprowadzi egzaminy z języka angielskiego i języka niemieckiego dla studentów – kandydatów Uniwersytetu Radomskiego, którzy będą ubiegać się o wyjazd na studia i praktyki w ramach Programu Erasmus+ w roku akademickim 2026/2027.…”
-
-[4] **Erasmus+ 2026/2027 – Stawki-Erasmus-PRACOWNICY-UCZELNI.pdf** (2026-06-15)
-„Stawki Erasmus+ PRACOWNICY UCZELNI Stawka dzienna dla Stawka dzienna dla Kraje należące do danej grupy projektów projektów zaakceptowanych w zaakceptowanych w konkursie w roku 2024 przy konkursie w roku 2024 wyjazdach trwających nie przy wyjazdach trwających dłużej niż 14 dni od 15 dni do 2 miesięcy* Grupa 1 – Austria, Belgia, Dania, Finlandia, Francja, Irlandia, Islandia, Lichtenstein, Luksemburg, Niderlandy, Niemcy, Norwegia, Szwecja, Włochy oraz 190 € 133 € kraje niestowarzyszone z programem …”
+[3] **Erasmus+ 2023/2024 – Erasmus-Rekrutacja-2023-2024.pdf**
+„Drodzy Studenci, Rozpoczynamy rekrutację na wyjazdy na studia i praktyki w ramach Programu Erasmus+ w roku akademickim 2023/2024. Studium Języków Obcych UTH Radom przeprowadzi egzaminy pisemny i ustny z języka angielskiego i niemieckiego dla studentów – kandydatów UTH Radom, któr…”
 
 Źródła:
-[1] http
+[1] https://dwz.uniwersytetradom.pl/wp-content/uploads/sites/57/2023/07/ErasmusplusProgramme-Guide2023-v3_en.pdf – 2023-07-05 ⚠️ informacja może być nieaktualna
+[2] https://dwz.uniwersytetradom.pl/wp-content/uploads/sites/57/2022/10/Erasmus-Policy-Statement-2020-Karta-ECHE.pdf – 2022-10-28 ⚠️ informacja może być nieaktualna
+[3] https://dwz.uniwersytetradom.pl/wp-content/uploads/sites/57/2023/03/Erasmus-Rekrutacja-2023-2024.pdf – 2023-03-02 ⚠️ informacja może być nieaktualna
+[4] https://dwz.uniwersytetradom.pl/aktualnosci/zapisy-na-egzamin-erasmus-2/ – 2026-01-29
 
 
 **ASSERT PASS**
@@ -748,37 +779,43 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec):
 
-[1] **Rekrutacja cudzoziemców Kontakt** (2022-07-11 ⚠️ informacja może być nieaktualna)
-„Kontakt Dział Współpracy z Zagranicą – wizy, sprawy pobytowe tel. + 48 48 361 70 74 fax + 48 48 361 70 75 e-mail: dwz@uthrad.pl Pełnomocnik Rektora ds. Rekrutacji dr inż. Krzysztof Golec e-mail: pelnomocnik@uthrad.pl Centralny Punkt Informacji – informacje ogólne, rejestracja w systemie tel. +48 (48) 361-80-00 ul. Malczewskiego 29, 26-600 Radom e-mail: rekrutacja@uthrad.pl SPRAWDŹ OFERTA DYDAKTYCZNA Fashion NOWOŚĆ! Architektura wnętrz Grafika Sztuka mediów Sztuczna inteligencja w biznesie NOWOŚĆ…”
+[1] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich**
+„Zasady obowiązujące cudzoziemców O przyjęcie na studia i odbywanie ich na zasadach obowiązujących obywateli polskich mogą ubiegać się cudzoziemcy, którzy spełniają jeden z poniższych warunków: posiadają zezwolenie na pobyt stały w Rzeczypospolitej Polskiej; posiadają status uchod…”
 
-[2] **Rekrutacja cudzoziemców Podstawy prawne** (2025-06-30)
-„Podstawy prawne Dokumenty zewnętrzne Obwieszczenie Marszałka Sejmu Rzeczypospolitej Polskiej z dnia 21 marca 2024 r. w sprawie ogłoszenia jednolitego tekstu ustawy o cudzoziemcach Dokumenty wewnętrzne Załącznik do uchwały Nr 000-7/16/2025 Senatu URad. z dnia 26 czerwca 2025 r. w sprawie: zasad przyjmowania cudzoziemców na studia w Uniwersytecie Radomskim im. Kazimierza Pułaskiego w roku akademickim 2025/2026 Warunki i tryb rekrutacji dla poszczególnych kierunków studiów w Uniwersytecie Radomskim…”
+[2] **Rekrutacja cudzoziemców informacje ogólne**
+„CUDZOZIEMCY WAŻNE INFORMACJE Kurs języka polskiego Nowe wymagania dla cudzoziemców od 1 lipca 2025 Wymagane dokumenty Harmonogram rekrutacji Wymogi formalne (świadectwa, dyplomy) Opłaty Zasady obowiązujące cudzoziemców Weryfikacja umiejętności i predyspozycji dla kandydatów na Wy…”
 
-[3] **Rekrutacja cudzoziemców Zasady inne niż obowiązujące obywateli polskich** (2022-07-11 ⚠️ informacja może być nieaktualna)
-„Zasady inne niż obowiązujące obywateli polskich O przyjęcie na studia i odbywanie ich na zasadach innych niż obowiązujące obywateli polskich mogą ubiegać się cudzoziemcy na podstawie: umów międzynarodowych, na zasadach określonych w tych umowach; umów zawartych przez UTH Rad z podmiotami zagranicznymi na zasadach określonych w tych umowach; decyzji ministra właściwego do spraw szkolnictwa wyższego; decyzji Rektora Uczelni, występując z podaniem o przyjęcie na studia do Rektora Uczelni Cudzoziemc…”
+[3] **Rekrutacja cudzoziemców Świadectwa, dyplomy, wymogi formalne**
+„Wymogi formalne (świadectwa, dyplomy) WAŻNE! Informacje o przeliczaniu ocen ze skal zagranicznych można znaleźć TUTAJ Uchwała nr 1-06-2026 Uczelnianej Komisji rekrutacyjnej z dnia 30 czerwca 2026 r. w sprawie zasad i sposobu przeliczania ocen z egzaminów oraz świadectw uzyskanych…”
 
-[4] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich** (2026-04-29)
-„Zasady obowiązujące cudzoziemców O przyjęcie na studia i odbywanie ich na zasadach obowiązujących obywateli polskich mogą ubiegać się cudzoziemcy, którzy spełniają jeden z poniższych warunków: posiadają zezwolenie na pobyt stały w Rzeczypospolitej Polskiej; posiadają status uchodźcy nadany w Rzeczypospolitej Polskiej; korzystają z ochrony czasowej na terytorium Rzeczypospolitej Polskiej; są pracownikami migrującymi będącymi obywatelami państwa członkowskiego Unii Europejskiej, Konfed
+Źródła:
+[1] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-zasady-obowiazujace-obywateli-polskich/ – 2026-04-29
+[2] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-informacje-ogolne/ – 2026-07-15
+[3] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-swiadectwa-dyplomy-wymogi-formalne/ – 2026-07-02
+[4] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-wymagane-dokumenty/ – 2026-07-27
 
 **Użytkownik:** cudzoziemiec z kartą pobytu
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec):
 
-[1] **Rekrutacja cudzoziemców Kontakt** (2022-07-11 ⚠️ informacja może być nieaktualna)
-„Kontakt Dział Współpracy z Zagranicą – wizy, sprawy pobytowe tel. + 48 48 361 70 74 fax + 48 48 361 70 75 e-mail: dwz@uthrad.pl Pełnomocnik Rektora ds. Rekrutacji dr inż. Krzysztof Golec e-mail: pelnomocnik@uthrad.pl Centralny Punkt Informacji – informacje ogólne, rejestracja w systemie tel. +48 (48) 361-80-00 ul. Malczewskiego 29, 26-600 Radom e-mail: rekrutacja@uthrad.pl SPRAWDŹ OFERTA DYDAKTYCZNA Fashion NOWOŚĆ! Architektura wnętrz Grafika Sztuka mediów Sztuczna inteligencja w biznesie NOWOŚĆ…”
+[1] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich**
+„Zasady obowiązujące cudzoziemców O przyjęcie na studia i odbywanie ich na zasadach obowiązujących obywateli polskich mogą ubiegać się cudzoziemcy, którzy spełniają jeden z poniższych warunków: posiadają zezwolenie na pobyt stały w Rzeczypospolitej Polskiej; posiadają status uchod…”
 
-[2] **Rekrutacja cudzoziemców Podstawy prawne** (2025-06-30)
-„Podstawy prawne Dokumenty zewnętrzne Obwieszczenie Marszałka Sejmu Rzeczypospolitej Polskiej z dnia 21 marca 2024 r. w sprawie ogłoszenia jednolitego tekstu ustawy o cudzoziemcach Dokumenty wewnętrzne Załącznik do uchwały Nr 000-7/16/2025 Senatu URad. z dnia 26 czerwca 2025 r. w sprawie: zasad przyjmowania cudzoziemców na studia w Uniwersytecie Radomskim im. Kazimierza Pułaskiego w roku akademickim 2025/2026 Warunki i tryb rekrutacji dla poszczególnych kierunków studiów w Uniwersytecie Radomskim…”
+[2] **Rekrutacja cudzoziemców informacje ogólne**
+„CUDZOZIEMCY WAŻNE INFORMACJE Kurs języka polskiego Nowe wymagania dla cudzoziemców od 1 lipca 2025 Wymagane dokumenty Harmonogram rekrutacji Wymogi formalne (świadectwa, dyplomy) Opłaty Zasady obowiązujące cudzoziemców Weryfikacja umiejętności i predyspozycji dla kandydatów na Wy…”
 
-[3] **Rekrutacja cudzoziemców Zasady inne niż obowiązujące obywateli polskich** (2022-07-11 ⚠️ informacja może być nieaktualna)
-„Zasady inne niż obowiązujące obywateli polskich O przyjęcie na studia i odbywanie ich na zasadach innych niż obowiązujące obywateli polskich mogą ubiegać się cudzoziemcy na podstawie: umów międzynarodowych, na zasadach określonych w tych umowach; umów zawartych przez UTH Rad z podmiotami zagranicznymi na zasadach określonych w tych umowach; decyzji ministra właściwego do spraw szkolnictwa wyższego; decyzji Rektora Uczelni, występując z podaniem o przyjęcie na studia do Rektora Uczelni Cudzoziemc…”
+[3] **Rekrutacja cudzoziemców Świadectwa, dyplomy, wymogi formalne**
+„Wymogi formalne (świadectwa, dyplomy) WAŻNE! Informacje o przeliczaniu ocen ze skal zagranicznych można znaleźć TUTAJ Uchwała nr 1-06-2026 Uczelnianej Komisji rekrutacyjnej z dnia 30 czerwca 2026 r. w sprawie zasad i sposobu przeliczania ocen z egzaminów oraz świadectw uzyskanych…”
 
-[4] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich** (2026-04-29)
-„Zasady obowiązujące cudzoziemców O przyjęcie na studia i odbywanie ich na zasadach obowiązujących obywateli polskich mogą ubiegać się cudzoziemcy, którzy spełniają jeden z poniższych warunków: posiadają zezwolenie na pobyt stały w Rzeczypospolitej Polskiej; posiadają status uchodźcy nadany w Rzeczypospolitej Polskiej; korzystają z ochrony czasowej na terytorium Rzeczypospolitej Polskiej; są pracownikami migrującymi będącymi obywatelami państwa członkowskiego Unii Europejskiej, Konfed
+Źródła:
+[1] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-zasady-obowiazujace-obywateli-polskich/ – 2026-04-29
+[2] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-informacje-ogolne/ – 2026-07-15
+[3] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-swiadectwa-dyplomy-wymogi-formalne/ – 2026-07-02
+[4] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-wymagane-dokumenty/ – 2026-07-27
 
 
 **ASSERT PASS**
@@ -790,37 +827,43 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "bezpanstwowiec"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: bezpanstwowiec). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: bezpanstwowiec):
 
-[1] **Rekrutacja cudzoziemców Kontakt** (2022-07-11 ⚠️ informacja może być nieaktualna)
-„Kontakt Dział Współpracy z Zagranicą – wizy, sprawy pobytowe tel. + 48 48 361 70 74 fax + 48 48 361 70 75 e-mail: dwz@uthrad.pl Pełnomocnik Rektora ds. Rekrutacji dr inż. Krzysztof Golec e-mail: pelnomocnik@uthrad.pl Centralny Punkt Informacji – informacje ogólne, rejestracja w systemie tel. +48 (48) 361-80-00 ul. Malczewskiego 29, 26-600 Radom e-mail: rekrutacja@uthrad.pl SPRAWDŹ OFERTA DYDAKTYCZNA Fashion NOWOŚĆ! Architektura wnętrz Grafika Sztuka mediów Sztuczna inteligencja w biznesie NOWOŚĆ…”
+[1] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich**
+„Zasady obowiązujące cudzoziemców O przyjęcie na studia i odbywanie ich na zasadach obowiązujących obywateli polskich mogą ubiegać się cudzoziemcy, którzy spełniają jeden z poniższych warunków: posiadają zezwolenie na pobyt stały w Rzeczypospolitej Polskiej; posiadają status uchod…”
 
-[2] **Rekrutacja cudzoziemców Podstawy prawne** (2025-06-30)
-„Podstawy prawne Dokumenty zewnętrzne Obwieszczenie Marszałka Sejmu Rzeczypospolitej Polskiej z dnia 21 marca 2024 r. w sprawie ogłoszenia jednolitego tekstu ustawy o cudzoziemcach Dokumenty wewnętrzne Załącznik do uchwały Nr 000-7/16/2025 Senatu URad. z dnia 26 czerwca 2025 r. w sprawie: zasad przyjmowania cudzoziemców na studia w Uniwersytecie Radomskim im. Kazimierza Pułaskiego w roku akademickim 2025/2026 Warunki i tryb rekrutacji dla poszczególnych kierunków studiów w Uniwersytecie Radomskim…”
+[2] **Rekrutacja cudzoziemców informacje ogólne**
+„CUDZOZIEMCY WAŻNE INFORMACJE Kurs języka polskiego Nowe wymagania dla cudzoziemców od 1 lipca 2025 Wymagane dokumenty Harmonogram rekrutacji Wymogi formalne (świadectwa, dyplomy) Opłaty Zasady obowiązujące cudzoziemców Weryfikacja umiejętności i predyspozycji dla kandydatów na Wy…”
 
-[3] **Rekrutacja cudzoziemców Zasady inne niż obowiązujące obywateli polskich** (2022-07-11 ⚠️ informacja może być nieaktualna)
-„Zasady inne niż obowiązujące obywateli polskich O przyjęcie na studia i odbywanie ich na zasadach innych niż obowiązujące obywateli polskich mogą ubiegać się cudzoziemcy na podstawie: umów międzynarodowych, na zasadach określonych w tych umowach; umów zawartych przez UTH Rad z podmiotami zagranicznymi na zasadach określonych w tych umowach; decyzji ministra właściwego do spraw szkolnictwa wyższego; decyzji Rektora Uczelni, występując z podaniem o przyjęcie na studia do Rektora Uczelni Cudzoziemc…”
+[3] **Rekrutacja cudzoziemców Świadectwa, dyplomy, wymogi formalne**
+„Wymogi formalne (świadectwa, dyplomy) WAŻNE! Informacje o przeliczaniu ocen ze skal zagranicznych można znaleźć TUTAJ Uchwała nr 1-06-2026 Uczelnianej Komisji rekrutacyjnej z dnia 30 czerwca 2026 r. w sprawie zasad i sposobu przeliczania ocen z egzaminów oraz świadectw uzyskanych…”
 
-[4] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich** (2026-04-29)
-„Zasady obowiązujące cudzoziemców O przyjęcie na studia i odbywanie ich na zasadach obowiązujących obywateli polskich mogą ubiegać się cudzoziemcy, którzy spełniają jeden z poniższych warunków: posiadają zezwolenie na pobyt stały w Rzeczypospolitej Polskiej; posiadają status uchodźcy nadany w Rzeczypospolitej Polskiej; korzystają z ochrony czasowej na terytorium Rzeczypospolitej Polskiej; są pracownikami migrującymi będącymi obywatelami państwa członkowskiego Unii Europejskiej, Konf
+Źródła:
+[1] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-zasady-obowiazujace-obywateli-polskich/ – 2026-04-29
+[2] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-informacje-ogolne/ – 2026-07-15
+[3] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-swiadectwa-dyplomy-wymogi-formalne/ – 2026-07-02
+[4] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-wymagane-dokumenty/ – 2026-07-27
 
 **Użytkownik:** uchodzca, stacjonarne, I stopien
 
 **Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "poziom": "I"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, poziom: I). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, poziom: I):
 
-[1] **Rekrutacja cudzoziemców Kontakt** (2022-07-11 ⚠️ informacja może być nieaktualna)
-„Kontakt Dział Współpracy z Zagranicą – wizy, sprawy pobytowe tel. + 48 48 361 70 74 fax + 48 48 361 70 75 e-mail: dwz@uthrad.pl Pełnomocnik Rektora ds. Rekrutacji dr inż. Krzysztof Golec e-mail: pelnomocnik@uthrad.pl Centralny Punkt Informacji – informacje ogólne, rejestracja w systemie tel. +48 (48) 361-80-00 ul. Malczewskiego 29, 26-600 Radom e-mail: rekrutacja@uthrad.pl SPRAWDŹ OFERTA DYDAKTYCZNA Fashion NOWOŚĆ! Architektura wnętrz Grafika Sztuka mediów Sztuczna inteligencja w biznesie NOWOŚĆ…”
+[1] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich**
+„Zasady obowiązujące cudzoziemców O przyjęcie na studia i odbywanie ich na zasadach obowiązujących obywateli polskich mogą ubiegać się cudzoziemcy, którzy spełniają jeden z poniższych warunków: posiadają zezwolenie na pobyt stały w Rzeczypospolitej Polskiej; posiadają status uchod…”
 
-[2] **Rekrutacja cudzoziemców Podstawy prawne** (2025-06-30)
-„Podstawy prawne Dokumenty zewnętrzne Obwieszczenie Marszałka Sejmu Rzeczypospolitej Polskiej z dnia 21 marca 2024 r. w sprawie ogłoszenia jednolitego tekstu ustawy o cudzoziemcach Dokumenty wewnętrzne Załącznik do uchwały Nr 000-7/16/2025 Senatu URad. z dnia 26 czerwca 2025 r. w sprawie: zasad przyjmowania cudzoziemców na studia w Uniwersytecie Radomskim im. Kazimierza Pułaskiego w roku akademickim 2025/2026 Warunki i tryb rekrutacji dla poszczególnych kierunków studiów w Uniwersytecie Radomskim…”
+[2] **Rekrutacja cudzoziemców informacje ogólne**
+„CUDZOZIEMCY WAŻNE INFORMACJE Kurs języka polskiego Nowe wymagania dla cudzoziemców od 1 lipca 2025 Wymagane dokumenty Harmonogram rekrutacji Wymogi formalne (świadectwa, dyplomy) Opłaty Zasady obowiązujące cudzoziemców Weryfikacja umiejętności i predyspozycji dla kandydatów na Wy…”
 
-[3] **Rekrutacja cudzoziemców Zasady inne niż obowiązujące obywateli polskich** (2022-07-11 ⚠️ informacja może być nieaktualna)
-„Zasady inne niż obowiązujące obywateli polskich O przyjęcie na studia i odbywanie ich na zasadach innych niż obowiązujące obywateli polskich mogą ubiegać się cudzoziemcy na podstawie: umów międzynarodowych, na zasadach określonych w tych umowach; umów zawartych przez UTH Rad z podmiotami zagranicznymi na zasadach określonych w tych umowach; decyzji ministra właściwego do spraw szkolnictwa wyższego; decyzji Rektora Uczelni, występując z podaniem o przyjęcie na studia do Rektora Uczelni Cudzoziemc…”
+[3] **Rekrutacja cudzoziemców Świadectwa, dyplomy, wymogi formalne**
+„Wymogi formalne (świadectwa, dyplomy) WAŻNE! Informacje o przeliczaniu ocen ze skal zagranicznych można znaleźć TUTAJ Uchwała nr 1-06-2026 Uczelnianej Komisji rekrutacyjnej z dnia 30 czerwca 2026 r. w sprawie zasad i sposobu przeliczania ocen z egzaminów oraz świadectw uzyskanych…”
 
-[4] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich** (2026-04-29)
-„Zasady obowiązujące cudzoziemców O przyjęcie na studia i odbywanie ich na zasadach obowiązujących obywateli polskich mogą ubiegać się cudzoziemcy, którzy spełniają jeden z poniższych warunków: posiadają zezwolenie na pobyt stały w Rzeczypospolitej Polskiej; posiadają status uchodźcy nadany w Rzeczypospolitej Polskiej; korzystają z ochrony czasowej na terytorium Rzeczypospolitej Polskiej; są pracownikami migrującymi będącymi obywatelami państwa członkowsk
+Źródła:
+[1] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-zasady-obowiazujace-obywateli-polskich/ – 2026-04-29
+[2] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-informacje-ogolne/ – 2026-07-15
+[3] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-swiadectwa-dyplomy-wymogi-formalne/ – 2026-07-02
+[4] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-wymagane-dokumenty/ – 2026-07-27
 
 
 **ASSERT PASS**
@@ -943,23 +986,22 @@ I can help with official UR information: scholarships, fees, Erasmus+, regulatio
 
 **Asystent** _(mode=wyszukiwanie; profile={"tryb": "stacjonarne", "poziom": "I", "rok": "1", "kierunek": "ekonomia"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: tryb: stacjonarne, poziom: I, rok: 1, kierunek/grupa: ekonomia). Zweryfikuj w źródle:
+Na podstawie oficjalnych stron UR (profil: tryb: stacjonarne, poziom: I, rok: 1, kierunek/grupa: ekonomia):
 
-[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć.** (2026-10-21)
-„- I_E_1sem_2026_27_st-2.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_E_1sem_2026_27_st-2.pdf (aktualizacja: 2026-10-21) - I_E_5sem_2026_27_st.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_E_5sem_2026_27_st.pdf (aktualizacja: 2026-10-07) - II_FiR_1sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf (aktualizacja: 2026-09-30) - II_Z_1sem_2026_27_st-1.pdf → https://wei…”
+[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć.**
+„- I_E_1sem_2026_27_st-2.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_E_1sem_2026_27_st-2.pdf (aktualizacja: 2026-10-21) - I_E_5sem_2026_27_st.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_E_5sem_2026_27_st.pdf (aktual…”
 
-[2] **WEiF – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna inteligencja w biznesie Zarządzanie I stopień I stopień I stopień I stopień I stopień stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne I …”
+[2] **WEiF – Plany zajęć**
+„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna int…”
 
-[3] **WEiF – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
-„Plany zajęć - Wydział Ekonomii i Finansów Skip to content Plany zajęć Rok akademicki 2026/2027 Rok akademicki 2026/2027 rozpoczyna się 1 października 2026 r. i trwa do 30 września 2027 r. POBIERZ: Zarządzenie R-6/2026 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów.…”
-
-[4] **WEiF – Plan zajęć – R-06-2026_Organizacja-roku-akademickiego-2026-2027.pdf** (2026-09-18)
-„do 30 czerwca 2027 r. okres wakacji - od 1 lipca do 31 sierpnia 2027 r. jesienna sesja poprawkowa - od 1 września do 19 września 2027 r. 28 maja - dodatkowym dniem wolnym od zajęć dydaktycznych okres rejestracji i podejmowania indywidualnych decyzji - od 20 września do 30 września 2027 r. *9 czerwca (środa) obowiązują zajęcia wg rozkładu z piątku Maj Czerwiec WrzesieńKwiecieńMarzec Semestr letni Rok akademicki 2026/2027…”
+[3] **WEiF – Plany zajęć**
+„Plany zajęć - Wydział Ekonomii i Finansów Skip to content Plany zajęć Rok akademicki 2026/2027 Rok akademicki 2026/2027 rozpoczyna się 1 października 2026 r. i trwa do 30 września 2027 r. POBIERZ: Zarządzenie R-6/2026 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z d…”
 
 Źródła:
 [1] https://weif.uniwersytetradom.pl/plany-zajec/ – 2026-10-21
-[2] https://weif.uniwersytetradom.pl/plany-zajec/ –
+[2] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/R-06-2026_Organizacja-roku-akademickiego-2026-2027.pdf – 2026-09-18
+[3] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_FiR_1sem_2026_27_st-3.pdf – 2026-10-07
+[4] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/II_Z_1sem_2026_27_st-1.pdf – 2026-10-16
 
 
 **ASSERT PASS**

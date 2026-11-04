@@ -18,13 +18,15 @@ TOPIC_POLICY = {
         "canonical": r"stypendia-socjalne|swiadczenia-dla-studentow|R-41-2025|R-32-2024|Zalacznik-Nr-8-Ukraina",
         "substance": r"stypendi|dochód|2099|wniosek|oświadczen|Ukrain|socjaln|zł|Wirtualny",
         "force_rules": [
-            {"url": r"stypendia-socjalne", "w": 5},
-            {"url": r"stypendia-socjalne", "text": r"obywatel Ukrainy|Stypendium dla cudzoziemc|ochrony czasowej", "w": 8},
-            {"url": r"stypendia-socjalne", "text": r"2099|dochód na osobę|Wirtualny Dziekanat", "w": 3},
-            {"url": r"Zalacznik-Nr-8-Ukraina", "w": 10, "if_pobyt": "ukr"},
+            {"url": r"stypendia-socjalne", "text": r"2099", "w": 20},
+            {"url": r"stypendia-socjalne", "text": r"Wirtualny Dziekanat", "w": 12},
+            {"url": r"stypendia-socjalne", "text": r"obywatel Ukrainy.{0,120}(stypendium socjalne|ochrony czasowej)|O stypendium socjalne.{0,80}cudzoziem", "w": 18},
+            {"url": r"stypendia-socjalne", "text": r"Stypendium dla cudzoziemc", "w": 10},
+            {"url": r"stypendia-socjalne", "w": 4},
+            {"url": r"Zalacznik-Nr-8-Ukraina", "w": 16, "if_pobyt": "ukr"},
             {"url": r"Zalacznik-Nr-8-Ukraina", "w": 2},
             {"url": r"R-41-2025|R-32-2024", "title": r"swiadczen|świadcze|socjal", "w": 4},
-            {"text": r"obywatel Ukrainy.{0,80}stypendium socjalne", "w": 6, "if_pobyt": "ukr"},
+            {"url": r"R-32-2024", "text": r"Ukrain|ochrony czasowej|cudzoziem", "w": 8},
         ],
     },
     "stypendium_rektora": {
@@ -220,12 +222,32 @@ def force_topic_hits(topic, profile=None, k=4, chunks=None):
                 score += rule.get("w", 1)
         if score:
             scored.append((score, c))
-    scored.sort(key=lambda x: -x[0])
-    out, seen = [], set()
+    def _rich(c):
+        t = c.get("text") or ""
+        return (
+            3 if re.search(r"2099", t) else 0,
+            2 if re.search(r"obywatel Ukrainy|ochrony czasowej|Wirtualny Dziekanat", t, re.I) else 0,
+            len(t),
+        )
+
+    scored.sort(key=lambda x: (-x[0], -_rich(x[1])[0], -_rich(x[1])[1], -_rich(x[1])[2]))
+    out, per_url = [], {}
     for _, c in scored:
-        if c["url"] in seen:
+        u = c["url"]
+        n = per_url.get(u, 0)
+        if n >= 2:
             continue
-        seen.add(c["url"])
+        # 2. chunk tego URL tylko gdy wnosi 2099 / Ukraina, a pierwszego tego nie ma
+        if n == 1:
+            prev = next(h for h in out if h["url"] == u)
+            t_new, t_old = c.get("text") or "", prev.get("text") or ""
+            adds_2099 = re.search(r"2099", t_new) and not re.search(r"2099", t_old)
+            adds_ukr = re.search(r"obywatel Ukrainy|ochrony czasowej", t_new, re.I) and not re.search(
+                r"obywatel Ukrainy|ochrony czasowej", t_old, re.I
+            )
+            if not (adds_2099 or adds_ukr):
+                continue
+        per_url[u] = n + 1
         out.append(c)
         if len(out) >= k:
             break
