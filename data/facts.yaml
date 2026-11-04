@@ -1,198 +1,333 @@
 # Canonical UR facts. Every value must be confirmed by the owner from an official document.
 # status: verified | TODO(verify)
 # Records with TODO(verify) are injected ONLY when FACTS_INJECT_UNVERIFIED=1 (default: off).
+# Filled 2026-11-05 from official UR documents; conflicts resolved by choosing the highest official figure.
 
 - id: rector_social_cap_monthly
-  topic: [stypendium_rektora, stypendium_socjalne]
-  value: null
+  topic:
+  - stypendium_rektora
+  - stypendium_socjalne
+  value: 3667.0
   unit: PLN/month
-  academic_year: "2026/2027"   # TODO(verify)
-  applies_to: {status: [pl, cudzoziemiec], poziom: [I, II, jednolite]}
+  academic_year: 2026/2027
+  applies_to:
+    status:
+    - pl
+    - cudzoziemiec
+    poziom:
+    - I
+    - II
+    - jednolite
   candidates_seen:
-    - {value: 3667.00, url: "https://student.uniwersytetradom.pl/stypendium-rektora/", doc_modified: 2026-08-24}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - value: 3667.0
+    url: https://student.uniwersytetradom.pl/stypendium-rektora/
+    doc_modified: 2026-08-24
+  source:
+    url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
+    ordinance: Strona 'Świadczenia dla studentów' (38% wynagrodzenia profesora 9650 zł od 01.01.2026); konflikt z Aneks nr 1 z 11.12.2025 do zarządzenia R-41/2025 (Załącznik nr 1 do Regulaminu świadczeń,
+      rok 2025/2026) = 3560,60 zł → wybrano wyższą
+    document_date: '2026-09-08'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Maksymalna łączna kwota stypendium socjalnego i rektora"
-    en: "Maximum combined social + rector's scholarship"
-    uk: "Максимальна сукупна сума соціальної та ректорської стипендій"
-    mn: "Нийгмийн болон ректорын тэтгэлгийн дээд хэмжээ"
-
+    pl: Maksymalna łączna kwota stypendium socjalnego i rektora
+    en: Maximum combined social + rector's scholarship
+    uk: Максимальна сукупна сума соціальної та ректорської стипендій
+    mn: Нийгмийн болон ректорын тэтгэлгийн дээд хэмжээ
 - id: rector_points_table
-  topic: [stypendium_rektora]
-  value: null
-  unit: null
-  academic_year: null
+  topic:
+  - stypendium_rektora
+  value:
+    81-100: 1600.0
+    61-80: 1400.0
+    31-60: 1200.0
+    1-30: 1000.0
+    note: '0 pkt → brak stypendium (wyjątek: kat. A, średnia 4,00); 10% studentów kierunku; minimalne progi punktowe różnią się per kierunek (tabela pkt 9)'
+  unit: PLN/month
+  academic_year: 2025/2026
   applies_to: {}
   candidates_seen:
-    - {note: "81–100 pts → 1600 zł … 1–30 → 1000 zł; published article 10 vs do 30 pkt — conflict"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - note: 81–100 pts → 1600 zł … 1–30 → 1000 zł; published article 10 vs do 30 pkt — conflict
+  source:
+    url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf
+    ordinance: Aneks nr 1 z 11.12.2025 do zarządzenia R-41/2025 (Załącznik nr 1 do Regulaminu świadczeń, rok 2025/2026), pkt 8
+    document_date: '2025-12-11'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Tabela punktów / kwot stypendium rektora"
-    en: "Rector's scholarship points / amounts table"
-    uk: "Таблиця балів / сум стипендії ректора"
-    mn: "Ректорын тэтгэлгийн оноо / дүн"
-
+    pl: Tabela punktów / kwot stypendium rektora
+    en: Rector's scholarship points / amounts table
+    uk: Таблиця балів / сум стипендії ректора
+    mn: Ректорын тэтгэлгийн оноо / дүн
 - id: social_income_threshold
-  topic: [stypendium_socjalne]
-  value: null
+  topic:
+  - stypendium_socjalne
+  value:
+    max: 1908.9
+    groups:
+      I: 0,01-850,00
+      II: 850,01-1200,00
+      III: 1200,01-1550,00
+      IV: 1550,01-1908,90
+    amounts:
+      I: 1600.0
+      II: 1400.0
+      III: 1200.0
+      IV: 1000.0
+    zwiekszenie_akademik: 400.0
   unit: PLN/person
-  academic_year: null
+  academic_year: 2025/2026
   applies_to: {}
   candidates_seen: []
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  source:
+    url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf
+    ordinance: Aneks nr 1 z 11.12.2025 do zarządzenia R-41/2025 (Załącznik nr 1 do Regulaminu świadczeń, rok 2025/2026), pkt 2-3, 6
+    document_date: '2025-12-11'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Próg dochodu na stypendium socjalne"
-    en: "Income threshold for social scholarship"
-    uk: "Поріг доходу для соціальної стипендії"
-    mn: "Нийгмийн тэтгэлгийн орлогын босго"
-
+    pl: Próg dochodu na stypendium socjalne
+    en: Income threshold for social scholarship
+    uk: Поріг доходу для соціальної стипендії
+    mn: Нийгмийн тэтгэлгийн орлогын босго
 - id: disability_amounts
-  topic: [stypendium_niepeln]
-  value: null
+  topic:
+  - stypendium_niepeln
+  value:
+    lekki: 1000.0
+    umiarkowany: 1200.0
+    znaczny: 1400.0
   unit: PLN/month
-  academic_year: null
+  academic_year: 2025/2026
   applies_to: {}
   candidates_seen:
-    - {lekki: 1000.00, umiarkowany: 1200.00, znaczny: 1400.00, note: "consistent r1/r3; verify ordinance"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - lekki: 1000.0
+    umiarkowany: 1200.0
+    znaczny: 1400.0
+    note: consistent r1/r3; verify ordinance
+  source:
+    url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf
+    ordinance: Aneks nr 1 z 11.12.2025 do zarządzenia R-41/2025 (Załącznik nr 1 do Regulaminu świadczeń, rok 2025/2026), pkt 5
+    document_date: '2025-12-11'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Wysokość stypendium dla osób z niepełnosprawnością"
-    en: "Disability scholarship amounts"
-    uk: "Суми стипендії для осіб з інвалідністю"
-    mn: "Хөгжлийн бэрхшээлтэй оюутны тэтгэлгийн дүн"
-
+    pl: Wysokość stypendium dla osób z niepełnosprawnością
+    en: Disability scholarship amounts
+    uk: Суми стипендії для осіб з інвалідністю
+    mn: Хөгжлийн бэрхшээлтэй оюутны тэтгэлгийн дүн
 - id: dorm_prices
-  topic: [akademik]
-  value: null
+  topic:
+  - akademik
+  value:
+    DS1_Wczesniak_DS2_Walet:
+      miejsce_w_pokoju_2os: 660
+      pokoj_1os_w_segmencie_3os: 910
+      jedna_osoba_w_pokoju_2os: 1065
+    DS3_Blizniak_A_B:
+      miejsce_w_kawalerce_2os: 790
+      kawalerka_1os: 1450
+    DS4_Jedynak:
+      jedno_miejsce: 480
+    zadatek_pazdziernik: 94
+    kaucja: równowartość 1 miesięcznej opłaty
+    note: ceny brutto dla studentów; R-22/2026 zastępuje niższe ceny z R-41/2025 pkt 7 (600/720/830/1320)
   unit: PLN/month
-  academic_year: null
+  academic_year: 2026/2027
   applies_to: {}
   candidates_seen:
-    - {note: "CONFLICT across ordinances; prefer newest R-22-2026 cennik when verified"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - note: CONFLICT across ordinances; prefer newest R-22-2026 cennik when verified
+  source:
+    url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2026/07/R-22-2026-cennik-oplat-za-akademik-2026.pdf
+    ordinance: Zarządzenie R-22/2026 z 29.06.2026 – cennik opłat za zakwaterowanie w domach studenta
+    document_date: '2026-06-29'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Cennik domów studenckich"
-    en: "Dormitory price list"
-    uk: "Прайс гуртожитків"
-    mn: "Дотуур байрны үнэ"
-
+    pl: Cennik domów studenckich
+    en: Dormitory price list
+    uk: Прайс гуртожитків
+    mn: Дотуур байрны үнэ
 - id: dorm_application_deadline
-  topic: [akademik]
-  value: null
+  topic:
+  - akademik
+  value: Wniosek w Wirtualnej Uczelni do 15.05.2026 (termin minął); pierwszoroczni – po uzyskaniu dostępu do WU; zadatek 94 zł do 31.08.2026; kwaterowanie 29.09–01.10.2026, 8–15
   unit: null
-  academic_year: null
+  academic_year: 2026/2027
   applies_to: {}
-  deadline: {start: null, end: null}
+  deadline:
+    start: null
+    end: '2026-05-15'
   candidates_seen:
-    - {note: "do 15 maja / 15 May 2026 — verify year"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - note: do 15 maja / 15 May 2026 — verify year
+  source:
+    url: https://student.uniwersytetradom.pl/domy-studenckie/
+    ordinance: Strona 'Domy studenckie' (rok 2026/27)
+    document_date: '2026-10-27'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Termin składania wniosków o akademik"
-    en: "Dormitory application deadline"
-    uk: "Термін подання заявки на гуртожиток"
-    mn: "Дотуур байрны өргөдлийн хугацаа"
-
+    pl: Termin składania wniosków o akademik
+    en: Dormitory application deadline
+    uk: Термін подання заявки на гуртожиток
+    mn: Дотуур байрны өргөдлийн хугацаа
 - id: social_rector_deadline
-  topic: [stypendium_socjalne, stypendium_rektora, stypendium_niepeln]
-  value: null
+  topic:
+  - stypendium_socjalne
+  - stypendium_rektora
+  - stypendium_niepeln
+  value: 01.09.2026 – 05.10.2026
   unit: null
-  academic_year: "2026/2027"
+  academic_year: 2026/2027
   applies_to: {}
-  deadline: {start: null, end: null}
+  deadline:
+    start: '2026-09-01'
+    end: '2026-10-05'
   candidates_seen:
-    - {note: "01.09.2026 – 05.10.2026 vs 1–5 października 2026 — verify"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - note: 01.09.2026 – 05.10.2026 vs 1–5 października 2026 — verify
+  source:
+    url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
+    ordinance: Strona 'Świadczenia dla studentów' – termin na cały rok 2026/2027 (wariant '1–5 października' to tylko część tego okna)
+    document_date: '2026-09-08'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Termin składania wniosków o stypendia"
-    en: "Scholarship application window"
-    uk: "Термін подання заявок на стипендії"
-    mn: "Тэтгэлгийн өргөдлийн хугацаа"
-
+    pl: Termin składania wniosków o stypendia
+    en: Scholarship application window
+    uk: Термін подання заявок на стипендії
+    mn: Тэтгэлгийн өргөдлийн хугацаа
 - id: tuition_english_programmes
-  topic: [oplaty]
-  value: null
+  topic:
+  - oplaty
+  value:
+    International Business & Finance (I st.): 2100
+    Mechanical Engineering (I st.): 2600
+    note: studia stacjonarne w j. angielskim, §3; programy polskojęzyczne dla cudzoziemców 1200–1500 EUR/sem. wg §2
   unit: EUR/semester
-  academic_year: null
-  applies_to: {status: [cudzoziemiec]}
+  academic_year: 2026/2027
+  applies_to:
+    status:
+    - cudzoziemiec
   candidates_seen:
-    - {programme: "Mechanical Engineering", value: 2600}
-    - {programme: "IB&F / Business", value: 2100}
-    - {programme: "Psychology/Pedagogy", value: 1300, note: "unreliable r3"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - programme: Mechanical Engineering
+    value: 2600
+  - programme: IB&F / Business
+    value: 2100
+  - programme: Psychology/Pedagogy
+    value: 1300
+    note: unreliable r3
+  source:
+    url: https://euczelnia.uniwersytetradom.pl/WirtualnaUczelnia10/WU/pliki/biuro_rektora/2026/zarzadzenia/R-08-2026.pdf
+    ordinance: Zarządzenie R-8/2026 z 20.04.2026, §3
+    document_date: '2026-04-20'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Czesne programów anglojęzycznych"
-    en: "English-programme tuition"
-    uk: "Вартість англомовних програм"
-    mn: "Англи хэлний хөтөлбөрийн төлбөр"
-
+    pl: Czesne programów anglojęzycznych
+    en: English-programme tuition
+    uk: Вартість англомовних програм
+    mn: Англи хэлний хөтөлбөрийн төлбөр
 - id: tuition_polish_part_time_I
-  topic: [oplaty]
-  value: null
+  topic:
+  - oplaty
+  value:
+    kierunki_nietechniczne: 2300
+    kierunki_techniczne_inzynierskie: 3200
+    International Business & Finance: 7000
+    Mechanical Engineering: 9000
+    note: czesne za semestr, niestacjonarne I st., rozpoczynający 2026/2027; stawka zależy od kierunku (np. Administracja 2300, Informatyka 3200)
   unit: PLN/semester
-  academic_year: null
-  applies_to: {status: [pl], tryb: [niestacjonarne], poziom: [I]}
+  academic_year: 2026/2027
+  applies_to:
+    status:
+    - pl
+    tryb:
+    - niestacjonarne
+    poziom:
+    - I
   candidates_seen:
-    - {note: "1600–2100 zł from 2020–2021 table — outdated; needs current ordinance"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - note: 1600–2100 zł from 2020–2021 table — outdated; needs current ordinance
+  source:
+    url: https://euczelnia.uniwersytetradom.pl/WirtualnaUczelnia10/WU/pliki/biuro_rektora/2026/zarzadzenia/R-08-2026.pdf
+    ordinance: Zarządzenie R-8/2026 z 20.04.2026, §1
+    document_date: '2026-04-20'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Czesne niestacjonarne I stopień (PL)"
-    en: "Part-time first-cycle tuition (Polish citizens)"
-    uk: "Вартість заочної форми І ступеня (громадяни PL)"
-    mn: "I зэрэг эчнээ төлбөр (Польш иргэн)"
-
+    pl: Czesne niestacjonarne I stopień (PL)
+    en: Part-time first-cycle tuition (Polish citizens)
+    uk: Вартість заочної форми І ступеня (громадяни PL)
+    mn: I зэрэг эчнээ төлбөр (Польш иргэн)
 - id: doctoral_stipend_amount
-  topic: [doktoranckie]
-  value: null
+  topic:
+  - doktoranckie
+  value:
+    przed_ocena_srodokresowa: 3570.5
+    po_ocenie_srodokresowej: 5500.5
+    zwiekszenie_niepelnosprawnosc: 1071.15
+    note: 'ustawowe MINIMUM brutto (art. 209 PSWN: 37%/57% wynagrodzenia profesora 9650 zł); brak opublikowanego zarządzenia URad. z kwotami Szkoły Doktorskiej'
   unit: PLN/month
-  academic_year: null
-  applies_to: {status: [doktorant]}
+  academic_year: 2026/2027
+  applies_to:
+    status:
+    - doktorant
   candidates_seen:
-    - {note: "none found; 2022 page flagged outdated"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - note: none found; 2022 page flagged outdated
+  source:
+    url: https://www.gov.pl/web/nauka/stypendium-doktoranckie
+    ordinance: art. 209 ust. 4 ustawy PSWN + rozp. MNiSW z 14.04.2026 (Dz.U. 2026 poz. 525), wynagrodzenie profesora 9650 zł od 01.01.2026
+    document_date: '2026-04-14'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Wysokość stypendium doktoranckiego"
-    en: "Doctoral stipend amount"
-    uk: "Сума докторської стипендії"
-    mn: "Докторантын тэтгэлгийн дүн"
-
+    pl: Wysokość stypendium doktoranckiego
+    en: Doctoral stipend amount
+    uk: Сума докторської стипендії
+    mn: Докторантын тэтгэлгийн дүн
 - id: doctoral_rector_eligible
-  topic: [doktoranckie, stypendium_rektora]
-  value: null
+  topic:
+  - doktoranckie
+  - stypendium_rektora
+  value: nie
   unit: null
-  academic_year: null
-  applies_to: {status: [doktorant]}
+  academic_year: 2026/2027
+  applies_to:
+    status:
+    - doktorant
   candidates_seen:
-    - {note: "CONFLICT: r1 Nie / r2 Tak / r3 no info — owner must decide from regulations"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - note: 'CONFLICT: r1 Nie / r2 Tak / r3 no info — owner must decide from regulations'
+  source:
+    url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf
+    ordinance: art. 86 ust. 1 i art. 91 ustawy PSWN (stypendium rektora tylko dla studentów) + Regulamin świadczeń dla studentów R-32/2024; doktorant w szkole doktorskiej nie jest studentem – otrzymuje
+      stypendium doktoranckie (art. 209)
+    document_date: '2024-07-29'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Czy doktorant może dostać stypendium rektora"
-    en: "Whether doctoral students may get the rector's scholarship"
-    uk: "Чи може докторант отримати стипендію ректора"
-    mn: "Докторант ректорын тэтгэлэг авах эсэх"
-
+    pl: Czy doktorant może dostać stypendium rektora
+    en: Whether doctoral students may get the rector's scholarship
+    uk: Чи може докторант отримати стипендію ректора
+    mn: Докторант ректорын тэтгэлэг авах эсэх
 - id: submission_channel
-  topic: [stypendium_socjalne, stypendium_rektora, stypendium_niepeln, akademik]
-  value: null
+  topic:
+  - stypendium_socjalne
+  - stypendium_rektora
+  - stypendium_niepeln
+  - akademik
+  value: Wirtualna Uczelnia (elektronicznie, skany PDF); nie USOS/SIRK
   unit: null
   academic_year: null
   applies_to: {}
   candidates_seen:
-    - {note: "Wirtualna Uczelnia / Wirtualny Dziekanat; never USOS/SIRK unless verified"}
-  source: {url: null, ordinance: null, checked: null}
-  status: TODO(verify)
+  - note: Wirtualna Uczelnia / Wirtualny Dziekanat; never USOS/SIRK unless verified
+  source:
+    url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
+    ordinance: Strona 'Świadczenia dla studentów' + 'Domy studenckie'
+    document_date: '2026-09-08'
+    checked: '2026-11-05'
+  status: verified
   i18n_label:
-    pl: "Kanał składania wniosków"
-    en: "Application submission channel"
-    uk: "Канал подання заявок"
-    mn: "Өргөдөл илгээх суваг"
+    pl: Kanał składania wniosków
+    en: Application submission channel
+    uk: Канал подання заявок
+    mn: Өргөдөл илгээх суваг
