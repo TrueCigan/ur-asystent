@@ -240,16 +240,56 @@ def clarify_text(lang, missing):
     qs = "\n".join(f"{i}. {SLOT_Q[m].get(lang, SLOT_Q[m]['pl'])}" for i, m in enumerate(missing, 1))
     return f"{head}\n{qs}\n\n{tip}"
 
-SYSTEM = """You are an information assistant for students of Kazimierz Pułaski University of Radom (Uniwersytet Radomski, UR).
+CLARIFY_SYS = """You help students of Uniwersytet Radomski (UR). The user asked something that depends on their situation, and some facts are still missing.
+Write a short, warm clarification in {lang_name} (lang={lang}).
+Rules:
+- Do NOT answer the substantive question yet.
+- Ask ONLY about these missing fields: {missing_labels}.
+- 1–2 sentence intro why you ask, then a short numbered list (max {n} questions).
+- Invite a single-sentence reply with an example fitting the topic ({topics}).
+- No URLs, no invented rules, no legal advice.
+Known profile so far: {profile}
+User question: {question}"""
+
+SYSTEM = """You are a helpful campus information assistant for students of Kazimierz Pułaski University of Radom (Uniwersytet Radomski, UR).
+Tone: clear, calm, practical — like a well-informed staff member at Biuro Obsługi Studenta. Not a bureaucratic form, not a chatbot script.
+
 HARD RULES:
-1. Answer in {lang_name}. The user language code is {lang}. Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) as in the sources when useful, but explain in the user language. If the user asks to switch language (e.g. “po polsku”, “на польській”), change the answer language — do NOT interpret that as a question about tuition “in the Polish language”. For Polish citizens, full-time first-cycle studies are often free; quote paid amounts only when the source clearly applies to the user’s mode/level (e.g. niestacjonarne / second cycle / foreigners).
-2. Use ONLY the source fragments in ŹRÓDŁA / SOURCES. No outside knowledge. If missing, say clearly that indexed UR materials do not cover it and point to Biuro Obsługi Studenta, Dział Współpracy Zagranicznej, or Szkoła Doktorska.
-3. Ground every claim with [n]. End with a “Sources:” / “Źródła:” / “Джерела:” / “Эх сурвалж:” list (matching the answer language) with URL and update date.
-4. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts/deadlines only if present in sources, with the academic year / ordinance (e.g. R-41/2025). Today: {today}. If a deadline has passed, say so.
-5. List each URL once. Do not invent source numbers.
-6. CLARIFY first when rules depend on student situation (citizenship/foreigner/stateless, doctoral school, full-time/part-time, level/year, second programme or prior diploma, disability, programme/group) and PROFIL lacks data — ask short numbered questions only, then answer after the reply.
-7. Describe rules for the user’s category only; mention exceptions briefly.
+1. Answer in {lang_name} (lang={lang}). Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) when useful. If the user asks to switch language (“po polsku”, “на польській”, “in English”), switch language — do NOT treat that as a question about tuition “in the Polish language”.
+2. Use ONLY the fragments in ŹRÓDŁA. No outside knowledge. If the sources do not cover the question, say so plainly and point to Biuro Obsługi Studenta, Dział Współpracy Zagranicznej, or Szkoła Doktorska.
+3. Structure: (a) direct answer first, (b) conditions/exceptions for THIS student’s profile, (c) what to do next if useful, (d) sources list. Use short paragraphs or bullets; avoid repeating the same sentence pattern.
+4. Cite claims with [n]. End with a sources heading in the answer language (Źródła / Sources / Джерела / Эх сурвалж) with URL + update date. Each URL once. Do not invent source numbers.
+5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. If a deadline already passed, say so.
+6. For Polish citizens, full-time first-cycle study is often free — quote paid zł/euro amounts only when the source clearly applies to the user’s mode/level (e.g. niestacjonarne, second cycle, foreigners).
+7. Describe rules for the user’s category only; mention other categories only as a brief aside.
 8. No legal advice; for individual cases refer to the proper UR unit. Do not invent URLs."""
+
+SLOT_LABEL = {
+ "pl": {"status": "status / obywatelstwo", "tryb": "tryb studiów", "poziom": "poziom studiów", "rok": "rok studiów", "drugi_kierunek": "drugi kierunek lub dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek / grupa"},
+ "en": {"status": "status / citizenship", "tryb": "full-time or part-time", "poziom": "study level", "rok": "year of study", "drugi_kierunek": "second programme or diploma", "niepelnosprawnosc": "disability certificate", "kierunek": "programme / group"},
+ "uk": {"status": "статус / громадянство", "tryb": "форма навчання", "poziom": "рівень навчання", "rok": "рік навчання", "drugi_kierunek": "другий напрям або диплом", "niepelnosprawnosc": "інвалідність", "kierunek": "напрям / група"},
+ "mn": {"status": "статус / иргэншил", "tryb": "сургалтын хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил эсвэл диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил / бүлэг"},
+}
+
+def clarify_answer(lang, missing, question, history, topics, prof):
+    """Natural LLM clarification when possible; template fallback otherwise."""
+    if llm_enabled():
+        labels = SLOT_LABEL.get(lang, SLOT_LABEL["pl"])
+        miss_l = ", ".join(labels.get(m, m) for m in missing)
+        prof_txt = ", ".join(f"{k}={v}" for k, v in prof.items()) or "—"
+        sys = (CLARIFY_SYS.replace("{lang}", lang)
+                          .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
+                          .replace("{missing_labels}", miss_l)
+                          .replace("{n}", str(len(missing)))
+                          .replace("{topics}", ", ".join(topics) or "general")
+                          .replace("{profile}", prof_txt)
+                          .replace("{question}", question))
+        msgs = [{"role": "system", "content": sys}] + history[-6:] + [{"role": "user", "content": question}]
+        try:
+            return call_llm(msgs, temperature=0.35), "doprecyzowanie-llm"
+        except Exception:
+            pass
+    return clarify_text(lang, missing), "doprecyzowanie"
 
 def fmt_sources(hits):
     out = []
@@ -259,20 +299,20 @@ def fmt_sources(hits):
 
 def outdated(m): return (not m) or m[:4] < "2024"
 
-def call_llm(messages):
+def call_llm(messages, temperature=0.25):
     prov = os.getenv("LLM_PROVIDER", "").lower(); key = os.getenv("LLM_API_KEY", "")
     model = os.getenv("LLM_MODEL", "")
     if prov == "gemini":
         import time
         key = os.getenv("GEMINI_API_KEY") or key
-        chain = [m for m in [model, "gemini-3.5-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"] if m]
+        chain = [m for m in [model, "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"] if m]
         last = None
         for m in dict.fromkeys(chain):
             for att in range(4):
                 try:
                     r = httpx.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", timeout=90,
                                    headers={"Authorization": f"Bearer {key}"},
-                                   json={"model": m, "messages": messages, "temperature": 0.1, "reasoning_effort": "low"})
+                                   json={"model": m, "messages": messages, "temperature": temperature, "reasoning_effort": "low"})
                 except httpx.TimeoutException as e:
                     last = e; break
                 if r.status_code == 200:
@@ -285,12 +325,12 @@ def call_llm(messages):
     if prov == "anthropic":
         r = httpx.post("https://api.anthropic.com/v1/messages", timeout=120,
             headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
-            json={"model": model or "claude-sonnet-4-5", "max_tokens": 1200, "system": messages[0]["content"], "messages": messages[1:]})
+            json={"model": model or "claude-sonnet-4-5", "max_tokens": 1400, "system": messages[0]["content"], "messages": messages[1:], "temperature": temperature})
         r.raise_for_status(); return r.json()["content"][0]["text"]
     base = {"openai": "https://api.openai.com/v1", "xai": "https://api.x.ai/v1", "ollama": "http://localhost:11434/v1"}.get(prov) or os.getenv("LLM_BASE_URL")
     base = os.getenv("LLM_BASE_URL", base)
     r = httpx.post(base + "/chat/completions", timeout=120, headers={"Authorization": f"Bearer {key}"},
-                   json={"model": model or "gpt-4o-mini", "messages": messages, "temperature": 0.1})
+                   json={"model": model or "gpt-4o-mini", "messages": messages, "temperature": temperature})
     r.raise_for_status(); return r.json()["choices"][0]["message"]["content"]
 
 def llm_enabled():
@@ -325,8 +365,8 @@ def answer(question, history):
     lang = detect_lang(question, hist_user, latest=question)
     topics, prof, missing = needed(question, hist_user)
     if missing:
-        return dict(clarify=True, mode="doprecyzowanie", sources=[], profile=prof, lang=lang,
-                    answer=clarify_text(lang, missing))
+        text, mode = clarify_answer(lang, missing, question, history, topics, prof)
+        return dict(clarify=True, mode=mode, sources=[], profile=prof, lang=lang, answer=text)
     base_q = question
     if history:
         prev = [m["content"] for m in history if m["role"] == "user" and any(re.search(rx, m["content"], re.I) for _, rx, _ in TOPICS)]
@@ -358,9 +398,9 @@ def answer(question, history):
                      .replace("{lang}", lang)
                      .replace("{lang_name}", LANG_NAME.get(lang, "polski")))
         msgs = [{"role": "system", "content": sys}] + history[-8:] + [{"role": "user", "content":
-                f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\n\nŹRÓDŁA:\n{fmt_sources(hits)}\n\nPYTANIE: {question}"}]
+                f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\nTEMATY: {', '.join(topics) or '—'}\n\nŹRÓDŁA:\n{fmt_sources(hits)}\n\nPYTANIE: {question}\n\nNapisz konkretną, naturalną odpowiedź według zasad systemowych."}]
         try:
-            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, lang=lang, answer=call_llm(msgs))
+            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, lang=lang, answer=call_llm(msgs, temperature=0.3))
         except Exception as e:
             err = LLM_ERR.get(lang, LLM_ERR["pl"]).format(e=e)
     else:
