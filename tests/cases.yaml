@@ -1,0 +1,117 @@
+# Built from report_2026-11-04.md (r1), report_round2_2026-11-04.md (r2), report_round3_2026-11-04.md (r3).
+# Policy assertions apply to every e2e case: never Russian, URLs from sources only, <=1 deadline note per date.
+
+# ---------- language ----------
+- id: lang-ru-rector-stays-uk
+  origin: r2-S10 / r3-S8
+  turns: ["Привет, я студент из Польши, учусь на бакалавре. Как получить ректорскую стипендию и сколько платят?", "3 курс, поляк, один"]
+  per_turn_lang_not: [ru]
+  unit: {lang: uk, profile: {status: pl, poziom: I, rok: "3", drugi_kierunek: nie}, missing: []}
+  e2e: {every_turn: true, lang_in: [uk, pl, en], urls_subset_of_sources: true, max_count: {"⚠️": 1}}
+- id: lang-ru-explicit-request-refused
+  origin: r1-S3 / r2-S5 / r3-S6
+  turns: ["siema, jestem doktorantem. czy moge dostac stypendium rektora i ile dostaje sie ze stypendium doktoranckiego?", "Привет! Можешь ответить по-русски: до какого числа подавать документы на докторскую стипендию?"]
+  per_turn_lang_not: [ru]
+  unit: {topics_include: [doktoranckie]}
+  e2e: {lang_in: [uk, pl], must_not_match: ["могу.{0,20}русск", "відповідати .{0,30}російськ"]}
+- id: lang-mn-never-ru
+  origin: r3-S10
+  turns: ["Сайн байна уу, би Монгол оюутан. Польш хэлний хөтөлбөрийн сургалтын төлбөр хэд вэ? Магистр, өдрийн.", "cudzoziemiec", "Баярлалаа. Дотуур байрны үнэ хэд вэ?"]
+  unit: {lang: mn, profile: {status: cudzoziemiec}}
+  e2e: {every_turn: true, lang_in: [mn, en, pl], urls_subset_of_sources: true}
+- id: lang-session-sticky-after-polish-turn
+  origin: r3-S9
+  turns: ["Здравствуйте. Я иностранец, учусь заочно, хочу общежитие. Сколько стоит и до какого числа заявка?", "a stypendium socjalne dla mnie? mam karte pobytu, dzienne, licencjat, jedno", "nie mam drugiego"]
+  per_turn_lang_not: [ru]
+  unit: {profile: {drugi_kierunek: nie}, missing: []}
+  e2e: {every_turn: true, lang_in: [uk, pl], must_not_match: ["Biuro Obsługi Studenta – mogą rozpatrzeć wyjątek"]}
+- id: lang-en-in-polish-is-not-switch
+  origin: r1-S6 / r2-S9 / r3-S1
+  turns: ["Hello, I am Pole studying part-time bachelors. How much do I pay for studies in Polish?"]
+  unit: {lang: en, profile: {status: pl, tryb: niestacjonarne, poziom: I}, missing: []}
+  e2e: {lang_in: [en], urls_subset_of_sources: true, must_not_match: ["2020[–-]2021", "univerzytetradom"]}
+
+# ---------- slots ----------
+- id: slot-daily-after-clarify
+  origin: r2-S2
+  turns: ["czesc, jak dostac stypendium socjalne?", "z polski jestem, mgr, jednokierunkowo", "daily"]
+  unit: {profile: {status: pl, poziom: II, drugi_kierunek: nie, tryb: stacjonarne}, missing: []}
+  e2e: {lang_in: [pl], must_not_match: ["Nie rozumiem pytania"]}
+- id: slot-a-pole-nothing-else
+  origin: r1-S10 / r2-S4
+  turns: ["How to get a social scholarship?", "a Pole, nothing else, daily, master, 1st year"]
+  unit: {profile: {status: pl, tryb: stacjonarne, poziom: II, drugi_kierunek: nie}, missing: []}
+- id: slot-foreigner-india
+  origin: r3-S4
+  turns: ["Hi, how much is tuition for English programmes? Mechanical Engineering, I am from India", "foreigner, 1st degree, daily"]
+  unit: {profile: {status: cudzoziemiec}, missing_not: [status]}
+  e2e: {lang_in: [en], must_match: ["2[ ,.]?600\\s*(EUR|euro)"], must_not_match: ["SIRK", "uniwersytelnia10"], urls_subset_of_sources: true}
+- id: slot-negated-second-programme-keeps-topic
+  origin: r2-S7
+  turns: ["Dzień dobry, mam orzeczenie o niepełnosprawności w stopniu znacznym. Jakie stypendium mi przysługuje?", "polak, mgr, nie mam drugiego kierunku, nic wiecej", "full time"]
+  unit: {topics_include: [stypendium_niepeln], topics_exclude: [dwa_kierunki], missing: []}
+  e2e: {must_match: ["1[ .]?400"], must_not_match: ["USOS"]}
+- id: slot-doctoral-no-second-programme-q
+  origin: r2-S5
+  turns: ["czy doktorant moze dostac stypendium rektora?"]
+  unit: {profile: {status: doktorant}, missing: []}
+- id: slot-karta-pobytu-not-ochrona
+  origin: r2-S8 / r3-S3
+  turns: ["Привіт, я з України, маю карту побуту. Як отримати соціальну стипендію?", "dzienne, licencjat, nie"]
+  unit: {profile: {status: cudzoziemiec, pobyt: pobyt_czasowy}, missing: []}
+  e2e: {lang_in: [uk], must_not_match: ["ochrona czasowa", "заповідження", "стипендіум"], max_count: {"⚠️": 1}}
+
+# ---------- topics ----------
+- id: topic-social-plus-dorm
+  origin: r2-S8 / r3-S2
+  turns: ["czesc, chce stypendium socjalne i miejsce w akademiku. ile to kosztuje?", "polak, jednokierunkowo, daily"]
+  unit: {topics_include: [stypendium_socjalne, akademik]}
+  e2e: {must_match: ["akademik|dom studencki", "socjaln"], must_not_match: ["Student → Akademik"]}
+- id: topic-rector-plus-social-cap
+  origin: r3-S7
+  turns: ["yo what is the max if i get both rector and social scholarship? gpa 4.8", "im a Pole, undergrad, only one, no, full time"]
+  unit: {topics_include: [stypendium_rektora, stypendium_socjalne], missing: []}
+  e2e: {lang_in: [en], stable_across_runs: ["(3[ ,.]?(?:560|667)[.,]?\\d*)"], must_not_match: ["GPA of 4\\.8, you'd likely qualify"]}
+- id: topic-foreigner-scholarship-not-dorm
+  origin: r2-S6
+  turns: ["Сайн байна уу, би Монголоос ирсэн оюутан. Тэтгэлэг авч болох уу? Дотуур байр хэд вэ?", "foreign student, residence permit, full-time, 1st degree. what about scholarship for foreigners?"]
+  unit: {topics_exclude: []}   # TODO: expect a scholarship topic once multi-topic routing lands
+- id: topic-english-programme-tuition
+  origin: r2-S6
+  turns: ["foreign student, residence permit, full-time, 1st degree", "how much for english programs? business"]
+  unit: {topics_include: [oplaty]}
+  e2e: {must_match: ["2[ ,.]?100\\s*(EUR|euro)"], must_not_match: ["Dormitory Fees"]}
+
+# ---------- facts consistency ----------
+- id: fact-rector-cap-consistent-pl
+  origin: r2-S3 / r3-S2,S7,S8
+  turns: ["Ile maksymalnie mogę dostać łącznie ze stypendium socjalnego i rektora?", "polak, I stopień, stacjonarne, 2 rok, jeden kierunek"]
+  e2e: {stable_across_runs: ["(3[ .]?(?:560|667)[.,]?\\d*)"]}
+- id: fact-doctoral-rector-eligibility-stable
+  origin: r1-S9 / r2-S5 / r3-S6
+  turns: ["czy doktorant moze dostac stypendium rektora?"]
+  e2e: {stable_across_runs: ["\\b(Tak|Nie|Niestety)\\b"]}
+- id: fact-dorm-prices-current
+  origin: r2-S1,S4 / r3-S9,S10
+  turns: ["Ile kosztuje akademik?"]
+  e2e: {stable_across_runs: ["(\\d{3})\\s*zł"], urls_subset_of_sources: true}
+
+# ---------- deadline warner (pure function) ----------
+- id: deadline-range-one-note
+  origin: r2-S4 / r3-S3,S5
+  deadline_note: {text: "od 01.09.2026 do 05.10.2026", lang: pl, expect_count: 1}
+- id: deadline-range-en-no-polish-words
+  origin: r2-S4
+  deadline_note: {text: "od 01.09.2026 do 05.10.2026", lang: en, expect_count: 1, must_not_match: ["\\bod\\b", "\\bdo\\b"]}
+- id: deadline-month-name-pl
+  origin: r3-S2
+  deadline_note: {text: "Wnioski składa się do 15 maja 2026", lang: pl, expect_count: 1}
+- id: deadline-month-name-en
+  origin: r2-S1,S6
+  deadline_note: {text: "Application deadline: 15 May 2026", lang: en, expect_count: 1}
+- id: deadline-single-date
+  origin: r2-S3
+  deadline_note: {text: "No applications accepted after 05.10.2026", lang: en, expect_count: 1}
+- id: deadline-month-name-yearless
+  origin: r3-S2 ("do 15 maja"), r3-S10
+  deadline_note: {text: "Wnioski o akademik składa się do 15 maja", lang: pl, expect_count: 1}

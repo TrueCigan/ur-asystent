@@ -1,0 +1,30 @@
+name: eval
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 3 * * *"        # nightly e2e
+  workflow_dispatch:
+jobs:
+  eval-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r requirements.txt pyyaml
+      - run: python tests/eval_dialogues.py --repo . --layer unit
+      - run: docker build -t ur-asystent-ci .          # guards the Render deploy (Dockerfile COPY lines, deps)
+  eval-e2e:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      LLM_PROVIDER: gemini
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r requirements.txt pyyaml
+      - run: python tests/eval_dialogues.py --repo . --layer e2e --runs 3
