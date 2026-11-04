@@ -1,4 +1,4 @@
-"""Logika asystenta: doprecyzowanie sytuacji studenta, wyszukiwanie hybrydowe, odpowiedź z cytatami (PL)."""
+"""Logika asystenta: doprecyzowanie sytuacji studenta, wyszukiwanie hybrydowe, odpowiedź z cytatami (PL/EN/UK/MN)."""
 import os, re, gzip, json, math, collections, numpy as np, scipy.sparse as sp, httpx
 from index import tokens, norm, D, char_ngrams, char_vec
 
@@ -50,44 +50,160 @@ def search(q, k=8, prefer=None):
         if len(out) >= k: break
     return out
 
-# ---------- profil studenta i doprecyzowanie ----------
-SLOTS = {
- "status": ("Jaki jest Twój status: student z obywatelstwem polskim, cudzoziemiec (podaj, czy masz np. Kartę Polaka, kartę pobytu stałego/czasowego, status uchodźcy lub ochronę czasową/UKR), osoba bez obywatelstwa (bezpaństwowiec), czy doktorant/doktorantka Szkoły Doktorskiej?",
-   {"bezpanstwowiec": r"bezpa[nń]stw|bez obywatel|stateless", "pl": r"\b(polak|polk[aąi]|jestem polk|obywatel\w* polsk|polskie obywatel|jestem z polski)", "cudzoziemiec": r"cudzozie|obcokraj|zagranicz|ukrai|bia[lł]oru|karta polaka|kart\w* pobytu|ochron\w* czasow|uchod[zź]", "bezpanstwowiec": r"bezpa[nń]stw|bez obywatel|stateless", "doktorant": r"jestem doktorant|doktorantk|w szko[lł]\w* doktorsk|szko[lł]\w* doktorsk"}),
- "tryb": ("Studiujesz w trybie stacjonarnym czy niestacjonarnym?", {"stacjonarne": r"(?<!nie)stacjonar|dzienn", "niestacjonarne": r"niestacjonar|zaoczn|weekend"}),
- "poziom": ("Na jakim poziomie studiujesz: I stopnia (licencjackie/inżynierskie), II stopnia (magisterskie), jednolite magisterskie czy Szkoła Doktorska?", {"II": r"\bii\s*stop|drugi\w* stop|magist(?!.*jednolit)|uzupe[lł]niaj", "I": r"\bi\s*stop|pierwsz\w* stop|licencj|in[zż]ynier", "jednolite": r"jednolit", "SD": r"doktorant|szko[lł]\w* doktorsk"}),
- "rok": ("Na którym roku studiów jesteś (pierwszy rok czy wyższy)?", {"rok": r"(\b[1-6]\s*rok|\bi+\s*rok|\bpierwsz\w* rok|\bdrugi\w* rok|\btrzeci\w* rok|\bczwart\w* rok|\bpi[aą]t\w* rok|\b(?:na|jestem na)\s+(?:i|ii|iii|iv|v)\s+roku|\bpierwszoroczn)"}),
- "drugi_kierunek": ("Czy studiujesz (lub studiowałeś/aś wcześniej) równolegle drugi kierunek albo masz już ukończone studia? To ważne, bo świadczenia przysługują co do zasady na jednym kierunku i nie przysługują po uzyskaniu tytułu danego poziomu.", {"tak": r"(drugi\w* kierun\w*|dw[ao]\w* kierun\w*|r[oó]wnoleg[lł]\w*|ju[zż] (mam|uko[nń]czy)\w*|mam (tytu[lł]|licencjat|dyplom))", "nie": r"(jedyn\w* kierun|jeden kierun|tylko jed\w* kierun|nie studiuj\w* (r[oó]wnoleg|drug)|pierwsz\w* studi|nie mam (innego|drugiego|uko))"}),
- "niepelnosprawnosc": ("Czy posiadasz orzeczenie o niepełnosprawności (lub stopniu niepełnosprawności)?", {"tak": r"(mam orzeczenie|z niepe[lł]nosprawno|orzeczen\w* o (niepe|stop))", "nie": r"(nie mam orzecz|bez orzecz|nie jestem (osob\w* )?niepe[lł]no)"}),
- "kierunek": ("Jaki kierunek, rok i grupę (lub specjalność) studiujesz? Podaj np. „Informatyka, I stopień, 1 rok, stacjonarne”.", {"kierunek": r"informaty|elektrotechn|transport|ekonom|prawo|piel[eę]g|medycy|pedagog|mechani|logisty|filolog|filozof|socjolog|turysty|kosmetolog"}),
+# ---------- język (PL / EN / UK / MN) ----------
+LANG_NAME = {"pl": "polski", "en": "English", "uk": "українська", "mn": "монгол"}
+
+def detect_lang(*parts):
+    text = "\n".join(p for p in parts if p) or ""
+    if re.search(r"[өүӨҮ]", text): return "mn"
+    if re.search(r"[іїєґІЇЄҐ]", text): return "uk"
+    if re.search(r"[а-яА-ЯёЁ]", text):
+        if re.search(r"тэтгэлэг|оюутан|суралц|төлбөр|иргэн|мэргэжил|докторант", text, re.I): return "mn"
+        return "uk"
+    if re.search(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", text): return "pl"
+    if re.search(r"\b(the|and|how|what|when|where|scholarship|tuition|fees?|i'?m|i am|full[- ]time|part[- ]time|bachelor|master'?s?|phd|doctoral|citizen|foreign)\b", text, re.I): return "en"
+    if re.search(r"\b(jak|czy|stypendium|opłat|jestem|studiuj|cudzoziem|rektor|zajęć)\b", text, re.I): return "pl"
+    if re.search(r"\b(як|чи|стипенд|оплат|громадян|інозем|навчан)\b", text, re.I): return "uk"
+    return "pl"
+
+# ---------- profil studenta i doprecyzowanie (PL/EN/UK/MN) ----------
+SLOT_Q = {
+ "status": {
+  "pl": "Jaki jest Twój status: obywatel Polski, cudzoziemiec (np. Karta Polaka, karta pobytu, uchodźca/ochrona UKR), bezpaństwowiec, czy doktorant Szkoły Doktorskiej?",
+  "en": "What is your status: Polish citizen, international student (e.g. Pole’s Card, residence permit, refugee/UKR temporary protection), stateless person, or doctoral student?",
+  "uk": "Який ваш статус: громадянин Польщі, іноземець (напр. Карта поляка, карта побуту, біженець/тимчасовий захист UKR), особа без громадянства чи докторант?",
+  "mn": "Таны статус юу вэ: Польш иргэн, гадаадын оюутан (ж.нь. Польшийн карт, оршин суух зөвшөөрөл, дүрвэгч/UKR), харьяалалгүй хүн, эсвэл докторант уу?",
+ },
+ "tryb": {
+  "pl": "Studiujesz stacjonarnie czy niestacjonarnie?",
+  "en": "Do you study full-time or part-time?",
+  "uk": "Ви навчаєтесь на денній (стаціонар) чи заочній формі?",
+  "mn": "Та өдрийн (бүтэн цагийн) эсвэл эчнээ (цагийн) хэлбэрээр суралцдаг уу?",
+ },
+ "poziom": {
+  "pl": "Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?",
+  "en": "Level: first-cycle (bachelor/engineer), second-cycle (master), long-cycle master’s, or doctoral school?",
+  "uk": "Рівень: І ступінь (бакалавр/інженер), ІІ ступінь (магістр), єдиний магістерський чи докторантура?",
+  "mn": "Түвшин: I зэрэг (бакалавр/инженер), II зэрэг (магистр), нэгдсэн магистр, эсвэл докторантур уу?",
+ },
+ "rok": {
+  "pl": "Na którym roku studiów jesteś?",
+  "en": "Which year of study are you in?",
+  "uk": "На якому ви році навчання?",
+  "mn": "Та хэд дэх курст суралцаж байна вэ?",
+ },
+ "drugi_kierunek": {
+  "pl": "Czy studiujesz równolegle drugi kierunek albo masz już ukończone studia tego poziomu? (świadczenia zwykle tylko na jednym kierunku)",
+  "en": "Are you studying a second programme in parallel, or have you already completed a degree at this level? (benefits usually cover one programme)",
+  "uk": "Чи навчаєтесь паралельно на другому напрямі або вже маєте диплом цього рівня? (виплати зазвичай лише на одному напрямі)",
+  "mn": "Та зэрэгцээ хоёр мэргэжил сурдаг уу, эсвэл энэ түвшний дипломтой юу? (тэтгэлэг ихэвчлэн нэг мэргэжилд)",
+ },
+ "niepelnosprawnosc": {
+  "pl": "Czy masz orzeczenie o niepełnosprawności?",
+  "en": "Do you have a disability certificate / official disability ruling?",
+  "uk": "Чи маєте посвідчення/висновок про інвалідність?",
+  "mn": "Танд хөгжлийн бэрхшээлийн гэрчилгээ/шийдвэр бий юу?",
+ },
+ "kierunek": {
+  "pl": "Podaj kierunek, stopień, rok i tryb (np. Informatyka, I stopień, 1 rok, stacjonarne).",
+  "en": "Give your programme, level, year and mode (e.g. Computer Science, bachelor, year 1, full-time).",
+  "uk": "Вкажіть напрям, рівень, рік і форму (напр. Інформатика, І ступінь, 1 рік, денна).",
+  "mn": "Мэргэжил, түвшин, курс, хэлбэрээ бичнэ үү (ж.нь. Информатик, I зэрэг, 1-р курс, өдрийн).",
+ },
 }
+
+SLOT_OPTS = {
+ "status": [
+  ("doktorant", r"doktorant|doktoranc|doctoral\s*school|phd\s*student|i'?m\s*a?\s*phd|doctoral\s*student|школ\w*\s*доктор|докторант|докторантур|докторант"),
+  ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
+  ("pl", r"\b(polak|polk[aąi]|polish\s*citizen|i(?:'?m|\s+am)\s+polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
+  ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|i'?m\s*a?\s*foreign|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карта\s*побуту|тимчасов\w*\s*захист|біжен|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
+ ],
+ "tryb": [
+  ("stacjonarne", r"(?<!nie)stacjonar|dzienn|full[-\s]?time|on[- ]campus|денн|стаціонар|очна\s*форм|өдрийн|бүтэн\s*цаг"),
+  ("niestacjonarne", r"niestacjonar|zaoczn|weekend|part[-\s]?time|extramural|заочн|вечірнь|эчнээ|цагийн\s*сургалт"),
+ ],
+ "poziom": [
+  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|phd\b|doktoranc|докторантур|докторант(?!\w)"),
+  ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
+  ("II", r"\bii\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|другого\s*ступ|магістр|ii\s*зэрэг|2\s*зэрэг|магистр"),
+  ("I", r"\bi\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|bachelor|undergraduate|licencj|in[zż]ynier|і\s*ступ|бакалавр|інженер|i\s*зэрэг|1\s*зэрэг"),
+ ],
+ "rok": [
+  ("rok", r"(\b[1-6]\s*(rok|year|курс|жил|курс[т]?)\b|\byear\s*[1-6]\b|\b[1-6](st|nd|rd|th)\s*year\b|\bi+\s*rok|\bpierwsz\w*\s*rok|\bdrugi\w*\s*rok|\btrzeci\w*\s*rok|\bczwart\w*\s*rok|\bpi[aą]t\w*\s*rok|\bfirst\s*year|\bsecond\s*year|\bthird\s*year|\bfreshman|\bsophomore|\bперш\w*\s*рік|\bдруг\w*\s*рік|\bтрет\w*\s*рік|\b[1-6][- ]?р\s*курс|\b(?:na|jestem na)\s+(?:i|ii|iii|iv|v)\s+roku|\bpierwszoroczn)"),
+ ],
+ "drugi_kierunek": [
+  ("tak", r"(drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*(mam|uko[nń]czy)|mam\s*(tytu[lł]|licencjat|dyplom)|друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)|диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
+  ("nie", r"(jedyn\w*\s*kierun|jeden\s*kierun|tylko\s*jed|only\s*one\s*(program|programme|major|degree|field)|single\s*(major|program|programme)|one\s*program\s*only|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|first\s*degree\s*only|nie\s*mam\s*(innego|drugiego|uko)|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
+ ],
+ "niepelnosprawnosc": [
+  ("tak", r"(mam\s*orzeczenie|z\s*niepe[lł]nosprawno|orzeczen\w*\s*o\s*(niepe|stop)|disability\s*(certificate|ruling|status)|i\s*have\s*a?\s*disability|інвалід|посвідчен\w*\s*про\s*інвал|хөгжлийн\s*бэрхшээл)"),
+  ("nie", r"(nie\s*mam\s*orzecz|bez\s*orzecz|nie\s*jestem\s*(osob\w*\s*)?niepe[lł]no|no\s*disability|without\s*disability|не\s*маю\s*(інвал|посвідч)|бэрхшээлгүй|хөгжлийн\s*бэрхшээл\s*гүй)"),
+ ],
+ "kierunek": [
+  ("kierunek", r"informaty|computer\s*science|elektrotechn|electrical|transport|ekonom|economics|prawo|law\b|piel[eę]g|nursing|medycy|pedagog|mechani|logisty|filolog|filozof|socjolog|turysty|kosmetolog|інформатик|електротех|економік|право|педагог|механік|логістик|информатик|цахилгаан|эдийн\s*засаг"),
+ ],
+}
+
+# keep SLOTS shape used elsewhere: (default PL question, opts dict)
+SLOTS = {k: (SLOT_Q[k]["pl"], {val: rx for val, rx in opts}) for k, opts in SLOT_OPTS.items()}
+
 TOPICS = [
- ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w* materialn|[sś]wiadcze", ["status", "drugi_kierunek", "tryb", "poziom"]),
- ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w* ocen", ["status", "drugi_kierunek", "poziom", "rok"]),
- ("stypendium_niepeln", r"niepe[lł]nospraw", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
- ("doktoranckie", r"doktorant|doktorsk|doktoranck", ["status"]),
- ("oplaty", r"op[lł]at|czesne|ile kosztuj|p[lł]aci[cć]|bezp[lł]atn", ["status", "tryb", "poziom"]),
- ("erasmus", r"erasmus|wyjazd|wymian|mobilno", ["status", "poziom", "rok"]),
- ("plan", r"plan\w* zaj|rozk[lł]ad|harmonogram zaj|zaj[eę]cia w|kiedy mam zaj", ["kierunek", "tryb"]),
- ("cudzoziemcy", r"cudzozie|bezpa[nń]stw|bez obywatel|karta polaka|kart\w* pobytu|legaliz|wiz\w*\b|ochron\w* czasow", ["status"]),
- ("dwa_kierunki", r"dw[ao]\w* kierun|drugi\w* kierun|r[oó]wnoleg", ["status", "drugi_kierunek", "tryb"]),
+ ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w*\s*materialn|[sś]wiadcze|social\s*scholarship|maintenance\s*grant|need[-\s]?based|стипенд\w*\s*соціал|соціальн\w*\s*стипенд|матеріальн\w*\s*допомог|тэтгэлэг|нийгмийн\s*тэтгэлэг|амьжиргааны", ["status", "drugi_kierunek", "tryb", "poziom"]),
+ ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|merit\s*scholarship|academic\s*excellence|стипенд\w*\s*ректор|ректорськ|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom", "rok"]),
+ ("stypendium_niepeln", r"niepe[lł]nospraw|disability\s*scholarship|інвалід|хөгжлийн\s*бэрхшээл", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
+ ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|докторант|докторантур", ["status"]),
+ ("oplaty", r"op[lł]at|czesne|ile\s*kosztuj|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?|how\s*much\s*(does|do|is)|cost\s*of\s*stud|оплат|вартість\s*навчан|плата\s*за\s*навчан|төлбөр|сургалтын\s*төлбөр|хэд\s*вэ", ["status", "tryb", "poziom"]),
+ ("erasmus", r"erasmus|wyjazd|wymian|mobilno|exchange\s*program|study\s*abroad|мобільніст|обмін|солилцоо|гадаадад\s*суралц", ["status", "poziom", "rok"]),
+ ("plan", r"plan\w*\s*zaj|rozk[lł]ad|harmonogram\s*zaj|zaj[eę]cia\s*w|kiedy\s*mam\s*zaj|timetable|class\s*schedule|course\s*schedule|розклад|розклад\s*занят|хичээлийн\s*хуваарь|хуваарь", ["kierunek", "tryb"]),
+ ("cudzoziemcy", r"cudzozie|bezpa[nń]stw|bez\s*obywatel|karta\s*polaka|kart\w*\s*pobytu|legaliz|wiz\w*\b|ochron\w*\s*czasow|international\s*student|foreign\s*student|residence\s*permit|інозем|без\s*громадян|карта\s*поляка|гадаад\s*оюутан|оршин\s*суух", ["status"]),
+ ("dwa_kierunki", r"dw[ao]\w*\s*kierun|drugi\w*\s*kierun|r[oó]wnoleg|second\s*(major|program|programme)|double\s*major|друг\w*\s*напрям|паралельн|хоёр\s*мэргэжил|зэрэгцээ", ["status", "drugi_kierunek", "tryb"]),
 ]
 
+TOPIC_PL_QUERY = {
+ "stypendium_socjalne": "stypendium socjalne pomoc materialna dochód",
+ "stypendium_rektora": "stypendium rektora średnia ocen",
+ "stypendium_niepeln": "stypendium dla osób niepełnosprawnych",
+ "doktoranckie": "stypendium doktoranckie szkoła doktorska",
+ "oplaty": "opłaty czesne koszt studiów",
+ "erasmus": "Erasmus wymiana mobilność",
+ "plan": "plan zajęć rozkład WTEiI",
+ "cudzoziemcy": "cudzoziemcy rekrutacja karta pobytu",
+ "dwa_kierunki": "drugi kierunek świadczenia",
+}
+
+CLARIFY = {
+ "pl": ("Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:",
+        "Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”."),
+ "en": ("Before I answer – UR rules depend on your situation. Please clarify:",
+        "You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”."),
+ "uk": ("Перш ніж відповісти – правила UR залежать від вашої ситуації. Уточніть, будь ласка:",
+        "Можна однією фразою, напр. «іноземець з картою побуту, денна, І ступінь, 2 рік, один напрям»."),
+ "mn": ("Хариулахаас өмнө – UR-ийн дүрэм таны нөхцөл байдлаас хамаарна. Тодруулна уу:",
+        "Нэг өгүүлбэрээр хариулж болно, ж.нь. «оршин суух зөвшөөрөлтэй гадаадын оюутан, өдрийн, I зэрэг, 2-р курс, нэг мэргэжил»."),
+}
+
 def extract_profile(text):
-    t = norm(text) if False else text.lower()
+    t = text.lower()
     prof = {}
-    for slot, (_, opts) in SLOTS.items():
-        for val, rx in opts.items():
-            if re.search(rx, t, re.I): prof[slot] = val; break
-    if prof.get("status") == "doktorant": prof.setdefault("poziom", "SD"); prof.setdefault("tryb", "stacjonarne"); prof.setdefault("rok", "rok")
-    if prof.get("poziom") == "SD": prof.setdefault("status_doktor", True)
-    if re.search(r"drugi\w* kierun|dw[ao]\w* kierun|r[oó]wnoleg", t) and re.search(r"czy (mog|moż)", t): prof.setdefault("drugi_kierunek", "pytanie")
+    for slot, opts in SLOT_OPTS.items():
+        for val, rx in opts:
+            if re.search(rx, t, re.I):
+                prof[slot] = val
+                break
+    if prof.get("status") == "doktorant":
+        prof.setdefault("poziom", "SD"); prof.setdefault("tryb", "stacjonarne"); prof.setdefault("rok", "rok")
+    if prof.get("poziom") == "SD":
+        prof.setdefault("status_doktor", True)
+    if re.search(r"drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(major|program|programme)|double\s*major|друг\w*\s*напрям|хоёр\s*мэргэжил", t, re.I) and \
+       re.search(r"czy\s*(mog|moż)|can\s*i|is\s*it\s*possible|чи\s*мож|болох\s*уу", t, re.I):
+        prof.setdefault("drugi_kierunek", "pytanie")
     return prof
 
 def needed(question, history_text):
     q = question.lower()
     topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, q, re.I)]
-    if not topics:  # kontynuacja – szukaj tematu w historii
+    if not topics:
         topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, history_text.lower(), re.I)][:1]
     req = []
     for _, s in topics:
@@ -99,16 +215,21 @@ def needed(question, history_text):
     missing = [x for x in req if x not in prof]
     return [n for n, _ in topics], prof, missing
 
-SYSTEM = """Jesteś asystentem informacyjnym dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego (UR).
-ZASADY (bezwzględne):
-1. Odpowiadasz ZAWSZE po polsku, niezależnie od języka pytania.
-2. Odpowiadasz WYŁĄCZNIE na podstawie fragmentów źródeł podanych w sekcji ŹRÓDŁA. Nie korzystasz z wiedzy ogólnej. Jeśli w źródłach brak informacji – napisz wprost: „W zindeksowanych materiałach UR nie znalazłem informacji na ten temat” i wskaż, gdzie warto zapytać (Biuro Obsługi Studenta, Dział Współpracy Zagranicznej, Szkoła Doktorska).
-3. Każde twierdzenie opierasz na źródle i cytujesz je w formacie [n]. Na końcu podajesz listę „Źródła:” z adresem URL i datą ostatniej aktualizacji strony.
-4. Ostrzeżenie „⚠️ informacja może być nieaktualna (strona z dnia …)” dodawaj WYŁĄCZNIE dla źródeł z datą wcześniejszą niż 2024-01-01 lub bez daty (pole „nieaktualne: TAK”). Źródeł z 2024 r. i później NIE oznaczaj jako nieaktualne. Kwoty, terminy i progi dochodowe podawaj tylko, gdy są w źródle, i zawsze wskaż, którego roku akademickiego/zarządzenia dotyczą (np. „wg zarządzenia R-41/2025”). Dzisiejsza data: {today}. Jeśli termin ze źródła już minął, napisz to wyraźnie.
-8. W liście „Źródła:” każdy URL podaj tylko raz (z datą aktualizacji). Nie wymyślaj numerów źródeł, których nie ma w sekcji ŹRÓDŁA.
-5. DOPRECYZOWANIE: zasady różnią się w zależności od sytuacji studenta (obywatelstwo/status cudzoziemca lub bezpaństwowca, Szkoła Doktorska, tryb stacjonarny/niestacjonarny, poziom i rok studiów, studiowanie równolegle drugiego kierunku lub posiadanie dyplomu, niepełnosprawność, kierunek/grupa). Jeżeli odpowiedź od tego zależy, a w PROFILU STUDENTA brakuje potrzebnych danych, NIE odpowiadaj merytorycznie – najpierw zadaj krótkie, ponumerowane pytania doprecyzowujące (tylko te potrzebne), a odpowiedz po otrzymaniu odpowiedzi.
-6. Gdy różne kategorie studentów mają różne zasady, opisz zasady tylko dla kategorii użytkownika; ewentualne wyjątki zaznacz krótko.
-7. Nie udzielasz porad prawnych; w sprawach indywidualnych odsyłasz do właściwej jednostki UR. Nie zmyślaj adresów URL."""
+def clarify_text(lang, missing):
+    head, tip = CLARIFY.get(lang, CLARIFY["pl"])
+    qs = "\n".join(f"{i}. {SLOT_Q[m].get(lang, SLOT_Q[m]['pl'])}" for i, m in enumerate(missing, 1))
+    return f"{head}\n{qs}\n\n{tip}"
+
+SYSTEM = """You are an information assistant for students of Kazimierz Pułaski University of Radom (Uniwersytet Radomski, UR).
+HARD RULES:
+1. Answer in {lang_name}. The user language code is {lang}. Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) as in the sources when useful, but explain in the user language.
+2. Use ONLY the source fragments in ŹRÓDŁA / SOURCES. No outside knowledge. If missing, say clearly that indexed UR materials do not cover it and point to Biuro Obsługi Studenta, Dział Współpracy Zagranicznej, or Szkoła Doktorska.
+3. Ground every claim with [n]. End with a “Sources:” / “Źródła:” / “Джерела:” / “Эх сурвалж:” list (matching the answer language) with URL and update date.
+4. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts/deadlines only if present in sources, with the academic year / ordinance (e.g. R-41/2025). Today: {today}. If a deadline has passed, say so.
+5. List each URL once. Do not invent source numbers.
+6. CLARIFY first when rules depend on student situation (citizenship/foreigner/stateless, doctoral school, full-time/part-time, level/year, second programme or prior diploma, disability, programme/group) and PROFIL lacks data — ask short numbered questions only, then answer after the reply.
+7. Describe rules for the user’s category only; mention exceptions briefly.
+8. No legal advice; for individual cases refer to the proper UR unit. Do not invent URLs."""
 
 def fmt_sources(hits):
     out = []
@@ -157,27 +278,47 @@ def llm_enabled():
     if p == "gemini": return bool(os.getenv("GEMINI_API_KEY") or os.getenv("LLM_API_KEY"))
     return bool(p) and (bool(os.getenv("LLM_API_KEY")) or p == "ollama")
 
-PROF_PL = {"status": "status", "tryb": "tryb", "poziom": "poziom", "rok": "rok", "drugi_kierunek": "drugi kierunek / dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek/grupa"}
+PROF_LABEL = {
+ "pl": {"status": "status", "tryb": "tryb", "poziom": "poziom", "rok": "rok", "drugi_kierunek": "drugi kierunek / dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek/grupa"},
+ "en": {"status": "status", "tryb": "mode", "poziom": "level", "rok": "year", "drugi_kierunek": "second programme / diploma", "niepelnosprawnosc": "disability certificate", "kierunek": "programme/group"},
+ "uk": {"status": "статус", "tryb": "форма", "poziom": "рівень", "rok": "рік", "drugi_kierunek": "другий напрям / диплом", "niepelnosprawnosc": "інвалідність", "kierunek": "напрям/група"},
+ "mn": {"status": "статус", "tryb": "хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил / диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил/бүлэг"},
+}
+NO_LLM = {
+ "pl": "**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: {prof}). Zweryfikuj w źródle:",
+ "en": "**No-LLM mode** – top matching excerpts from official UR pages (profile: {prof}). Verify in the source:",
+ "uk": "**Режим без мовної моделі** – найближчі фрагменти з офіційних сторінок UR (профіль: {prof}). Перевірте в джерелі:",
+ "mn": "**Хэлний загваргүй горим** – UR-ийн албан ёсны хуудаснуудаас олдсон хэсгүүд (профайл: {prof}). Эх сурвалжаас шалгана уу:",
+}
+SRC_HDR = {"pl": "Źródła", "en": "Sources", "uk": "Джерела", "mn": "Эх сурвалж"}
+OUTDATED = {"pl": "informacja może być nieaktualna", "en": "may be outdated", "uk": "може бути неактуальною", "mn": "хуучирсан байж болно"}
+LLM_ERR = {
+ "pl": "(Błąd LLM: {e}. Pokazuję tryb wyszukiwania.)\n\n",
+ "en": "(LLM error: {e}. Showing search mode.)\n\n",
+ "uk": "(Помилка LLM: {e}. Показую режим пошуку.)\n\n",
+ "mn": "(LLM алдаа: {e}. Хайлтын горим.)\n\n",
+}
 
 def answer(question, history):
-    """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify)"""
+    """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang)"""
     hist_user = "\n".join(m["content"] for m in history if m["role"] == "user")
+    lang = detect_lang(question, hist_user)
     topics, prof, missing = needed(question, hist_user)
-    if missing:  # deterministyczna bramka doprecyzowania (działa także bez LLM)
-        qs = "\n".join(f"{i}. {SLOTS[m][0]}" for i, m in enumerate(missing, 1))
-        return dict(clarify=True, mode="doprecyzowanie", sources=[], profile=prof,
-            answer=f"Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:\n{qs}\n\nMożesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu stałego, stacjonarne, I stopień, 2 rok, jeden kierunek”.")
-    # zapytanie wyszukiwania = bieżące pytanie + ostatnie pytanie merytoryczne z historii (kontynuacja)
+    if missing:
+        return dict(clarify=True, mode="doprecyzowanie", sources=[], profile=prof, lang=lang,
+                    answer=clarify_text(lang, missing))
     base_q = question
     if history:
         prev = [m["content"] for m in history if m["role"] == "user" and any(re.search(rx, m["content"], re.I) for _, rx, _ in TOPICS)]
         if prev: base_q = prev[-1] + " " + question
     q = base_q + " " + " ".join(str(v) for k, v in prof.items() if k in ("status",) and v in ("cudzoziemiec", "bezpanstwowiec", "doktorant"))
+    q += " " + " ".join(TOPIC_PL_QUERY[t] for t in topics if t in TOPIC_PL_QUERY)
     PREF = {"plan": ["wteii"], "erasmus": ["dwz"], "cudzoziemcy": ["rekrutacja", "dwz", "student"], "oplaty": ["rekrutacja", "student"],
             "doktoranckie": ["student"], "stypendium_socjalne": ["student"], "stypendium_rektora": ["student"], "dwa_kierunki": ["student"]}
     tp = [t for t in topics if t != "cudzoziemcy"] or topics
     prefer = sorted({x for t in tp for x in PREF.get(t, [])})
-    if tp is not topics: q = re.sub(r"(?i)\b(jako\s+)?cudzoziem\w*", " ", q)
+    if tp is not topics:
+        q = re.sub(r"(?i)\b(jako\s+)?cudzoziem\w*|international\s+student|foreign\s+student|інозем\w*|гадаад\s+оюутан", " ", q)
     hits = search(q, k=8, prefer=prefer)
     if "plan" in topics:
         files = sorted({(c["title"], c["url"], c["modified"]) for c in IDX["chunks"] if c["source"] == "wteii" and c["kind"] == "file"})
@@ -185,22 +326,26 @@ def answer(question, history):
         hits = [dict(title="WTEiI – lista plików z planami zajęć (nazwa pliku = kod kierunku: IN=Informatyka, IT, E=Elektrotechnika, TiL/TIL=Transport i logistyka; _I/_II/_III/_IV lub R1–R4 = rok; _all = niestacjonarne/zjazdy)",
                      url="https://wteii.uniwersytetradom.pl/plany-zajec/", modified=max(f[2] or "" for f in files) or None, text=lst, source="wteii", kind="list")] + hits[:6]
     srcs = [dict(n=i, title=h["title"], url=h["url"], modified=h["modified"], outdated=outdated(h["modified"]), snippet=h["text"][:400]) for i, h in enumerate(hits, 1)]
-    prof_txt = ", ".join(f"{PROF_PL.get(k,k)}: {v}" for k, v in prof.items() if k in PROF_PL) or "brak danych"
+    labels = PROF_LABEL.get(lang, PROF_LABEL["pl"])
+    prof_txt = ", ".join(f"{labels.get(k, k)}: {v}" for k, v in prof.items() if k in labels) or "—"
     if llm_enabled():
         import datetime
-        msgs = [{"role": "system", "content": SYSTEM.replace("{today}", datetime.date.today().isoformat())}] + history[-8:] + [{"role": "user", "content":
-                f"PROFIL STUDENTA (z rozmowy): {prof_txt}\n\nŹRÓDŁA:\n{fmt_sources(hits)}\n\nPYTANIE: {question}"}]
+        sys = (SYSTEM.replace("{today}", datetime.date.today().isoformat())
+                     .replace("{lang}", lang)
+                     .replace("{lang_name}", LANG_NAME.get(lang, "polski")))
+        msgs = [{"role": "system", "content": sys}] + history[-8:] + [{"role": "user", "content":
+                f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\n\nŹRÓDŁA:\n{fmt_sources(hits)}\n\nPYTANIE: {question}"}]
         try:
-            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, answer=call_llm(msgs))
+            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, lang=lang, answer=call_llm(msgs))
         except Exception as e:
-            err = f"(Błąd LLM: {e}. Pokazuję tryb wyszukiwania.)\n\n"
+            err = LLM_ERR.get(lang, LLM_ERR["pl"]).format(e=e)
     else:
         err = ""
-    # tryb bez LLM: ekstrakcyjny
-    lines = [err + f"**Tryb bez modelu językowego** – poniżej najtrafniejsze fragmenty z oficjalnych stron UR (profil: {prof_txt}). Zweryfikuj szczegóły w źródle:"]
+    warn_l = OUTDATED.get(lang, OUTDATED["pl"])
+    lines = [err + NO_LLM.get(lang, NO_LLM["pl"]).format(prof=prof_txt)]
     for s, h in zip(srcs[:4], hits[:4]):
-        warn = " ⚠️ informacja może być nieaktualna" if s["outdated"] else ""
+        warn = f" ⚠️ {warn_l}" if s["outdated"] else ""
         snip = re.sub(r"\s+", " ", h["text"])[:500]
-        lines.append(f"\n[{s['n']}] **{s['title']}** (aktualizacja: {s['modified'] or 'brak daty'}{warn})\n„{snip}…”")
-    lines.append("\nŹródła:\n" + "\n".join(f"[{s['n']}] {s['url']} – {s['modified'] or 'brak daty'}" for s in srcs[:4]))
-    return dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, answer="\n".join(lines))
+        lines.append(f"\n[{s['n']}] **{s['title']}** ({s['modified'] or '—'}{warn})\n„{snip}…”")
+    lines.append(f"\n{SRC_HDR.get(lang, 'Źródła')}:\n" + "\n".join(f"[{s['n']}] {s['url']} – {s['modified'] or '—'}" for s in srcs[:4]))
+    return dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, lang=lang, answer="\n".join(lines))
