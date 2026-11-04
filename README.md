@@ -17,15 +17,13 @@ GitHub (загрузить файлы через веб) → Render: New → Blu
 - `app/server.py`, `app/static/index.html` – FastAPI + czat (limity: 20 pytań / 10 min na IP).
 - `app/rag.py` – wyszukiwanie hybrydowe (BM25 + char n-gram TF-IDF, fuzja RRF), dopytywanie, wywołanie Gemini (API zgodne z OpenAI, fallback modeli).
 - `app/index.py` – budowa lekkiego indeksu (numpy/scipy, float16, słownik 60k n-gramów, maks. 400 n-gramów na fragment).
-- `app/crawl.py` – crawler (wymaga `requirements-crawl.txt`); `data/docs.jsonl.gz` – zebrane dokumenty.
+- `app/crawl.py` – crawler (wymaga `requirements-crawl.txt`); `data/docs.jsonl.gz` – zebrane dokumenty. Plany zajęć: WTEiI, WEiF, WM, WPiA, WNMiNoZ, WFP (`python crawl.py plans`).
 
 ## Aktualizacja danych (lokalnie)
 ```bash
 pip install -r requirements-crawl.txt
-cd app && python crawl.py && python index.py   # nowe data/index.npz + data/meta.json.gz → commit
+cd app && python crawl.py plans && python index.py   # plany + indeks → commit
+# pełny korpus: python crawl.py && python index.py
 ```
 
 Zmienne: `GEMINI_API_KEY` (wymagany), `LLM_PROVIDER=gemini`, opcjonalnie `LLM_MODEL`.
-
-## Bezpieczeństwo
-Klucza API nie umieszczaj w repozytorium. Asystent odmawia próśb o klucze/hasła/konta wykładowców oraz jailbreak („ignore previous instructions”). Odpowiedzi i błędy są filtrowane pod kątem wycieku sekretów; `/api/status` nie ujawnia env.

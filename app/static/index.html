@@ -323,7 +323,20 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let busy = false;
 let chatBusy = false;
 
-function esc(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+function safeUrl(u) {
+  try {
+    const raw = String(u).replace(/&amp;/g, '&');
+    if (/["'<>\\s]/.test(raw)) return null;
+    const parsed = new URL(raw);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.href;
+  } catch (_) { return null; }
+}
 function add(cls, html) {
   const d = document.createElement('div');
   d.className = 'm ' + cls;
@@ -337,7 +350,11 @@ function render(text) {
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
     .replace(/^#+\s*(.+)$/gm, '<b>$1</b>')
     .replace(/^\* /gm, '• ')
-    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    .replace(/(https?:\/\/[^\s<&]+)/g, (m) => {
+      const href = safeUrl(m.replace(/&amp;/g, '&'));
+      if (!href) return m;
+      return `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(href)}</a>`;
+    });
 }
 function setInputsLocked(on) {
   document.getElementById('q').disabled = on;

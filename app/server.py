@@ -1,4 +1,4 @@
-import os, sys, time, collections, threading
+import os, sys, time, collections, threading, ipaddress
 sys.path.insert(0, os.path.dirname(__file__))
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -13,7 +13,7 @@ app = FastAPI(title="Asystent UR", docs_url=None, redoc_url=None, openapi_url=No
 def _warm():
     threading.Thread(target=rag.load, daemon=True).start()
 
-MAXQ, MAXH, LIMIT, WIN, GLOBAL = 500, 10, 20, 600, 300
+MAXQ, MAXH, LIMIT, WIN, GLOBAL = 500, 10, 20, 600, 1000
 hits = collections.defaultdict(collections.deque)
 glob = collections.deque()
 lock = threading.Lock()
@@ -23,21 +23,43 @@ class Q(BaseModel):
     question: str = Field(..., min_length=1, max_length=MAXQ)
     history: list = Field(default_factory=list)
 
+def _public_ip(s: str):
+    s = (s or "").strip()
+    if not s:
+        return None
+    try:
+        ip = ipaddress.ip_address(s.split("%")[0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+            return None
+        return str(ip)
+    except ValueError:
+        return None
+
 def ip(r: Request):
-    return (
-        r.headers.get("cf-connecting-ip")
-        or (r.headers.get("x-forwarded-for") or "").split(",")[0].strip()
-        or (r.client.host if r.client else "unknown")
-    )
+    """Prefer Cloudflare; otherwise last public hop in XFF (spoof-resistant vs client-leftmost)."""
+    cf = (r.headers.get("cf-connecting-ip") or "").strip()
+    if cf:
+        return cf
+    xff = r.headers.get("x-forwarded-for") or ""
+    parts = [p.strip() for p in xff.split(",") if p.strip()]
+    for cand in reversed(parts):
+        pub = _public_ip(cand)
+        if pub:
+            return pub
+    if parts:
+        return parts[-1]
+    return r.client.host if r.client else "unknown"
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
     resp = await call_next(request)
     resp.headers["X-Content-Type-Options"] = "nosniff"
-    resp.headers["X-Frame-Options"] = "SAMEORIGIN"
+    # Widget na stronach UR: pozwól iframe tylko z domen uczelni
+    resp.headers["Content-Security-Policy"] = (
+        "frame-ancestors 'self' https://*.uniwersytetradom.pl https://uniwersytetradom.pl"
+    )
     resp.headers["Referrer-Policy"] = "no-referrer"
     resp.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    # Chat UI is same-origin; block accidental cross-site embedding of API responses in foreign scripts' expectations
     resp.headers["Cross-Origin-Resource-Policy"] = "same-origin"
     if request.url.path.startswith("/api/"):
         resp.headers["Cache-Control"] = "no-store"
@@ -83,7 +105,6 @@ def chat(q: Q, r: Request):
     except HTTPException:
         raise
     except Exception:
-        # Nie wyciekaj stack trace / treści wyjątków do klienta
         raise HTTPException(500, "Wewnętrzny błąd serwera. Spróbuj ponownie.")
     finally:
         sem.release()
@@ -96,7 +117,6 @@ def healthz():
 def status():
     if rag.IDX is None:
         rag.load()
-    # Tylko bezpieczne metadane – bez nazw sekretów, modeli z kluczem, env
     return {
         "chunks": len(rag.IDX["chunks"]),
         "llm": rag.llm_enabled(),

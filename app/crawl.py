@@ -34,7 +34,16 @@ def file_text(url):
     try:
         ct = r.headers.get("content-type", "")
         if ext == "pdf" or "pdf" in ct:
-            t = subprocess.run(["pdftotext", "-layout", p, "-"], capture_output=True, text=True, timeout=120).stdout
+            try:
+                t = subprocess.run(["pdftotext", "-layout", p, "-"], capture_output=True, text=True, timeout=120).stdout
+            except FileNotFoundError:
+                t = None
+            if not (t and t.strip()):
+                try:
+                    from pypdf import PdfReader
+                    t = "\n".join((pg.extract_text() or "") for pg in PdfReader(p).pages)
+                except Exception as e2:
+                    print("ERRPDF", url, e2, file=sys.stderr); t = None
         elif ext == "docx" or "officedocument" in ct:
             import docx; t = "\n".join(x.text for x in docx.Document(p).paragraphs)
         else: t = None
@@ -48,7 +57,7 @@ def add(url, title, text, modified, source, kind, scanned=False):
     seen.add(url)
     d = dict(url=url, title=title.strip(), text=text, modified=modified, source=source, kind=kind, scanned=scanned)
     docs.append(d)
-    with open(OUT, "a") as f: f.write(json.dumps(d, ensure_ascii=False) + "\n")
+    with open(OUT, "a", encoding="utf-8") as f: f.write(json.dumps(d, ensure_ascii=False) + "\n")
     print(f"+ [{source}/{kind}] {title[:70]} ({modified}) {len(text)}ch")
 
 def add_file(url, parent_title, source, modified_hint=None, max_files=None):
@@ -123,11 +132,41 @@ def bip_item(u, keyfilter):
     for a in re.findall(r'href="(/attachments/\d+/download/[^"]+)"', r.text)[:6]:
         add_file(BIP + a + ("" if a.lower().endswith(".pdf") else ""), f"BIP: {title} {subj}"[:150], "bip", mod)
 
+# Plany zajęć – wszystkie aktywne wydziały (różne path: /plany-zajec/ vs /plan-zajec/)
+PLAN_FACULTIES = [
+    ("wteii", "WTEiI", "https://wteii.uniwersytetradom.pl/plany-zajec/"),
+    ("weif", "WEiF", "https://weif.uniwersytetradom.pl/plany-zajec/"),
+    ("wm", "WM", "https://wm.uniwersytetradom.pl/plany-zajec/"),
+    ("wpia", "WPiA", "https://wpia.uniwersytetradom.pl/plany-zajec/"),
+    ("wnminoz", "WNMiNoZ", "https://wnminoz.uniwersytetradom.pl/plany-zajec/"),
+    ("wfp", "WFP", "https://wfp.uniwersytetradom.pl/plan-zajec/"),
+    # wicit.uniwersytetradom.pl obecnie 404 / redirect na signup – pomijamy
+]
+PLAN_SOURCES = {s for s, _, _ in PLAN_FACULTIES}
+MAX_PLAN_FILES = int(os.getenv("MAX_PLAN_FILES", "40"))
+
+def crawl_plans(sources=None):
+    """Crawl HTML + PDF planów zajęć. sources=None → wszystkie wydziały."""
+    want = set(sources) if sources else PLAN_SOURCES
+    for source, name, url in PLAN_FACULTIES:
+        if source not in want:
+            continue
+        r = get(url)
+        if not r:
+            continue
+        page_url = str(r.url)
+        add(url, f"{name} – Plany zajęć", clean_html(r.text), None, source, "page")
+        fl = file_links(r.text, page_url)
+        recent = [f for f in fl if re.search(r"/202[56]/", f)]
+        pick = (recent or fl)[:MAX_PLAN_FILES]
+        for f in pick:
+            add_file(f, f"{name} – Plan zajęć", source)
+
 if __name__ == "__main__":
     if "--fresh" in sys.argv and os.path.exists(OUT): os.remove(OUT)
     if os.path.exists(OUT):
-        for l in open(OUT): seen.add(json.loads(l)["url"])
-    which = [a for a in sys.argv[1:] if not a.startswith("--")] or ["student", "dwz", "rekrutacja", "bip", "wteii"]
+        for l in open(OUT, encoding="utf-8"): seen.add(json.loads(l)["url"])
+    which = [a for a in sys.argv[1:] if not a.startswith("--")] or ["student", "dwz", "rekrutacja", "bip", "plans"]
     if "student" in which: wp_site("student.uniwersytetradom.pl", source="student")
     if "dwz" in which: wp_site("dwz.uniwersytetradom.pl", source="dwz")
     if "rekrutacja" in which:
@@ -137,10 +176,11 @@ if __name__ == "__main__":
         for path in ["/artykuly/obowiazujace-akty-prawne", "/artykuly/akty-prawne", "/artykuly/uchwaly-senatu",
                      "/artykuly/uchwaly-rady-szkoly-doktorskiej", "/artykuly/zasady-i-tryb-przyjmowania-na-studia"]:
             bip_list(path)
-    if "wteii" in which:
-        r = get("https://wteii.uniwersytetradom.pl/plany-zajec/")
-        if r:
-            fl = [f for f in file_links(r.text, str(r.url)) if "/2026/" in f]
-            add("https://wteii.uniwersytetradom.pl/plany-zajec/", "WTEiI – Plany zajęć", clean_html(r.text), None, "wteii", "page")
-            for f in fl[:25]: add_file(f, "WTEiI – Plan zajęć", "wteii")
+    plan_want = []
+    if "plans" in which:
+        plan_want = list(PLAN_SOURCES)
+    else:
+        plan_want = [s for s in which if s in PLAN_SOURCES]
+    if plan_want:
+        crawl_plans(plan_want)
     print("DOCS", len(docs))

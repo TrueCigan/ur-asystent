@@ -19,8 +19,8 @@ PROBE_RE = re.compile(
     # sekrety / infrastruktura
     r"(?:api[_\s-]?key|secret[_\s-]?key|access[_\s-]?token|private[_\s-]?key|"
     r"GEMINI_API|LLM_API|OPENAI_API|ANTHROPIC|"
-    r"(?:pokaż|pokaz|выдай|дай|дати|reveal|show|dump|print|leak|exfiltrat)\w*"
-    r".{0,60}(?:key|ключ|токен|token|secret|hasło|password|credentials?))"
+    r"(?:pokaż|pokaz|покажи|выдай|дай|дати|reveal|show|dump|print|leak|exfiltrat)\w*"
+    r".{0,60}(?:key|ключ|токен|token|secret|hasło|password|credentials?|\.env|env\s*vars?))"
     r"|"
     # konta wykładowców / admin / USOS
     r"(?:(?:login|hasło|password|credentials?|dostęp|доступ|account|konto|аккаунт)"
@@ -29,6 +29,23 @@ PROBE_RE = re.compile(
     r"|"
     r"(?:(?:wykładow|profesor|nauczyciel|teacher|lecturer|викладач)"
     r".{0,50}(?:login|hasło|password|credentials?|dostęp|доступ|account|konto))"
+    r"|"
+    # soft prompt / model / rules leak
+    r"(?:(?:powtórz|powtorz|pokaż|pokaz|reveal|show|print|dump|list|repeat)\w*"
+    r".{0,80}(?:system\s*)?(?:prompt|instrukcj|instructions?|rules?|regu[lł]y|"
+    r"промпт|інструкц|системн))"
+    r"|"
+    r"(?:what\s+(?:is|are)\s+your\s+(?:system\s+)?(?:prompt|instructions?|rules?)|"
+    r"(?:jaki|jaka|jakie)\s+(?:masz\s+)?(?:model|temperatur|system\s*prompt|instrukcj)|"
+    r"list\s+your\s+(?:system\s+)?(?:rules?|instructions?|prompt)|"
+    r"покажи\s+(?:свої\s+)?(?:правила|інструкц|промпт)|"
+    r"які\s+в\s*тебе\s+(?:правила|інструкц))"
+    r"|"
+    # roleplay admin / env / filesystem
+    r"(?:pretend\s+you\s+are\s+(?:the\s+)?(?:system\s+)?admin|"
+    r"you\s+are\s+(?:now\s+)?(?:a\s+)?(?:system\s+)?administrator|"
+    r"(?:read|cat|type|open)\s+(?:/etc/passwd|\.env|env\b)|"
+    r"(?:pokaż|pokaz|show|dump|print)\w*.{0,40}(?:\.env|environment\s*variables?|env\s*vars?))"
     r"|"
     # jailbreak / override instrukcji
     r"(?:ignore(?:\s+all)?\s+(?:previous|prior|above|system)\s+instructions?|"
@@ -39,6 +56,7 @@ PROBE_RE = re.compile(
     r"reveal(?:\s+your)?\s+(?:system\s+)?prompt|"
     r"show(?:\s+me)?\s+(?:your\s+)?(?:system\s+)?(?:prompt|instructions?)|"
     r"powtórz\s+(?:swoje\s+)?(?:instrukcje|prompt)|"
+    r"powtorz\s+(?:swoje\s+)?(?:instrukcje|prompt)|"
     r"покажи\s+(?:системн\w*\s+)?(?:промпт|інструкц)|"
     r"игнорируй\s+(?:все\s+)?(?:предыдущие\s+)?инструкции|"
     r"ігноруй\s+(?:всі\s+)?(?:попередні\s+)?інструкц)"
@@ -107,7 +125,6 @@ def wrap_untrusted(label: str, text: str) -> str:
 def safe_error(exc: BaseException) -> str:
     """User/log-safe error string without secrets or response bodies."""
     msg = redact_secrets(f"{type(exc).__name__}")
-    # keep HTTP code if present in short form
     s = redact_secrets(str(exc))
     m = re.search(r"HTTP\s+(\d{3})", s)
     if m:

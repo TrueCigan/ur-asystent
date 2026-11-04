@@ -7,7 +7,5 @@ services:
     envVars:
       - key: LLM_PROVIDER
         value: gemini
-      - key: LLM_MODEL
-        value: gemini-3.8-flash
       - key: GEMINI_API_KEY
         sync: false

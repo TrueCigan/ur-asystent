@@ -59,6 +59,20 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
             elif status == "pl" and re.search(r"\d[\d\s]*zł", text[:1500], re.I) and re.search(r"opłat|czesne|r-\d+", title):
                 sc[i] *= 1.8
             if c.get("source") == "bip" and re.search(r"opłat|czesne", title): sc[i] *= 1.5
+        # plan zajęć: nie mylić z BIP „plan studiów” / programem; trzymaj aktualne pliki wydziału
+        if "plan" in topics:
+            if c.get("source") == "bip" or re.search(r"plan\s*studi|program\s*studi|opis\s*programu|uchwa[łl]a", title):
+                sc[i] *= 0.08
+            if re.search(r"plan\s*zaj|rozk[lł]ad|timetable", title) or c.get("source") in PLAN_SOURCES:
+                sc[i] *= 2.4
+            if c.get("kind") == "file" and (c.get("modified") or "0") < "2025" and c.get("source") in PLAN_SOURCES:
+                sc[i] *= 0.25
+            kier = (profile or {}).get("kierunek")
+            fac = KIEROUNEK_FACULTY.get(kier) if kier else None
+            if fac and c.get("source") == fac:
+                sc[i] *= 2.0
+            elif fac and c.get("source") in PLAN_SOURCES and c.get("source") != fac:
+                sc[i] *= 0.15
     out, per_url = [], {}
     for i in np.argsort(-sc):
         c = ch[i]
@@ -165,9 +179,59 @@ SLOT_OPTS = {
   ("nie", r"(nie\s*mam\s*orzecz|bez\s*orzecz|nie\s*jestem\s*(osob\w*\s*)?niepe[lł]no|no\s*disability|without\s*disability|не\s*маю\s*(інвал|посвідч)|бэрхшээлгүй|хөгжлийн\s*бэрхшээл\s*гүй)"),
  ],
  "kierunek": [
-  ("kierunek", r"informaty|computer\s*science|elektrotechn|electrical|transport|ekonom|economics|prawo|law\b|piel[eę]g|nursing|medycy|pedagog|mechani|logisty|filolog|filozof|socjolog|turysty|kosmetolog|інформатик|електротех|економік|право|педагог|механік|логістик|информатик|цахилгаан|эдийн\s*засаг"),
+  # kolejność ma znaczenie – bardziej konkretne najpierw
+  ("finanse", r"finanse\s*i\s*rachunk|finanse\s*i\s*finans|finance\s*and\s*account|фінанс\w*\s*i\s*облік|санхүү"),
+  ("weif_wydzial", r"ekonom\w*\s*i\s*finans|wydzia[łl]\s*ekonom|weif\b|faculty\s*of\s*economics|економ\w*\s*і\s*фінанс"),
+  ("ekonomia", r"ekonom(?:ia|ja|ii|ię|ią)\b|economics?\b|економik|эдийн\s*засаг"),
+  ("ai_biznes", r"sztuczn\w*\s*inteligenc|artificial\s*intelligence|штучн\w*\s*інтелект|informatyk\w*\s*i\s*analityk\w*\s*w\s*biznes"),
+  ("informatyka_techniczna", r"informatyk\w*\s*technicz|it\s*technicz|technical\s*informatics"),
+  ("informatyka", r"informatyk|computer\s*science|інформатик|информатик"),
+  ("elektrotechnika", r"elektrotechn|electrical\s*eng|електротех|цахилгаан"),
+  ("transport", r"transport\s*i\s*logist|til\b|\bti[lł]\b|transport\b|логістик"),
+  ("prawo", r"\bprawo\b|\blaw\b|право(?!\s*jazdy)"),
+  ("administracja", r"administracj|administration\b|адміністрац"),
+  ("bezpieczenstwo", r"bezpiecze[nń]stwo\s*wewn|internal\s*security|безпек\w*\s*внутріш"),
+  ("pielegniarstwo", r"piel[eę]gniar|nursing|медсестрин"),
+  ("kosmetologia", r"kosmetolog"),
+  ("medycyna", r"\bmedycyn|\bmedicine\b|лікарськ|медицин"),
+  ("fizjoterapia", r"fizjoterap|physiotherap"),
+  ("pedagogika", r"pedagog|педагог"),
+  ("filologia", r"filolog|philology|філолог"),
+  ("mechanika", r"mechanika\s*i\s*budowa|mi[bm]\b|mechanical\s*eng|механік"),
+  ("budownictwo", r"budownictw|civil\s*eng|будівниц"),
+  ("zarzadzanie", r"zarz[aą]dzanie(?!\s*i\s*in[zż])|management\b|управлінн|менеджмент"),
+  ("analityka", r"analityk\w*\s*gospodarcz|business\s*analytics|аналітик"),
+  ("turystyka", r"turystyk|recreation|туризм"),
+  ("bhp", r"\bbhp\b|bezpiecze[nń]stwo\s*i\s*higien"),
  ],
 }
+
+# kierunek → kod źródła planów zajęć (crawl)
+KIEROUNEK_FACULTY = {
+    "ekonomia": "weif", "finanse": "weif", "weif_wydzial": "weif", "analityka": "weif",
+    "zarzadzanie": "weif", "ai_biznes": "weif",
+    "informatyka": "wteii", "informatyka_techniczna": "wteii", "elektrotechnika": "wteii",
+    "transport": "wteii", "turystyka": "wteii",
+    "prawo": "wpia", "administracja": "wpia", "bezpieczenstwo": "wpia",
+    "pielegniarstwo": "wnminoz", "kosmetologia": "wnminoz", "medycyna": "wnminoz", "fizjoterapia": "wnminoz",
+    "pedagogika": "wfp", "filologia": "wfp",
+    "mechanika": "wm", "budownictwo": "wm", "bhp": "wm",
+}
+FACULTY_PLAN_URL = {
+    "wteii": "https://wteii.uniwersytetradom.pl/plany-zajec/",
+    "weif": "https://weif.uniwersytetradom.pl/plany-zajec/",
+    "wm": "https://wm.uniwersytetradom.pl/plany-zajec/",
+    "wpia": "https://wpia.uniwersytetradom.pl/plany-zajec/",
+    "wnminoz": "https://wnminoz.uniwersytetradom.pl/plany-zajec/",
+    "wfp": "https://wfp.uniwersytetradom.pl/plan-zajec/",
+    "wicit": "https://wicit.uniwersytetradom.pl/plan-zajec/",
+}
+FACULTY_LABEL = {
+    "wteii": "WTEiI", "weif": "WEiF (Ekonomia i Finanse)", "wm": "Wydział Mechaniczny",
+    "wpia": "WPiA", "wnminoz": "WNMiNoZ", "wfp": "WFP", "wicit": "WICiT",
+}
+PLAN_SOURCES = set(FACULTY_PLAN_URL)
+
 
 # keep SLOTS shape used elsewhere: (default PL question, opts dict)
 SLOTS = {k: (SLOT_Q[k]["pl"], {val: rx for val, rx in opts}) for k, opts in SLOT_OPTS.items()}
@@ -179,7 +243,7 @@ TOPICS = [
  ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|докторант|докторантур", ["status"]),
  ("oplaty", r"op[lł]at|czesne|ile\s*kosztuj|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?|how\s*much|cost\s*of\s*stud|price\s*of\s*stud|оплат|вартіст|кошту|цін[ауи]\s*навч|плата\s*за\s*навч|скільки\s*.{0,20}навч|төлбөр|сургалтын\s*төлбөр|хэд\s*(вэ|төгрөг|zł)", ["status", "tryb", "poziom"]),
  ("erasmus", r"erasmus|wyjazd|wymian|mobilno|exchange\s*program|study\s*abroad|мобільніст|обмін|солилцоо|гадаадад\s*суралц", ["status", "poziom", "rok"]),
- ("plan", r"plan\w*\s*zaj|rozk[lł]ad|harmonogram\s*zaj|zaj[eę]cia\s*w|kiedy\s*mam\s*zaj|timetable|class\s*schedule|course\s*schedule|розклад|розклад\s*занят|хичээлийн\s*хуваарь|хуваарь", ["kierunek", "tryb"]),
+ ("plan", r"plan\w*\s*zaj|rozk[lł]ad|harmonogram\s*zaj|zaj[eę]cia\s*w|kiedy\s*mam\s*zaj|timetable|class\s*schedule|course\s*schedule|розклад|розклад\s*занят|хичээлийн\s*хуваарь|хуваарь", ["kierunek", "tryb", "poziom", "rok"]),
  ("cudzoziemcy", r"cudzozie|bezpa[nń]stw|bez\s*obywatel|karta\s*polaka|kart\w*\s*pobytu|legaliz|wiz\w*\b|ochron\w*\s*czasow|international\s*student|foreign\s*student|residence\s*permit|інозем|без\s*громадян|карта\s*поляка|гадаад\s*оюутан|оршин\s*суух", ["status"]),
  ("dwa_kierunki", r"dw[ao]\w*\s*kierun|drugi\w*\s*kierun|r[oó]wnoleg|second\s*(major|program|programme)|double\s*major|друг\w*\s*напрям|паралельн|хоёр\s*мэргэжил|зэрэгцээ", ["status", "drugi_kierunek", "tryb"]),
 ]
@@ -191,7 +255,7 @@ TOPIC_PL_QUERY = {
  "doktoranckie": "stypendium doktoranckie szkoła doktorska",
  "oplaty": "opłaty czesne koszt studiów wysokość opłat za usługi edukacyjne zarządzenie semestr zł",
  "erasmus": "Erasmus wymiana mobilność",
- "plan": "plan zajęć rozkład WTEiI",
+ "plan": "plan zajęć rozkład harmonogram",
  "cudzoziemcy": "cudzoziemcy rekrutacja karta pobytu",
  "dwa_kierunki": "drugi kierunek świadczenia",
 }
@@ -233,7 +297,9 @@ def needed(question, history_text):
     for _, s in topics:
         for x in s:
             if x not in req: req.append(x)
-    prof = extract_profile(history_text + "\n" + question)
+    # bieżąca wiadomość nadpisuje historię (np. WEiF → konkretnie Ekonomia)
+    prof = extract_profile(history_text)
+    prof.update(extract_profile(question))
     if prof.get("status") == "doktorant":
         req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek")]
     missing = [x for x in req if x not in prof]
@@ -307,10 +373,58 @@ def _safe_history(history, n=8):
         if role not in ("user", "assistant"):
             continue
         content = redact_secrets(str(m.get("content", ""))[:3000])
-        if role == "user":
-            content = wrap_untrusted("USER_MESSAGE", content)
+        # Klient może podrobić role=assistant – zawsze traktuj treść historii jako dane
+        label = "USER_MESSAGE" if role == "user" else "ASSISTANT_MESSAGE"
+        content = wrap_untrusted(label, content)
         out.append({"role": role, "content": content})
     return out
+
+def resolve_plan_faculty(profile, question=""):
+    """Zwraca kod źródła planów (weif/wteii/…) albo None jeśli nieznany kierunek."""
+    kier = (profile or {}).get("kierunek")
+    if kier and kier in KIEROUNEK_FACULTY:
+        return KIEROUNEK_FACULTY[kier]
+    blob = (question or "").lower()
+    if re.search(r"wteii|transport.*elektrotechn|wydzia[łl].*informat", blob):
+        return "wteii"
+    if re.search(r"weif|wydzia[łl]\s*ekonom", blob):
+        return "weif"
+    if re.search(r"\bwpia\b|wydzia[łl]\s*prawa", blob):
+        return "wpia"
+    if re.search(r"\bwm\b|wydzia[łl]\s*mechan", blob):
+        return "wm"
+    if re.search(r"wnminoz|wydzia[łl]\s*nauk\s*med", blob):
+        return "wnminoz"
+    if re.search(r"\bwfp\b|filologiczno", blob):
+        return "wfp"
+    return None
+
+def plan_file_hits(faculty, profile=None, k=12):
+    """Lista plików planu dla wydziału; opcjonalnie filtr po kierunku/roku w nazwie."""
+    if IDX is None:
+        load()
+    files = []
+    seen_u = set()
+    for c in IDX["chunks"]:
+        if c.get("source") != faculty or c.get("kind") != "file":
+            continue
+        if c["url"] in seen_u:
+            continue
+        seen_u.add(c["url"])
+        files.append(c)
+    kier = (profile or {}).get("kierunek")
+    # lekkie preferencje po fragmencie nazwy pliku/tytułu
+    boost = {
+        "ekonomia": r"ekonom", "finanse": r"finans|rachunk", "informatyka": r"\bIN[_-]|informat",
+        "elektrotechnika": r"\bE[_-]|elektrotech", "transport": r"TiL|TIL|transport",
+        "prawo": r"prawo|PR[_-]", "administracja": r"admin",
+    }.get(kier)
+    if boost:
+        files.sort(key=lambda c: (0 if re.search(boost, c.get("title", "") + c.get("url", ""), re.I) else 1,
+                                  c.get("title") or ""))
+    else:
+        files.sort(key=lambda c: c.get("title") or "")
+    return files[:k]
 
 def fmt_sources(hits):
     out = []
@@ -415,18 +529,60 @@ def answer(question, history):
         q += " opłaty obywatel polski studia stacjonarne"
     elif "oplaty" in topics and prof.get("status") == "cudzoziemiec":
         q += " opłaty cudzoziemców rekrutacja"
-    PREF = {"plan": ["wteii"], "erasmus": ["dwz"], "cudzoziemcy": ["rekrutacja", "dwz", "student"], "oplaty": ["rekrutacja", "student", "bip"],
+    fac = resolve_plan_faculty(prof, base_q) if "plan" in topics else None
+    PREF = {"erasmus": ["dwz"], "cudzoziemcy": ["rekrutacja", "dwz", "student"], "oplaty": ["rekrutacja", "student", "bip"],
             "doktoranckie": ["student"], "stypendium_socjalne": ["student"], "stypendium_rektora": ["student"], "dwa_kierunki": ["student"]}
+    if "plan" in topics:
+        PREF["plan"] = [fac] if fac else list(PLAN_SOURCES)
     tp = [t for t in topics if t != "cudzoziemcy"] or topics
     prefer = sorted({x for t in tp for x in PREF.get(t, [])})
     if tp is not topics:
         q = re.sub(r"(?i)\b(jako\s+)?cudzoziem\w*|international\s+student|foreign\s+student|інозем\w*|гадаад\s+оюутан", " ", q)
+    if "plan" in topics and fac:
+        q += " " + FACULTY_LABEL.get(fac, fac) + " plan zajęć"
+        if prof.get("kierunek") == "weif_wydzial":
+            q += " Ekonomia Finanse i rachunkowość (wydział WEiF – wybierz konkretny kierunek na stronie)"
+        elif prof.get("kierunek"):
+            q += " " + prof["kierunek"]
     hits = search(q, k=8, prefer=prefer, topics=topics, profile=prof)
     if "plan" in topics:
-        files = sorted({(c["title"], c["url"], c["modified"]) for c in IDX["chunks"] if c["source"] == "wteii" and c["kind"] == "file"})
-        lst = "\n".join(f"- {t.split(' – ')[-1]} → {u} (aktualizacja: {m})" for t, u, m in files)
-        hits = [dict(title="WTEiI – lista plików z planami zajęć (nazwa pliku = kod kierunku: IN=Informatyka, IT, E=Elektrotechnika, TiL/TIL=Transport i logistyka; _I/_II/_III/_IV lub R1–R4 = rok; _all = niestacjonarne/zjazdy)",
-                     url="https://wteii.uniwersytetradom.pl/plany-zajec/", modified=max(f[2] or "" for f in files) or None, text=lst, source="wteii", kind="list")] + hits[:6]
+        if fac:
+            files = plan_file_hits(fac, prof, k=20)
+            url = FACULTY_PLAN_URL[fac]
+            label = FACULTY_LABEL.get(fac, fac)
+            if files:
+                lst = "\n".join(
+                    f"- {(c['title'].split(' – ')[-1])} → {c['url']} (aktualizacja: {c.get('modified') or '—'})"
+                    for c in files
+                )
+                note = ""
+                if fac == "wteii":
+                    note = " Kody plików WTEiI: IN=Informatyka, IT=Informatyka techniczna, E=Elektrotechnika (NIE Ekonomia!), TiL/TIL=Transport i logistyka."
+                if prof.get("kierunek") == "weif_wydzial":
+                    note += (" „Ekonomia i Finanse” to nazwa wydziału (WEiF). Konkretne kierunki: Ekonomia, "
+                             "Finanse i rachunkowość, Analityka gospodarcza, Zarządzanie, AI w biznesie – wybierz plik na stronie.")
+                hits = [dict(
+                    title=f"{label} – lista plików z planami zajęć.{note}",
+                    url=url, modified=max((c.get("modified") or "") for c in files) or None,
+                    text=lst, source=fac, kind="list",
+                )] + [h for h in hits if h.get("source") == fac or h.get("kind") == "list"][:6]
+            else:
+                hits = [dict(
+                    title=f"{label} – plany zajęć (brak PDF w indeksie asystenta)",
+                    url=url, modified=None,
+                    text=(f"W indeksie asystenta nie ma jeszcze plików PDF planu dla {label}. "
+                          f"Aktualny plan zajęć pobierz ze strony wydziału: {url}. "
+                          "Nie podawaj planów innego wydziału."),
+                    source=fac, kind="list",
+                )] + [h for h in hits if h.get("source") == fac][:4]
+        else:
+            catalog = "\n".join(f"- {FACULTY_LABEL[s]} → {FACULTY_PLAN_URL[s]}" for s in sorted(FACULTY_PLAN_URL))
+            hits = [dict(
+                title="Plany zajęć UR – strony wydziałów (wybierz swój kierunek)",
+                url="https://uniwersytetradom.pl/", modified=None,
+                text="Nie znam jeszcze Twojego kierunku, więc nie wskazuję konkretnego PDF. Oficjalne plany:\n" + catalog,
+                source="student", kind="list",
+            )] + hits[:5]
     srcs = [dict(n=i, title=h["title"], url=h["url"], modified=h["modified"], outdated=outdated(h["modified"]), snippet=h["text"][:400]) for i, h in enumerate(hits, 1)]
     labels = PROF_LABEL.get(lang, PROF_LABEL["pl"])
     prof_txt = ", ".join(f"{labels.get(k, k)}: {v}" for k, v in prof.items() if k in labels) or "—"
