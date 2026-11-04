@@ -6,7 +6,7 @@ services:
     healthCheckPath: /healthz
     envVars:
       - key: LLM_PROVIDER
-        value: gemini
+        value: anthropic
       - key: GEMINI_API_KEY
         sync: false
       - key: SESSION_SECRET
