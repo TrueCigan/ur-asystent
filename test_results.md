@@ -23,23 +23,62 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: pl, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie). Zweryfikuj w źródle:
 
-[1] **Świadczenia dla studentów – pomoc materialna – R-41-2025.pdf** (2025-12-05)
-„osób niepełnosprawnych - 6,5 % 143.000 zł miesięcznie - stypendia Rektora - 38,5 % 847.000 zł miesięcznie - zapomogi - 0,5 % 11.000 zł miesięcznie RAZEM FUNDUSZ - 100,0 % 2.200.000 zł miesięcznie. 2. Wysokość dochodu na osobę w rodzinie studenta, uprawniająca do ubiegania się o stypendium socjalne oraz liczba grup dochodowych. Do stypendium socjalnego uprawnieni są wszyscy, których dochód na osobę w rodzinie nie przekracza 1.908,90 zł netto. Uprawnieni do otrzymania stypendium socjalnego podziel…”
+[1] **Stypendia socjalne** (2026-10-01)
+„lub całości znajdującego się w posiadaniu rodziny gospodarstwa rolnego w dzierżawę; umowę zawartą w formie aktu notarialnego, w przypadku wniesienia gospodarstwa rolnego do użytkowania przez rolniczą spółdzielnię produkcyjną; wyrok sądu o rozwodzie między rodzicami studenta lub studentem i jego współmałżonkiem, wyrok sądu o wysokości przyznanych alimentów dla danej osoby z rodziny studenta, kopię odpisu podlegającego wykonaniu orzeczenia sądu zasądzającego alimenty na rzecz osób w rodzinie lub p…”
 
-[2] **Świadczenia dla studentów – pomoc materialna – Aneks-01-R-41-2025.pdf** (2025-12-15)
-„osób niepełnosprawnych - 6,5 % 143.000 zł miesięcznie - stypendia Rektora - 38,5 % 847.000 zł miesięcznie - zapomogi - 0,5 % 11.000 zł miesięcznie RAZEM FUNDUSZ - 100,0 % 2.200.000 zł miesięcznie. 2. Wysokość dochodu na osobę w rodzinie studenta, uprawniająca do ubiegania się o stypendium socjalne oraz liczba grup dochodowych. Do stypendium socjalnego uprawnieni są wszyscy, których dochód na osobę w rodzinie nie przekracza 1.908,90 zł netto. Uprawnieni do otrzymania stypendium socjalnego podziel…”
+[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
+„ZARZĄDZENIE R-32/2024 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 29 lipca 2024 r. w sprawie: wprowadzenia Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. - Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2023 r. poz. 742, z późn. zm.),  art. 41 ust. 10 - 12 ustawy z dnia 12 marca 2022 r. o pomocy obywatelom Ukrainy w związku z konfliktem zbrojnym na terytorium tego państwa (t…”
 
-[3] **Stypendia socjalne** (2026-10-01)
-„Stypendia socjalne UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj. kwoty 3667,00 zł (wynagrodzenie to od 01.01.2026 r. wynosi …”
+[3] **Świadczenia dla studentów – pomoc materialna – Aneks-01-R-41-2025.pdf** (2025-12-15)
+„ANEKS NR 1 z dnia 11 grudnia 2025 r. Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego do zarządzenia R-41/2025 z dnia 24 listopada 2025 r. w sprawie: ogłoszenia załącznika Nr 1 na rok akademicki 2025/2026 do Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2024 r. poz. 1571, z późn. zm.),  § 3 ust. 5 i 7 Regulaminu świadczeń dla studentów U…”
 
-[4] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„obę w rodzinie studenta, uprawniającą do ubiegania się o stypendium socjalne oraz liczbę grup dochodowych, wraz ze wskazaniem wysokości dochodu w tych grupach, 3) wysokość stypendium socjalnego w poszczególnych grupach dochodowych, 4) maksymalną łączną miesięczną wysokość stypendium socjalnego i stypendium Rektora, 5) wysokość (wysokości) stypendium dla osób niepełnosprawnych, 6) wysokość (wysokości) zwiększenia stypendium socjalnego, 7) wysokość odpłatności za miejsce w domach studenta, zgodnie…”
+[4] **Świadczenia dla studentów – pomoc materialna – R-41-2025.pdf** (2025-12-05)
+„ZARZĄDZENIE R-41/2025 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 24 listopada 2025 r. w sprawie: ogłoszenia załącznika Nr 1 na rok akademicki 2025/2026 do Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2024 r. poz. 1571, z późn. zm.),  § 3 ust. 5 i 7 Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza P…”
 
 Źródła:
-[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/R-41-2025.pdf – 2025-12-05
-[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf – 2025-12-15
-[3] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
-[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[1] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf – 2025-12-15
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/R-41-2025.pdf – 2025-12-05
+
+
+## Stypendium socjalne PESEL UKR
+
+**Użytkownik:** Jak dostać stypendium socjalne?
+
+**Asystent** _(tryb: doprecyzowanie; profil: {})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Jaki jest Twój status: obywatel Polski, cudzoziemiec (np. Karta Polaka, karta pobytu, uchodźca/ochrona UKR), bezpaństwowiec, czy doktorant Szkoły Doktorskiej?
+2. Czy studiujesz równolegle drugi kierunek albo masz już ukończone studia tego poziomu? (świadczenia zwykle tylko na jednym kierunku)
+3. Studiujesz stacjonarnie czy niestacjonarnie?
+4. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** Mam obywatelstwo cudzoziemca, PESEL UKR, nie mam dyplomu ani drugiego kierunku, stacjonarne, I stopień
+
+**Asystent** _(tryb: wyszukiwanie; profil: {"status": "cudzoziemiec", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie", "pobyt": "ukr"})_:
+
+**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie, pobyt: ukr). Zweryfikuj w źródle:
+
+[1] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
+„wie cennika opłat za zakwaterowanie w domach studenta. 44 Załącznik Nr 7 do Regulaminu (…) OŚWIADCZENIE do stypendium socjalnego dla obywateli Ukrainy/ЗАЯВА для подання заяви на соціальну допомогу. Radom, dnia _________________ r. (дата) ______________________________________ imię i nazwisko studentki/a/Ім’я та прізвище студента/-ки ______________________________________ numer albumu/номер студента ______________________________________ kierunek i rok studiów/спеціальність/напрям і рік навчання …”
+
+[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
+„rt. 156b ust. 1 tej ustawy lub posiadający wizę krajową w celu prowadzenia badań naukowych lub prac rozwojowych, 10) obywatel Ukrainy, którego pobyt na terytorium Rzeczypospolitej Polskiej jest uznawany za legalny na podstawie art. 2 ust. 1 ustawy z dnia 12 marca 2022 r. o pomocy obywatelom Ukrainy w związku z konfliktem zbrojnym na terytorium tego państwa (t.j. Dz. U. z 2024 r. poz. 167 z późn. zm.), będący studentem, może ubiegać się o stypendium socjalne, o którym mowa w art. 86 ust. 1 pkt 1 …”
+
+[3] **Świadczenia dla studentów – pomoc materialna** (2026-09-08)
+„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj. kwoty 3667,00 zł (wynagrodzenie to od 01…”
+
+[4] **Stypendia socjalne** (2026-10-01)
+„Stypendia socjalne UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj. kwoty 3667,00 zł (wynagrodzenie to od 01.01.2026 r. wynosi …”
+
+Źródła:
+[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[2] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
+[3] https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/ – 2026-09-08
+[4] https://student.uniwersytetradom.pl/stypendia-socjalne/ – 2026-10-01
 
 
 ## Stypendium rektora – cudzoziemiec
@@ -61,23 +100,23 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, poziom: II, rok: rok, drugi kierunek / dyplom: nie). Zweryfikuj w źródle:
 
-[1] **Rekrutacja cudzoziemców informacje ogólne** (2026-07-15)
-„CUDZOZIEMCY WAŻNE INFORMACJE Kurs języka polskiego Nowe wymagania dla cudzoziemców od 1 lipca 2025 Wymagane dokumenty Harmonogram rekrutacji Wymogi formalne (świadectwa, dyplomy) Opłaty Zasady obowiązujące cudzoziemców Weryfikacja umiejętności i predyspozycji dla kandydatów na Wydział Sztuki Elektroniczny informator dla kandydatów na studia Egzaminy Badania lekarskie Kontakt Aplikuj Informacje ogólne O przyjęcie na studia w Uniwersytecie Radomskim mogą się ubiegać cudzoziemcy, według zasad uzale…”
+[1] **Stypendium Rektora – Stypendium-Rektora-2024.pdf** (2024-06-27)
+„A. PUNKTACJA ZA ŚREDNIĄ OCEN Średnia ocen na potrzeby rankingu określana jest z zachowaniem poniższych zasad: a) średnia ocen liczona jest zgodnie z zasadami określonymi w Regulaminie studiów. Stypendium Rektora na podstawie wyników w nauce może być przyznane studentowi, który zaliczył rok i uzyskał średnią ocen nie niższą niż 4,0 (średnia ze średniej ocen z każdego semestru w poprzednim roku akademickim), b) na pierwszym roku studiów II stopnia średnią ocen wylicza się z dwóch ostatnich semestr…”
 
-[2] **Rekrutacja cudzoziemców wymagane dokumenty** (2026-07-27)
-„Wymagane dokumenty Cudzoziemcy starający się o przyjęcie na studia składają w Dziale Współpracy z Zagranicą w wyznaczonym terminie następujące dokumenty: I STOPIEŃ oraz JEDNOLITE MAGISTERSKIE: Wydrukowany z systemu IRK podpisany formularz zgłoszeniowy. Oryginał potwierdzenia wniesienia opłaty rekrutacyjnej. Dokument potwierdzający tożsamość, jego kserokopia – paszport, wiza, dowód – oryginał do wglądu. Kserokopia świadectwa maturalnego lub dyplomu wraz z dokumentem legalizacyjnym – Apostille (or…”
+[2] **Stypendium Rektora** (2026-08-24)
+„i punktacji określonych w Regulaminie świadczeń dla studentów. Średnie ocen są weryfikowane i ewentualnie poprawiane przez pracowników DSS, na podstawie zestawień średnich ocen z odpowiedniego BOS-u. Punkty za osiągnięcia przyznawane studentom są podstawą do utworzenia jednej listy rankingowej, wspólnej dla danego kierunku studiów oraz wszystkich osób ubiegających się o stypendium Rektora na tym kierunku, bez względu na kategorię osiągnięć. Student, który nie zaliczył poprzedniego roku studiów, …”
 
-[3] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich** (2026-04-29)
-„ujące obywateli polskich . Kandydaci, którzy nie spełniają żadnego z powyższych warunków są zobowiązani do ubiegania się o przyjęcie na studia na zasadach innych niż obowiązujące obywateli polskich . O przyjęcie na studia i odbywanie ich na zasadach innych niż obowiązujące obywateli polskich mogą ubiegać się cudzoziemcy na podstawie: umów międzynarodowych, na zasadach określonych w tych umowach; umów zawartych przez URad. z podmiotami zagranicznymi na zasadach określonych w tych umowach; decyzji…”
+[3] **Stypendium Rektora** (2026-08-24)
+„Jeśli przyznanie stypendium wszystkim tym osobom spowodowałoby przekroczenie limitu stypendiów, przeprowadza się kwalifikację dodatkową, która powoduje uszeregowanie uprawnionych w następujący sposób: a) punktuje się średnią wszystkich ocen wpisanych w zakładkę „karta ocen” w systemie Uczelnia z poprzedniego roku akademickiego (średnia ze średniej ocen z każdego semestru w poprzednim roku akademickim), b) w przypadku jednakowego wyniku ze średniej ocen, sumuje się punkty uzyskane przez studentów…”
 
-[4] **Zasady rekrutacji 2025/2026 – 35-zal.-do-uchwaly-Warunki-i-tryb-rekrutacji-_2025_2026_05_06_2024.pdf** (2024-06-26)
-„ać studia: 1) na zasadach odpłatności; 2) bez odpłatności; 3) jako stypendyści strony polskiej; 4) jako stypendyści strony wysyłającej, bez ponoszenia opłat za naukę; 5) jako stypendyści URad. §6 1. Rektor URad. ustala wysokość opłat za odbywanie studiów na zasadach, o których mowa w § 5 ust. 3 pkt 1. 2. Rektor może obniżyć opłatę, o której mowa w ust. 1, lub zwolnić z niej całkowicie na wniosek cudzoziemca, który znalazł się w trudnej sytuacji materialnej lub podjął, na zasadach odpłatności, st…”
+[4] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
+„ku akademickim), 2) w przypadku jednakowego wyniku ze średniej ocen, sumuje się punkty uzyskane przez studentów w różnych kategoriach, a w przypadku, gdy nadal wynik jest jednakowy, brana jest pod uwagę średnia ocen z ostatniego semestru (średnia pomocnicza). A. Punktacja za średnią ocen Średnia ocen na potrzeby rankingu określana jest z zachowaniem poniższych zasad: a) średnia ocen liczona jest zgodnie z zasadami określonymi w Regulaminie studiów. Stypendium Rektora na podstawie wyników w nauce…”
 
 Źródła:
-[1] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-informacje-ogolne/ – 2026-07-15
-[2] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-wymagane-dokumenty/ – 2026-07-27
-[3] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-zasady-obowiazujace-obywateli-polskich/ – 2026-04-29
-[4] https://rekrutacja.uniwersytetradom.pl/wp-content/uploads/sites/6/2024/06/35-zal.-do-uchwaly-Warunki-i-tryb-rekrutacji-_2025_2026_05_06_2024.pdf – 2024-06-26
+[1] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/06/Stypendium-Rektora-2024.pdf – 2024-06-27
+[2] https://student.uniwersytetradom.pl/stypendium-rektora/ – 2026-08-24
+[3] https://student.uniwersytetradom.pl/stypendium-rektora/ – 2026-08-24
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf – 2024-08-13
 
 
 ## Erasmus+ wyjazd
@@ -210,27 +249,27 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Użytkownik:** Ekonomia, I stopień, 1 rok, stacjonarne.
 
-**Asystent** _(tryb: wyszukiwanie; profil: {"tryb": "stacjonarne", "poziom": "I", "rok": "rok", "kierunek": "weif_wydzial"})_:
+**Asystent** _(tryb: wyszukiwanie; profil: {"kierunek": "ekonomia", "tryb": "stacjonarne", "poziom": "I", "rok": "rok"})_:
 
-**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: tryb: stacjonarne, poziom: I, rok: rok, kierunek/grupa: weif_wydzial). Zweryfikuj w źródle:
+**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: kierunek/grupa: ekonomia, tryb: stacjonarne, poziom: I, rok: rok). Zweryfikuj w źródle:
 
-[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć. „Ekonomia i Finanse” to nazwa wydziału (WEiF). Konkretne kierunki: Ekonomia, Finanse i rachunkowość, Analityka gospodarcza, Zarządzanie, AI w biznesie – wybierz plik na stronie.** (2026-10-21)
+[1] **WEiF (Ekonomia i Finanse) – lista plików z planami zajęć.** (2026-10-21)
 „- II_FiR_1sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf (aktualizacja: 2026-09-30) - II_FiR_3sem_2026_27_st.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/II_FiR_3sem_2026_27_st.pdf (aktualizacja: 2026-10-16) - II_Z_1sem_2026_27_st-1.pdf → https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/II_Z_1sem_2026_27_st-1.pdf (aktualizacja: 2026-10-16) - II_Z_3sem_2026_27_st.pdf → https…”
 
 [2] **WEiF – Plan zajęć – I_FiR_3sem_2026_27_st-1.pdf** (2026-09-30)
 „29.09.2026 Zatwierdził Dziekan WEiF: Prof. Piotr Misztal Finanse i rachunkowość: rok II, semestr 3 – studia stacjonarne I stopnia r.a. 2026/2027 – semestr zimowy Grupa 01 poniedziałek wtorek środa czwartek piątek 08.15-09.00 Podstawy ekonometrii (w) dr Z. Śleszyński, s. 208 Finanse UE (w) dr K. Kalinowska (zdalnie) Międzynarodowe stosunki ekonomiczne i finansowe (ćw.) Prof. P. Misztal, s. 208 09.15-10.00 5 x Podstawy matematyki finansowej (w) dr Ł. Zięba, prof. URad., s. 208 3 x Warsztaty III – …”
 
-[3] **WEiF – Plan zajęć – II_FiR_1sem_2026_27_st-1.pdf** (2026-09-30)
-„29.09.2026 Zatwierdził Dziekan WEiF: Prof. Piotr Misztal Finanse i rachunkowość: rok I, semestr 1 – studia stacjonarne II stopnia r.a. 2026/2027 – semestr zimowy poniedziałek wtorek środa czwartek piątek 08.15-09.00 Finanse międzynarodowe (ćw.) dr G. Olszewska, s. 263 Statystyka w finansach (w) dr E. Falkiewicz, s. 263 Makroekonomia II (w) Prof. P. Misztal, s. 219…”
+[3] **WEiF – Plan zajęć – I_IAwB_3sem_2026_27_st.pdf** (2026-10-07)
+„07.10.2026 Zatwierdził Dziekan WEiF: Prof. Piotr Misztal Informatyka i analityka w biznesie: rok II, semestr 3 – studia stacjonarne I stopnia r.a. 2026/2027 – semestr zimowy poniedziałek wtorek środa czwartek piątek 08.15-09.00 5 x Finanse publiczne (ćw.) Mgr A. Borcuch, s. 219 3 x Warsztaty III – dr hab. V. Stoika, prof. URad., s. 219 3 x Warsztaty IV – dr G. Kozuń-Cieślak, prof. URad., s. 219 J. angielski (ćw.) mgr E. Wieczorek, s. 243 Rynki finansowe i instrumenty finansowe (ćw.) dr J. Bukows…”
 
-[4] **WEiF – Plan zajęć – I_FiR_1sem_2026_27_st-3.pdf** (2026-10-07)
-„07.10.2026 Zatwierdził Dziekan WEiF: Prof. Piotr Misztal Finanse i rachunkowość: rok I, semestr 1 – studia stacjonarne I stopnia r.a. 2026/2027 – semestr zimowy poniedziałek wtorek środa czwartek piątek 08.15-09.00 8.00-9.30 WF (Hala Sportowa, ul. Chrobrego 27)…”
+[4] **WEiF – Plany zajęć** (— ⚠️ informacja może być nieaktualna)
+„im. Kazimierza Pułaskiego z dnia 24 marca 2026 r. w sprawie organizacji roku akademickiego 2026/2027 Semestr zimowy Uwaga! Plany zajęć mogą jeszcze się zmienić! Uprzejmie prosimy o sprawdzanie planów. Ekonomia Finanse i rachunkowość Informatyka i analityka w biznesie Sztuczna inteligencja w biznesie Zarządzanie I stopień I stopień I stopień I stopień I stopień stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne stacjonarne niestacjonarne I …”
 
 Źródła:
 [1] https://weif.uniwersytetradom.pl/plany-zajec/ – 2026-10-21
 [2] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/I_FiR_3sem_2026_27_st-1.pdf – 2026-09-30
-[3] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/09/II_FiR_1sem_2026_27_st-1.pdf – 2026-09-30
-[4] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_FiR_1sem_2026_27_st-3.pdf – 2026-10-07
+[3] https://weif.uniwersytetradom.pl/wp-content/uploads/sites/15/2026/10/I_IAwB_3sem_2026_27_st.pdf – 2026-10-07
+[4] https://weif.uniwersytetradom.pl/plany-zajec/ – —
 
 
 ## Bezpaństwowiec
@@ -251,23 +290,23 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: bezpanstwowiec, tryb: stacjonarne, poziom: I). Zweryfikuj w źródle:
 
-[1] **Rekrutacja cudzoziemców informacje ogólne** (2026-07-15)
-„CUDZOZIEMCY WAŻNE INFORMACJE Kurs języka polskiego Nowe wymagania dla cudzoziemców od 1 lipca 2025 Wymagane dokumenty Harmonogram rekrutacji Wymogi formalne (świadectwa, dyplomy) Opłaty Zasady obowiązujące cudzoziemców Weryfikacja umiejętności i predyspozycji dla kandydatów na Wydział Sztuki Elektroniczny informator dla kandydatów na studia Egzaminy Badania lekarskie Kontakt Aplikuj Informacje ogólne O przyjęcie na studia w Uniwersytecie Radomskim mogą się ubiegać cudzoziemcy, według zasad uzale…”
+[1] **Rekrutacja cudzoziemców opłaty – R-08-2026.pdf** (2026-04-21)
+„apia 1 500 euro Grafika jednolite studia 1 500 euro Pedagogika przedszkolna i wczesnoszkolna magisterskie 1 300 euro Pedagogika specjalna 1 300 euro Psychologia 1 300 euro Prawo 1 300 euro 4 §3 Ustalam opłaty z tytułu kształcenia (czesne) za semestr podstawowego toku studiów stacjonarnych prowadzonych w języku angielskim dla studentów rozpoczynających kształcenie w roku akademickim 2026/2027 w wysokości: POZIOM KIERUNEK STUDIÓW OPŁATA ZA SEMESTR STUDIÓW International Business & Finance pierwszy …”
 
-[2] **Rekrutacja cudzoziemców wymagane dokumenty** (2026-07-27)
-„Wymagane dokumenty Cudzoziemcy starający się o przyjęcie na studia składają w Dziale Współpracy z Zagranicą w wyznaczonym terminie następujące dokumenty: I STOPIEŃ oraz JEDNOLITE MAGISTERSKIE: Wydrukowany z systemu IRK podpisany formularz zgłoszeniowy. Oryginał potwierdzenia wniesienia opłaty rekrutacyjnej. Dokument potwierdzający tożsamość, jego kserokopia – paszport, wiza, dowód – oryginał do wglądu. Kserokopia świadectwa maturalnego lub dyplomu wraz z dokumentem legalizacyjnym – Apostille (or…”
+[2] **Rekrutacja cudzoziemców opłaty – R-08-2026.pdf** (2026-04-21)
+„ydanie oryginału. 3. Za uwierzytelnienie dokumentów wydanych w związku z przebiegiem lub ukończeniem studiów, przeznaczonych do obrotu prawnego z zagranicą pobierana jest opłata w wysokości 26 zł. §6 1. Opłatę semestralną z tytułu kształcenia (czesne), o której mowa w § 1, należy wnosić w całości lub w ratach. 2. W przypadku opłaty semestralnej wnoszonej w całości, opłatę należy wnosić przed rozpoczęciem każdego semestru danego roku akademickiego, nie później niż do dnia 1 października – za seme…”
 
-[3] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich** (2026-04-29)
-„Zasady obowiązujące cudzoziemców O przyjęcie na studia i odbywanie ich na zasadach obowiązujących obywateli polskich mogą ubiegać się cudzoziemcy, którzy spełniają jeden z poniższych warunków: posiadają zezwolenie na pobyt stały w Rzeczypospolitej Polskiej; posiadają status uchodźcy nadany w Rzeczypospolitej Polskiej; korzystają z ochrony czasowej na terytorium Rzeczypospolitej Polskiej; są pracownikami migrującymi będącymi obywatelami państwa członkowskiego Unii Europejskiej, Konfederacji Szwaj…”
+[3] **Akty prawne – R-08-2026.pdf** (2026-07-16)
+„apia 1 500 euro Grafika jednolite studia 1 500 euro Pedagogika przedszkolna i wczesnoszkolna magisterskie 1 300 euro Pedagogika specjalna 1 300 euro Psychologia 1 300 euro Prawo 1 300 euro 4 §3 Ustalam opłaty z tytułu kształcenia (czesne) za semestr podstawowego toku studiów stacjonarnych prowadzonych w języku angielskim dla studentów rozpoczynających kształcenie w roku akademickim 2026/2027 w wysokości: POZIOM KIERUNEK STUDIÓW OPŁATA ZA SEMESTR STUDIÓW International Business & Finance pierwszy …”
 
-[4] **Rekrutacja cudzoziemców Zasady obowiązujące obywateli polskich** (2026-04-29)
-„ujące obywateli polskich . Kandydaci, którzy nie spełniają żadnego z powyższych warunków są zobowiązani do ubiegania się o przyjęcie na studia na zasadach innych niż obowiązujące obywateli polskich . O przyjęcie na studia i odbywanie ich na zasadach innych niż obowiązujące obywateli polskich mogą ubiegać się cudzoziemcy na podstawie: umów międzynarodowych, na zasadach określonych w tych umowach; umów zawartych przez URad. z podmiotami zagranicznymi na zasadach określonych w tych umowach; decyzji…”
+[4] **Akty prawne – R-14-2025.pdf** (2025-04-22)
+„terapia 1 400 euro Grafika 1 400 euro Pedagogika przedszkolna i wczesnoszkolna 1 200 euro jednolite studia Pedagogika specjalna magisterskie 1 200 euro Psychologia 1 200 euro Prawo 1 200 euro §3 Ustalam opłaty z tytułu kształcenia (czesne) za semestr podstawowego toku studiów stacjonarnych prowadzonych w języku angielskim dla studentów rozpoczynających kształcenie w roku akademickim 2025/2026 w wysokości: POZIOM KIERUNEK STUDIÓW OPŁATA ZA SEMESTR STUDIÓW International Business & Finance pierwszy…”
 
 Źródła:
-[1] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-informacje-ogolne/ – 2026-07-15
-[2] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-wymagane-dokumenty/ – 2026-07-27
-[3] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-zasady-obowiazujace-obywateli-polskich/ – 2026-04-29
-[4] https://rekrutacja.uniwersytetradom.pl/rekrutacja-cudzoziemcow-zasady-obowiazujace-obywateli-polskich/ – 2026-04-29
+[1] https://euczelnia.uniwersytetradom.pl/WirtualnaUczelnia10/WU/pliki/biuro_rektora/2026/zarzadzenia/R-08-2026.pdf – 2026-04-21
+[2] https://euczelnia.uniwersytetradom.pl/WirtualnaUczelnia10/WU/pliki/biuro_rektora/2026/zarzadzenia/R-08-2026.pdf – 2026-04-21
+[3] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/R-08-2026.pdf – 2026-07-16
+[4] https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2022/10/R-14-2025.pdf – 2025-04-22
 
 
 ## Stypendium doktoranckie

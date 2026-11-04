@@ -217,6 +217,127 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 **ASSERT PASS**
 
 
+## Stypendium socjalne PESEL UKR (główny bug)
+
+**Użytkownik:** Jak dostać stypendium socjalne?
+
+**Asystent** _(mode=doprecyzowanie; profile={})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Jaki jest Twój status: obywatel Polski, cudzoziemiec (np. Karta Polaka, karta pobytu, uchodźca/ochrona UKR), bezpaństwowiec, czy doktorant Szkoły Doktorskiej?
+2. Czy studiujesz równolegle drugi kierunek albo masz już ukończone studia tego poziomu? (świadczenia zwykle tylko na jednym kierunku)
+3. Studiujesz stacjonarnie czy niestacjonarnie?
+4. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** Mam obywatelstwo cudzoziemca, PESEL UKR, nie mam dyplomu ani drugiego kierunku, stacjonarne, I stopień
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "poziom": "I", "drugi_kierunek": "nie", "pobyt": "ukr"})_:
+
+**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie, pobyt: ukr). Zweryfikuj w źródle:
+
+[1] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
+„wie cennika opłat za zakwaterowanie w domach studenta. 44 Załącznik Nr 7 do Regulaminu (…) OŚWIADCZENIE do stypendium socjalnego dla obywateli Ukrainy/ЗАЯВА для подання заяви на соціальну допомогу. Radom, dnia _________________ r. (дата) ______________________________________ imię i nazwisko studentki/a/Ім’я та прізвище студента/-ки ______________________________________ numer albumu/номер студента ______________________________________ kierunek i rok studiów/спеціальність/напрям і рік навчання …”
+
+[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
+„rt. 156b ust. 1 tej ustawy lub posiadający wizę krajową w celu prowadzenia badań naukowych lub prac rozwojowych, 10) obywatel Ukrainy, którego pobyt na terytorium Rzeczypospolitej Polskiej jest uznawany za legalny na podstawie art. 2 ust. 1 ustawy z dnia 12 marca 2022 r. o pomocy obywatelom Ukrainy w związku z konfliktem zbrojnym na terytorium tego państwa (t.j. Dz. U. z 2024 r. poz. 167 z późn. zm.), będący studentem, może ubiegać się o stypendium socjalne, o którym mowa w art. 86 ust. 1 pkt 1 …”
+
+[3] **Świadczenia dla studentów – pomoc materialna** (2026-09-08)
+„Świadczenia dla studentów - pomoc materialna Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj. kwoty 3667,00 zł (wynagrodzenie to od 01…”
+
+[4] **Stypendia socjalne** (2026-10-01)
+„Stypendia socjalne UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj
+
+
+**ASSERT PASS**
+
+
+## Stypendium socjalne UKR multi-turn
+
+**Użytkownik:** Jak dostać stypendium socjalne?
+
+**Asystent** _(mode=doprecyzowanie; profile={})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Jaki jest Twój status: obywatel Polski, cudzoziemiec (np. Karta Polaka, karta pobytu, uchodźca/ochrona UKR), bezpaństwowiec, czy doktorant Szkoły Doktorskiej?
+2. Czy studiujesz równolegle drugi kierunek albo masz już ukończone studia tego poziomu? (świadczenia zwykle tylko na jednym kierunku)
+3. Studiujesz stacjonarnie czy niestacjonarnie?
+4. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** Mam obywatelstwo cudzoziemca, nie
+
+**Asystent** _(mode=doprecyzowanie; profile={"status": "cudzoziemiec", "drugi_kierunek": "nie"})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Studiujesz stacjonarnie czy niestacjonarnie?
+2. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** Jestem w Polsce pod Peselem UKR
+
+**Asystent** _(mode=doprecyzowanie; profile={"status": "cudzoziemiec", "drugi_kierunek": "nie", "pobyt": "ukr"})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Studiujesz stacjonarnie czy niestacjonarnie?
+2. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** Nie, studiuje tylko w uczelni im. kaziemierza pułaskiego
+
+**Asystent** _(mode=doprecyzowanie; profile={"status": "cudzoziemiec", "pobyt": "ukr", "drugi_kierunek": "nie"})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Studiujesz stacjonarnie czy niestacjonarnie?
+2. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** Nie posiadam żadnego dyplomu
+
+**Asystent** _(mode=doprecyzowanie; profile={"status": "cudzoziemiec", "drugi_kierunek": "nie", "pobyt": "ukr"})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Studiujesz stacjonarnie czy niestacjonarnie?
+2. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** stacjonarnym
+
+**Asystent** _(mode=doprecyzowanie; profile={"status": "cudzoziemiec", "drugi_kierunek": "nie", "pobyt": "ukr", "tryb": "stacjonarne"})_:
+
+Zanim odpowiem – zasady na UR zależą od Twojej sytuacji. Proszę, doprecyzuj:
+1. Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?
+
+Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.
+
+**Użytkownik:** pierwszego stopnia
+
+**Asystent** _(mode=wyszukiwanie; profile={"status": "cudzoziemiec", "tryb": "stacjonarne", "drugi_kierunek": "nie", "pobyt": "ukr", "poziom": "I"})_:
+
+**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, drugi kierunek / dyplom: nie, pobyt: ukr, poziom: I). Zweryfikuj w źródle:
+
+[1] **Stypendia socjalne** (2026-10-01)
+„lub rozpoczęcia pozarolniczej działalności gospodarczej, jeżeli członek rodziny, osoba ucząca się lub dziecko pozostające pod opieką opiekuna prawnego utracili dochód z tych tytułów i w okresie 3 miesięcy, licząc od dnia utraty dochodu, uzyskali dochód u tego samego pracodawcy lub zleceniodawcy, lub zamawiającego dzieło lub ponownie rozpoczęli pozarolniczą działalność gospodarczą. Nie stanowi utraty dochodu przebywanie na urlopie bezpłatnym. Nie jest również uprawnione zgłaszanie jako dochodu ut…”
+
+[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
+„rozumienia o Wolnym Handlu (EFTA) – strony umowy o Europejskim Obszarze Gospodarczym, oraz członkowie jego rodziny, z zastrzeżeniem ust. 6, 2) cudzoziemiec – obywatel Zjednoczonego Królestwa Wielkiej Brytanii i Irlandii Północnej, o którym mowa w art. 10 ust. 1 lit. b lub d Umowy o wystąpieniu Zjednoczonego Królestwa Wielkiej Brytanii i Irlandii Północnej z Unii Europejskiej i Europejskiej Wspólnoty Energii Atomowej (Dz. U. UE. L. z 2020 r. Nr 29, str. 7, z późn. zm.), oraz członkowie jego rodzi…”
+
+[3] **Stypendia socjalne – Zalacznik-Nr-8-Ukraina-1.pdf** (2023-09-12 ⚠️ informacja może być nieaktualna)
+„Załącznik Nr 8 do Regulaminu świadczeń dla studentów OŚWIADCZENIE do stypendium socjalnego dla obywateli Ukrainy/ ЗАЯВА для подання заяви на соціальну допомогу. Radom, dnia _________________ r. (дата) ______________________________________ imię i nazwisko student-ki/a / Ім’я та прізвище студента/-ки ______________________________________ numer albumu / номер студента ______________________________________ kierunek i rok studiów / спеціальність/напрям і рік навчання OŚWIADCZENIE / ЗАЯВА (należy w…”
+
+[4] **Konferencje Naukowe – Wspolczesne-problemy-sektora-finansow-wybrane-zagadnienia-J.-Bukowska.pdf** (2024-10-15)
+„zającej 20 tys. złotych. Co istotne, obowiązkiem banków jest nie tylko sprawdzanie klientów, ale i prowadzenie rejestru operacji przewyższających wska- zaną wyżej kwotę [16]. Wśród metod prewencyjnych wskazać należy również takie jak:  Identyfikacja i weryfikacja danych klienta – na podstawie dokumentów toż- samości osoby fizycznej lub wiarygodnych danych i informacji obejmujących m.in.: imię, 
+
+
+**ASSERT PASS**
+
+
 ## Stypendium socjalne PL
 
 **Użytkownik:** jak dostac stypendium socjalneeee
@@ -237,17 +358,17 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: pl, tryb: stacjonarne, poziom: I, drugi kierunek / dyplom: nie). Zweryfikuj w źródle:
 
-[1] **Świadczenia dla studentów – pomoc materialna – R-41-2025.pdf** (2025-12-05)
-„osób niepełnosprawnych - 6,5 % 143.000 zł miesięcznie - stypendia Rektora - 38,5 % 847.000 zł miesięcznie - zapomogi - 0,5 % 11.000 zł miesięcznie RAZEM FUNDUSZ - 100,0 % 2.200.000 zł miesięcznie. 2. Wysokość dochodu na osobę w rodzinie studenta, uprawniająca do ubiegania się o stypendium socjalne oraz liczba grup dochodowych. Do stypendium socjalnego uprawnieni są wszyscy, których dochód na osobę w rodzinie nie przekracza 1.908,90 zł netto. Uprawnieni do otrzymania stypendium socjalnego podziel…”
+[1] **Stypendia socjalne** (2026-10-01)
+„lub całości znajdującego się w posiadaniu rodziny gospodarstwa rolnego w dzierżawę; umowę zawartą w formie aktu notarialnego, w przypadku wniesienia gospodarstwa rolnego do użytkowania przez rolniczą spółdzielnię produkcyjną; wyrok sądu o rozwodzie między rodzicami studenta lub studentem i jego współmałżonkiem, wyrok sądu o wysokości przyznanych alimentów dla danej osoby z rodziny studenta, kopię odpisu podlegającego wykonaniu orzeczenia sądu zasądzającego alimenty na rzecz osób w rodzinie lub p…”
 
-[2] **Świadczenia dla studentów – pomoc materialna – Aneks-01-R-41-2025.pdf** (2025-12-15)
-„osób niepełnosprawnych - 6,5 % 143.000 zł miesięcznie - stypendia Rektora - 38,5 % 847.000 zł miesięcznie - zapomogi - 0,5 % 11.000 zł miesięcznie RAZEM FUNDUSZ - 100,0 % 2.200.000 zł miesięcznie. 2. Wysokość dochodu na osobę w rodzinie studenta, uprawniająca do ubiegania się o stypendium socjalne oraz liczba grup dochodowych. Do stypendium socjalnego uprawnieni są wszyscy, których dochód na osobę w rodzinie nie przekracza 1.908,90 zł netto. Uprawnieni do otrzymania stypendium socjalnego podziel…”
+[2] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
+„ZARZĄDZENIE R-32/2024 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 29 lipca 2024 r. w sprawie: wprowadzenia Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. - Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2023 r. poz. 742, z późn. zm.),  art. 41 ust. 10 - 12 ustawy z dnia 12 marca 2022 r. o pomocy obywatelom Ukrainy w związku z konfliktem zbrojnym na terytorium tego państwa (t…”
 
-[3] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
-„obę w rodzinie studenta, uprawniającą do ubiegania się o stypendium socjalne oraz liczbę grup dochodowych, wraz ze wskazaniem wysokości dochodu w tych grupach, 3) wysokość stypendium socjalnego w poszczególnych grupach dochodowych, 4) maksymalną łączną miesięczną wysokość stypendium socjalnego i stypendium Rektora, 5) wysokość (wysokości) stypendium dla osób niepełnosprawnych, 6) wysokość (wysokości) zwiększenia stypendium socjalnego, 7) wysokość odpłatności za miejsce w domach studenta, zgodnie…”
+[3] **Świadczenia dla studentów – pomoc materialna – Aneks-01-R-41-2025.pdf** (2025-12-15)
+„ANEKS NR 1 z dnia 11 grudnia 2025 r. Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego do zarządzenia R-41/2025 z dnia 24 listopada 2025 r. w sprawie: ogłoszenia załącznika Nr 1 na rok akademicki 2025/2026 do Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2024 r. poz. 1571, z późn. zm.),  § 3 ust. 5 i 7 Regulaminu świadczeń dla studentów U…”
 
-[4] **Stypendia socjalne** (2026-10-01)
-„Stypendia socjalne UWAGA! Stypendium socjalne może zostać pomniejszone z uwagi na to, iż Student może otrzymywać równocześnie stypendium socjalne, stypendium rektora, stypendium dla osób niepełnosprawnych lub zapomogę, o ile spełnia kryteria przewidziane dla każdego ze świadczeń, z tym że łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora otrzymanych przez studenta nie może przekroczyć 38% wynagrodzenia profesora, tj. kwoty 3667,00 zł (wynagrodzen
+[4] **Świadczenia dla studentów – pomoc materialna – R-41-2025.pdf** (2025-12-05)
+„ZARZĄDZENIE R-41/2025 Rektora Uniwersytetu Radomskiego im. Kazimierza Pułaskiego z dnia 24 listopada 2025 r. w sprawie: ogłoszenia załącznika Nr 1 na rok akademicki 2025/2026 do Regulaminu świadczeń dla studentów Uniwersytetu Radomskiego im. Kazimierza Pułaskiego. Na podstawie:  art. 95 ustawy z dnia 20 lipca 2018 r. – Prawo o szkolnictwie wyższym i nauce (t.j. Dz. U. z 2024 r. poz. 1571, z późn. zm.),  § 3 ust. 5 i 7 Regulaminu świadczeń dla studentów Uniwersytet
 
 
 **ASSERT PASS**
@@ -463,20 +584,17 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: bezpanstwowiec). Zweryfikuj w źródle:
 
-[1] **Rekrutacja cudzoziemców informacje ogólne** (2026-07-15)
-„CUDZOZIEMCY WAŻNE INFORMACJE Kurs języka polskiego Nowe wymagania dla cudzoziemców od 1 lipca 2025 Wymagane dokumenty Harmonogram rekrutacji Wymogi formalne (świadectwa, dyplomy) Opłaty Zasady obowiązujące cudzoziemców Weryfikacja umiejętności i predyspozycji dla kandydatów na Wydział Sztuki Elektroniczny informator dla kandydatów na studia Egzaminy Badania lekarskie Kontakt Aplikuj Informacje ogólne O przyjęcie na studia w Uniwersytecie Radomskim mogą się ubiegać cudzoziemcy, według zasad uzale…”
+[1] **Konferencje Naukowe – M.-Pazdzior-M.-Orzechowska-Ochnia-Gospodarka-komunikacja-spoleczna-i-sztuka.pdf** (2025-07-10)
+„obotna. Jej obszerną definicję zawarto w ustawie z dnia 20 kwietnia 2004 roku o promocji zatrudnienia i instytucjach rynku pracy. Opisuje ona osobę bezrobotną jako taką, która posiada polskie obywatelstwo lub jest członkiem rodziny polskiego obywatela oraz nie uczęszcza do szkoły i nie posiada zatrudnienia lub nie wykonuje innej pracy zarobkowej, ale jest gotowa do jej podjęcia. Status osoby bezrobotnej wynika z faktu zarejestrowania się w odpowiednim urzędzie pracy. Niemniej, aby ubiegać się o …”
 
-[2] **Rekrutacja cudzoziemców wymagane dokumenty** (2026-07-27)
-„Wymagane dokumenty Cudzoziemcy starający się o przyjęcie na studia składają w Dziale Współpracy z Zagranicą w wyznaczonym terminie następujące dokumenty: I STOPIEŃ oraz JEDNOLITE MAGISTERSKIE: Wydrukowany z systemu IRK podpisany formularz zgłoszeniowy. Oryginał potwierdzenia wniesienia opłaty rekrutacyjnej. Dokument potwierdzający tożsamość, jego kserokopia – paszport, wiza, dowód – oryginał do wglądu. Kserokopia świadectwa maturalnego lub dyplomu wraz z dokumentem legalizacyjnym – Apostille (or…”
+[2] **Świadczenia dla studentów – pomoc materialna** (2026-09-08)
+„iwania w domu studenckim lub innym obiekcie), stypendium dla osób niepełnosprawnych, zapomogę, stypendium Rektora, zakwaterowanie w domu studenckim , jak również o zakwaterowanie małżonka lub dziecka. Świadczenia dla studentów przyznawane są na podstawie złożonych wniosków. Studenci składają wnioski elektronicznie w systemie Wirtualna Uczelnia oraz dołączają skany wymaganych dokumentów (wymagany format PDF). Wypełniony wniosek wraz z dokumentami należy zapisać a następnie przesłać. Po przesłaniu…”
 
 [3] **Zasady rekrutacji 2026/2027 – 17-zal-do-uchwaly-Zasady-rekrutacji_2026_2027-25.06.2025-1.pdf** (2025-07-02)
 „żność, a w przypadku jej braku – w drodze postępowania nostryfikacyjnego, o czym mowa w art. 327 ust. 1 ww. ustawy, 2) wykażą wymagane w Uczelni przyjmującej predyspozycje do podjęcia tych studiów. 2. Dyrektor NAWA udziela, na wniosek zainteresowanego podmiotu, pisemnej informacji o dyplomie wydanym przez zagraniczną uczelnię, o poziomie studiów i statusie uczelni. 3. W przypadku dyplomów oraz innych dokumentów ukończenia studiów wydanych za granicą, podlegających uznaniu w drodze nostryfikacji,…”
 
-[4] **Rekrutacja cudzoziemców opłaty – R-08-2026.pdf** (2026-04-21)
-„................... . ............................................................................................... podpis wnioskodawcy *niepotrzebne skreślić 12 Informacja Biura Obsługi Studenta: ……………………………………………………………………………………………………………………… ……………………………………………………………………………………………………………………… ……………………………………………………………………………………………………………………… ……………………………………………………………………………………………………………………… KARTA PRZEBIEGU STUDIÓW Rok Rok Średnia Opłaty studiów/ Informacje dodatkowe akademicki ocen wniesione zwolnienia sem…”
-
-Źródła:
-[1] https://rekrutacja.uni
+[4] **Nowe wymagania dla cudzoziemców od 1 lipca 2025 – 16-zal.-do-uchwaly-Zmiany_Zalacznik-5_-do-warunkow-rekrutacji-uchw.-Nr-000-9-35-2024.pdf** (2025-06-30)
+„żność, a w przypadku jej braku – w drodze postępowania nostryfikacyjnego, o czym mowa w art. 327 ust. 1 ww. ustawy, 2) wykażą wymagane w Uczelni przyjmującej predyspozycje do podjęcia tych studiów. 2. Dyrektor NAWA udziela, na wniosek zainteresowanego podmiotu, pisemnej informacji o dyplomie wydanym przez zagraniczną uczelnię, o poziomie studiów i statusie uczelni. 3. W przypadku d
 
 **Użytkownik:** uchodzca, stacjonarne, I stopien
 
@@ -484,17 +602,17 @@ Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacj
 
 **Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: status: cudzoziemiec, tryb: stacjonarne, poziom: I). Zweryfikuj w źródle:
 
-[1] **Rekrutacja cudzoziemców informacje ogólne** (2026-07-15)
-„CUDZOZIEMCY WAŻNE INFORMACJE Kurs języka polskiego Nowe wymagania dla cudzoziemców od 1 lipca 2025 Wymagane dokumenty Harmonogram rekrutacji Wymogi formalne (świadectwa, dyplomy) Opłaty Zasady obowiązujące cudzoziemców Weryfikacja umiejętności i predyspozycji dla kandydatów na Wydział Sztuki Elektroniczny informator dla kandydatów na studia Egzaminy Badania lekarskie Kontakt Aplikuj Informacje ogólne O przyjęcie na studia w Uniwersytecie Radomskim mogą się ubiegać cudzoziemcy, według zasad uzale…”
-
-[2] **Zasady rekrutacji 2026/2027 – 17-zal-do-uchwaly-Zasady-rekrutacji_2026_2027-25.06.2025-1.pdf** (2025-07-02)
+[1] **Zasady rekrutacji 2026/2027 – 17-zal-do-uchwaly-Zasady-rekrutacji_2026_2027-25.06.2025-1.pdf** (2025-07-02)
 „żność, a w przypadku jej braku – w drodze postępowania nostryfikacyjnego, o czym mowa w art. 327 ust. 1 ww. ustawy, 2) wykażą wymagane w Uczelni przyjmującej predyspozycje do podjęcia tych studiów. 2. Dyrektor NAWA udziela, na wniosek zainteresowanego podmiotu, pisemnej informacji o dyplomie wydanym przez zagraniczną uczelnię, o poziomie studiów i statusie uczelni. 3. W przypadku dyplomów oraz innych dokumentów ukończenia studiów wydanych za granicą, podlegających uznaniu w drodze nostryfikacji,…”
 
-[3] **Rekrutacja cudzoziemców wymagane dokumenty** (2026-07-27)
-„Wymagane dokumenty Cudzoziemcy starający się o przyjęcie na studia składają w Dziale Współpracy z Zagranicą w wyznaczonym terminie następujące dokumenty: I STOPIEŃ oraz JEDNOLITE MAGISTERSKIE: Wydrukowany z systemu IRK podpisany formularz zgłoszeniowy. Oryginał potwierdzenia wniesienia opłaty rekrutacyjnej. Dokument potwierdzający tożsamość, jego kserokopia – paszport, wiza, dowód – oryginał do wglądu. Kserokopia świadectwa maturalnego lub dyplomu wraz z dokumentem legalizacyjnym – Apostille (or…”
+[2] **Nowe wymagania dla cudzoziemców od 1 lipca 2025 – 16-zal.-do-uchwaly-Zmiany_Zalacznik-5_-do-warunkow-rekrutacji-uchw.-Nr-000-9-35-2024.pdf** (2025-06-30)
+„żność, a w przypadku jej braku – w drodze postępowania nostryfikacyjnego, o czym mowa w art. 327 ust. 1 ww. ustawy, 2) wykażą wymagane w Uczelni przyjmującej predyspozycje do podjęcia tych studiów. 2. Dyrektor NAWA udziela, na wniosek zainteresowanego podmiotu, pisemnej informacji o dyplomie wydanym przez zagraniczną uczelnię, o poziomie studiów i statusie uczelni. 3. W przypadku dyplomów oraz innych dokumentów ukończenia studiów wydanych za granicą, podlegających uznaniu w drodze nostryfikacji,…”
 
-[4] **Nowe wymagania dla cudzoziemców od 1 lipca 2025 – 16-zal.-do-uchwaly-Zmiany_Zalacznik-5_-do-warunkow-rekrutacji-uchw.-Nr-000-9-35-2024.pdf** (2025-06-30)
-„żność, a w przypadku jej braku – w drodze postępowania nostryfikacyjnego, o czym mowa w art. 327 ust. 1 ww. ustawy, 2) wykażą wymagane w Uczelni przyjmującej predyspozycje do podjęcia tych studiów. 2. Dyrektor NAWA udziela, na wniosek zainteresowanego podmiotu, pisemnej informacji o dyplomie wydanym przez zagraniczną uczelnię, o poziomie studiów i statusie uczelni. 3. W przypadku dyplomów oraz innych dokumentów uko
+[3] **Zasady rekrutacji 2025/2026 – 35-zal.-do-uchwaly-Warunki-i-tryb-rekrutacji-_2025_2026_05_06_2024.pdf** (2024-06-26)
+„anicą i uznany w Rzeczypospolitej Polskiej za uprawniający do ubiegania się o przyjęcie na studia drugiego stopnia:  zgodnie z art. 326 ust. 1 i 2 ustawy  Prawo o szkolnictwie wyższym i nauce, lub 26  na podstawie umowy międzynarodowej albo w drodze postępowania nostryfikacyjnego, o których mowa w art. 327 ust. 1 ww. ustawy, 2) wykażą wymagane w Uczelni przyjmującej predyspozycje do podjęcia tych studiów. 2. W przypadku dyplomów oraz innych dokumentów ukończenia studiów wydanych za granicą, p…”
+
+[4] **Świadczenia dla studentów – pomoc materialna – R-32-2024-Regulamin-swiadczen-dla-studentow.pdf** (2024-08-13)
+„rozumienia o Wolnym Handlu (EFTA) – strony umowy o Europejskim Obszarze Gospodarczym, oraz członkowie jego rodziny, z zastrzeżeniem ust. 6, 2) cudzoziemiec – obywatel Zjednoczonego Królestwa Wielkiej Brytanii i Irlandii Północnej, o którym mowa w art. 10 ust. 1 lit. b lub d Umowy o wystąpieniu Zjednoczoneg
 
 
 **ASSERT PASS**
@@ -681,7 +799,7 @@ I can help with official UR information: scholarships, fees, Erasmus+, regulatio
 
 ## Summary
 
-PASS=22 FAIL=0
+PASS=24 FAIL=0
 
 - PASS: Plan Ekonomia i Finanse (messy)
 - PASS: Plan Ekonomia konkretnie
@@ -689,6 +807,8 @@ PASS=22 FAIL=0
 - PASS: Plan WTEiI Informatyka
 - PASS: Plan Prawo
 - PASS: Plan bez kierunku
+- PASS: Stypendium socjalne PESEL UKR (główny bug)
+- PASS: Stypendium socjalne UKR multi-turn
 - PASS: Stypendium socjalne PL
 - PASS: Stypendium rektora UA
 - PASS: Erasmus slang

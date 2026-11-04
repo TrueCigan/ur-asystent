@@ -35,6 +35,28 @@ SCENARIOS = [
     ], {"expect_mode_contains": "doprecyzowanie"}),
 
     # --- świadczenia / opłaty / erasmus ---
+    ("Stypendium socjalne PESEL UKR (główny bug)", [
+        "Jak dostać stypendium socjalne?",
+        "Mam obywatelstwo cudzoziemca, PESEL UKR, nie mam dyplomu ani drugiego kierunku, stacjonarne, I stopień",
+    ], {
+        "expect_url": "stypendia-socjalne",
+        "forbid_url_only_rekrutacja": True,
+        "expect_substr": "Ukrain",
+        "forbid_bos_only": True,
+    }),
+    ("Stypendium socjalne UKR multi-turn", [
+        "Jak dostać stypendium socjalne?",
+        "Mam obywatelstwo cudzoziemca, nie",
+        "Jestem w Polsce pod Peselem UKR",
+        "Nie, studiuje tylko w uczelni im. kaziemierza pułaskiego",
+        "Nie posiadam żadnego dyplomu",
+        "stacjonarnym",
+        "pierwszego stopnia",
+    ], {
+        "expect_url": "stypendia-socjalne",
+        "forbid_bos_only": True,
+        "expect_profile_pobyt": "ukr",
+    }),
     ("Stypendium socjalne PL", [
         "jak dostac stypendium socjalneeee",
         "jestem polakiem stacjonarne I stopien tylko jeden kierunek",
@@ -105,10 +127,26 @@ def check(name, r, rules, blob):
         fails.append(f"missing url {rules['expect_url']}")
     if rules.get("forbid_url") and rules["forbid_url"] in blob:
         fails.append(f"forbidden url present {rules['forbid_url']}")
+    if rules.get("forbid_url_only_rekrutacja"):
+        urls = re.findall(r"https?://[^\s\]\"']+", blob)
+        if urls and all("rekrutacja." in u for u in urls):
+            fails.append("sources are only rekrutacja")
     if rules.get("expect_substr") and rules["expect_substr"] not in blob:
         fails.append(f"missing substr {rules['expect_substr']}")
     if rules.get("forbid_substr") and rules["forbid_substr"] in blob:
         fails.append(f"forbidden substr {rules['forbid_substr']}")
+    if rules.get("forbid_bos_only"):
+        ans = (r.get("answer") or "").lower()
+        bos = "biuro obsługi" in ans or "skontaktuj" in ans
+        substance = bool(re.search(
+            r"stypendi|dochód|2099|ukrain|ubiega|wniosek|oświadczen|wirtualny|dokument|zł",
+            ans, re.I,
+        ))
+        if bos and not substance:
+            fails.append("BOS-only answer without substance")
+    if rules.get("expect_profile_pobyt"):
+        if (r.get("profile") or {}).get("pobyt") != rules["expect_profile_pobyt"]:
+            fails.append(f"profile.pobyt={(r.get('profile') or {}).get('pobyt')} want={rules['expect_profile_pobyt']}")
     return fails
 
 

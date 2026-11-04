@@ -73,6 +73,20 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
                 sc[i] *= 2.0
             elif fac and c.get("source") in PLAN_SOURCES and c.get("source") != fac:
                 sc[i] *= 0.15
+        # stypendium socjalne: trzymaj student/świadczenia, nie rekrutację
+        if "stypendium_socjalne" in topics:
+            url = (c.get("url") or "").lower()
+            blob = title + " " + url
+            if c.get("source") == "rekrutacja" or re.search(r"rekrutacj|konferenc|monografia", blob):
+                sc[i] *= 0.08
+            if re.search(r"stypendia-socjalne|swiadczenia|świadczenia|r-41|r-32|pomoc-materialn", blob):
+                sc[i] *= 3.0
+            if (profile or {}).get("pobyt") == "ukr" and re.search(
+                r"ukrain|ukr|za[lł][aą]cznik|ochron\w*\s*czasow|cudzoziem", title + " " + text[:800], re.I
+            ):
+                sc[i] *= 2.2
+            if c.get("source") == "student" and re.search(r"socjaln|świadcze|stypend", title):
+                sc[i] *= 1.8
     out, per_url = [], {}
     for i in np.argsort(-sc):
         c = ch[i]
@@ -171,8 +185,9 @@ SLOT_OPTS = {
   ("rok", r"(\b[1-6]\s*(rok|year|курс|жил|курс[т]?)\b|\byear\s*[1-6]\b|\b[1-6](st|nd|rd|th)\s*year\b|\bi+\s*rok|\bpierwsz\w*\s*rok|\bdrugi\w*\s*rok|\btrzeci\w*\s*rok|\bczwart\w*\s*rok|\bpi[aą]t\w*\s*rok|\bfirst\s*year|\bsecond\s*year|\bthird\s*year|\bfreshman|\bsophomore|\bперш\w*\s*рік|\bдруг\w*\s*рік|\bтрет\w*\s*рік|\b[1-6][- ]?р\s*курс|\b(?:na|jestem na)\s+(?:i|ii|iii|iv|v)\s+roku|\bpierwszoroczn)"),
  ],
  "drugi_kierunek": [
-  ("tak", r"(drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*(mam|uko[nń]czy)|mam\s*(tytu[lł]|licencjat|dyplom)|друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)|диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
-  ("nie", r"(jedyn\w*\s*kierun|jeden\s*kierun|tylko\s*jed|only\s*one\s*(program|programme|major|degree|field)|single\s*(major|program|programme)|one\s*program\s*only|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|first\s*degree\s*only|nie\s*mam\s*(innego|drugiego|uko)|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
+  # „nie” najpierw – unikaj fałszywego „tak” przy „nie posiadam dyplomu”
+  ("nie", r"(?i)(?:^\s*nie\.?\s*$|(?:,\s*|\s+)nie\.?\s*$|jedyn\w*\s*kierun|jeden\s*kierun|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one\s*(program|programme|major|degree|field)|single\s*(major|program|programme)|one\s*program\s*only|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|не\s*маю\s*(жодн\w*\s*)?диплом|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
+  ("tak", r"(?i)(?:(?:mam|posiadam)\s+(?:ju[zż]\s+)?(?:uko[nń]czon\w*\s+)?(?:tytu[lł]|licencjat|in[zż]ynier|magister|dyplom)(?!\w)|drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*uko[nń]czy|друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)\w*\s*диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
  ],
  "niepelnosprawnosc": [
   ("tak", r"(mam\s*orzeczenie|z\s*niepe[lł]nosprawno|orzeczen\w*\s*o\s*(niepe|stop)|disability\s*(certificate|ruling|status)|i\s*have\s*a?\s*disability|інвалід|посвідчен\w*\s*про\s*інвал|хөгжлийн\s*бэрхшээл)"),
@@ -279,6 +294,15 @@ def extract_profile(text):
             if re.search(rx, t, re.I):
                 prof[slot] = val
                 break
+    # PESEL UKR / ochrona czasowa – podtyp pobytu (nie osobny status slot)
+    if re.search(
+        r"pesel\s*ukr|\bukr\b|ochron\w*\s*czasow|temporary\s*protection|"
+        r"specjaln\w*\s*ustaw\w*\s*ukrain|ustaw\w*.{0,40}ukrain|"
+        r"тимчасов\w*\s*захист|громадян\w*\s*украї|з\s*україн|гражданин\w*\s*украин",
+        t, re.I,
+    ):
+        prof["pobyt"] = "ukr"
+        prof.setdefault("status", "cudzoziemiec")
     if prof.get("status") == "doktorant":
         prof.setdefault("poziom", "SD"); prof.setdefault("tryb", "stacjonarne"); prof.setdefault("rok", "rok")
     if prof.get("poziom") == "SD":
@@ -288,11 +312,25 @@ def extract_profile(text):
         prof.setdefault("drugi_kierunek", "pytanie")
     return prof
 
+_BENEFIT_TOPICS = {
+    "stypendium_socjalne", "stypendium_rektora", "stypendium_niepeln",
+    "oplaty", "erasmus", "doktoranckie", "dwa_kierunki", "plan",
+}
+
 def needed(question, history_text):
     q = question.lower()
     topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, q, re.I)]
-    if not topics:
-        topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, history_text.lower(), re.I)][:1]
+    hist_topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, history_text.lower(), re.I)]
+    # Odpowiedź profilowa („cudzoziemiec, nie”) nie może zbić tematu ze stypendium na „cudzoziemcy/rekrutacja”
+    benefit_hist = [t for t in hist_topics if t[0] in _BENEFIT_TOPICS]
+    if benefit_hist:
+        names = {n for n, _ in topics}
+        if not topics or names <= {"cudzoziemcy"}:
+            topics = [benefit_hist[0]]
+        else:
+            topics = [(n, s) for n, s in topics if n != "cudzoziemcy"] or topics
+    elif not topics and hist_topics:
+        topics = hist_topics[:1]
     req = []
     for _, s in topics:
         for x in s:
@@ -323,25 +361,27 @@ Known profile so far: {profile}
 """
 
 SYSTEM = """You are a helpful campus information assistant for students of Kazimierz Pułaski University of Radom (Uniwersytet Radomski, UR).
+Your job is to SAVE the student’s time: extract concrete rules from ŹRÓDŁA (who may apply, amounts, deadlines, documents, where to submit) so they rarely need to dig through PDFs themselves.
 Tone: clear, calm, practical — like a well-informed staff member at Biuro Obsługi Studenta. Not a bureaucratic form, not a chatbot script.
 
 HARD RULES:
 1. Answer in {lang_name} (lang={lang}). Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) when useful. If the user asks to switch language (“po polsku”, “на польській”, “in English”), switch language — do NOT treat that as a question about tuition “in the Polish language”.
-2. Use ONLY the fragments in ŹRÓDŁA. No outside knowledge. If the sources do not cover the question, say so plainly and point to Biuro Obsługi Studenta, Dział Współpracy Zagranicznej, or Szkoła Doktorska.
-3. Structure: (a) direct answer first, (b) conditions/exceptions for THIS student’s profile, (c) what to do next if useful, (d) sources list. Use short paragraphs or bullets; avoid repeating the same sentence pattern.
+2. Use ONLY the fragments in ŹRÓDŁA. No outside knowledge. ALWAYS first give every concrete fact that IS in the sources (eligibility yes/no for THIS profile, income thresholds, document lists, deadlines, submission channel, links). FORBIDDEN: an answer that only says you don’t know / contact BOS when ŹRÓDŁA contain a relevant section (e.g. “Stypendium dla cudzoziemców”, “obywatel Ukrainy”). Mention Biuro Obsługi Studenta / DWZ only as a short last-line tip when a personal decision or missing individual document remains — never instead of the rules.
+3. Structure: (a) direct answer first, (b) conditions/exceptions for THIS student’s profile, (c) what to do next (documents, system, deadlines), (d) sources list. Use short paragraphs or bullets.
 4. Cite claims with [n]. End with a sources heading in the answer language (Źródła / Sources / Джерела / Эх сурвалж) with URL + update date. Each URL once. Do not invent source numbers.
 5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. If a deadline already passed, say so.
 6. For Polish citizens, full-time first-cycle study is often free — quote paid zł/euro amounts only when the source clearly applies to the user’s mode/level (e.g. niestacjonarne, second cycle, foreigners).
 7. Describe rules for the user’s category only; mention other categories only as a brief aside.
-8. No legal advice; for individual cases refer to the proper UR unit. Do not invent URLs.
+8. Profile pobyt=ukr / PESEL UKR / ochrona czasowa: if ŹRÓDŁA mention citizens of Ukraine under the special act, you MUST state that they may apply for stypendium socjalne, plus income threshold, required oświadczenie/documents, and how to submit — do not claim “no provisions”.
+9. No invented legal outcomes for an individual case; do not invent URLs.
 
 {security_rules}"""
 
 SLOT_LABEL = {
- "pl": {"status": "status / obywatelstwo", "tryb": "tryb studiów", "poziom": "poziom studiów", "rok": "rok studiów", "drugi_kierunek": "drugi kierunek lub dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek / grupa"},
- "en": {"status": "status / citizenship", "tryb": "full-time or part-time", "poziom": "study level", "rok": "year of study", "drugi_kierunek": "second programme or diploma", "niepelnosprawnosc": "disability certificate", "kierunek": "programme / group"},
- "uk": {"status": "статус / громадянство", "tryb": "форма навчання", "poziom": "рівень навчання", "rok": "рік навчання", "drugi_kierunek": "другий напрям або диплом", "niepelnosprawnosc": "інвалідність", "kierunek": "напрям / група"},
- "mn": {"status": "статус / иргэншил", "tryb": "сургалтын хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил эсвэл диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил / бүлэг"},
+ "pl": {"status": "status / obywatelstwo", "tryb": "tryb studiów", "poziom": "poziom studiów", "rok": "rok studiów", "drugi_kierunek": "drugi kierunek lub dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek / grupa", "pobyt": "podstawa pobytu"},
+ "en": {"status": "status / citizenship", "tryb": "full-time or part-time", "poziom": "study level", "rok": "year of study", "drugi_kierunek": "second programme or diploma", "niepelnosprawnosc": "disability certificate", "kierunek": "programme / group", "pobyt": "residence basis"},
+ "uk": {"status": "статус / громадянство", "tryb": "форма навчання", "poziom": "рівень навчання", "rok": "рік навчання", "drugi_kierunek": "другий напрям або диплом", "niepelnosprawnosc": "інвалідність", "kierunek": "напрям / група", "pobyt": "підстава перебування"},
+ "mn": {"status": "статус / иргэншил", "tryb": "сургалтын хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил эсвэл диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил / бүлэг", "pobyt": "оршин суух үндэслэл"},
 }
 
 def clarify_answer(lang, missing, question, history, topics, prof):
@@ -429,8 +469,45 @@ def plan_file_hits(faculty, profile=None, k=12):
 def fmt_sources(hits):
     out = []
     for n, h in enumerate(hits, 1):
-        out.append(f"[{n}] {h['title']} | URL: {h['url']} | aktualizacja: {h['modified'] or 'brak daty'} | nieaktualne: {'TAK' if outdated(h['modified']) else 'nie'}\n{h['text'][:1500]}")
+        out.append(f"[{n}] {h['title']} | URL: {h['url']} | aktualizacja: {h['modified'] or 'brak daty'} | nieaktualne: {'TAK' if outdated(h['modified']) else 'nie'}\n{h['text'][:2500]}")
     return "\n\n".join(out)
+
+def socjalne_force_hits(profile, k=4):
+    """Wymuś kluczowe fragmenty stypendiów (UKR / cudzoziemcy / próg dochodu)."""
+    if IDX is None:
+        load()
+    ukr = (profile or {}).get("pobyt") == "ukr"
+    scored = []
+    for c in IDX["chunks"]:
+        url = c.get("url") or ""
+        title = c.get("title") or ""
+        text = c.get("text") or ""
+        blob = f"{title}\n{text}"
+        score = 0
+        if "stypendia-socjalne" in url:
+            score += 5
+            if re.search(r"Stypendium dla cudzoziemc|obywatel Ukrainy|ochrony czasowej|Za[lł][aą]cznik", blob, re.I):
+                score += 8
+            if re.search(r"2099|dochód na osobę|Wirtualny Dziekanat|wniosek o stypendium socjalne", blob, re.I):
+                score += 3
+        if "Zalacznik-Nr-8-Ukraina" in url or re.search(r"Za[lł][aą]cznik\s*Nr\s*8.*Ukrain", title, re.I):
+            score += 10 if ukr else 2
+        if re.search(r"R-41-2025|R-32-2024", url) and re.search(r"swiadczen|świadcze|socjal", title, re.I):
+            score += 4
+        if ukr and re.search(r"obywatel Ukrainy|PESEL|ochrony czasowej|specjalnej ustawy", blob, re.I):
+            score += 6
+        if score:
+            scored.append((score, c))
+    scored.sort(key=lambda x: -x[0])
+    out, seen = [], set()
+    for _, c in scored:
+        if c["url"] in seen:
+            continue
+        seen.add(c["url"])
+        out.append(c)
+        if len(out) >= k:
+            break
+    return out
 
 def outdated(m): return (not m) or m[:4] < "2024"
 
@@ -481,10 +558,10 @@ def llm_enabled():
     return bool(p) and (bool(os.getenv("LLM_API_KEY")) or p == "ollama")
 
 PROF_LABEL = {
- "pl": {"status": "status", "tryb": "tryb", "poziom": "poziom", "rok": "rok", "drugi_kierunek": "drugi kierunek / dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek/grupa"},
- "en": {"status": "status", "tryb": "mode", "poziom": "level", "rok": "year", "drugi_kierunek": "second programme / diploma", "niepelnosprawnosc": "disability certificate", "kierunek": "programme/group"},
- "uk": {"status": "статус", "tryb": "форма", "poziom": "рівень", "rok": "рік", "drugi_kierunek": "другий напрям / диплом", "niepelnosprawnosc": "інвалідність", "kierunek": "напрям/група"},
- "mn": {"status": "статус", "tryb": "хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил / диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил/бүлэг"},
+ "pl": {"status": "status", "tryb": "tryb", "poziom": "poziom", "rok": "rok", "drugi_kierunek": "drugi kierunek / dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek/grupa", "pobyt": "pobyt"},
+ "en": {"status": "status", "tryb": "mode", "poziom": "level", "rok": "year", "drugi_kierunek": "second programme / diploma", "niepelnosprawnosc": "disability certificate", "kierunek": "programme/group", "pobyt": "residence"},
+ "uk": {"status": "статус", "tryb": "форма", "poziom": "рівень", "rok": "рік", "drugi_kierunek": "другий напрям / диплом", "niepelnosprawnosc": "інвалідність", "kierunek": "напрям/група", "pobyt": "перебування"},
+ "mn": {"status": "статус", "tryb": "хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил / диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил/бүлэг", "pobyt": "оршин суух"},
 }
 NO_LLM = {
  "pl": "**Tryb bez modelu językowego** – najtrafniejsze fragmenty z oficjalnych stron UR (profil: {prof}). Zweryfikuj w źródle:",
@@ -523,15 +600,28 @@ def answer(question, history):
     if history:
         prev = [m["content"] for m in history if m["role"] == "user" and any(re.search(rx, m["content"], re.I) for _, rx, _ in TOPICS)]
         if prev: base_q = prev[-1] + " " + question
-    q = base_q + " " + " ".join(str(v) for k, v in prof.items() if k in ("status",) and v in ("cudzoziemiec", "bezpanstwowiec", "doktorant"))
-    q += " " + " ".join(TOPIC_PL_QUERY[t] for t in topics if t in TOPIC_PL_QUERY)
+    # Nie doklejaj gołego „cudzoziemiec” do zapytań o stypendia – to ściąga rekrutację
+    if "stypendium_socjalne" not in topics and "stypendium_rektora" not in topics:
+        q = base_q + " " + " ".join(
+            str(v) for k, v in prof.items() if k in ("status",) and v in ("cudzoziemiec", "bezpanstwowiec", "doktorant")
+        )
+    else:
+        q = base_q
+    q += " " + " ".join(TOPIC_PL_QUERY[t] for t in topics if t in TOPIC_PL_QUERY and t != "cudzoziemcy")
+    if "stypendium_socjalne" in topics:
+        q += " stypendium socjalne regulamin świadczeń student"
+        if prof.get("pobyt") == "ukr":
+            q += " obywatel Ukrainy ochrona czasowa oświadczenie załącznik Nr 8"
+        elif prof.get("status") == "cudzoziemiec":
+            q += " stypendium dla cudzoziemców uprawnienia świadczenia"
     if "oplaty" in topics and prof.get("status") == "pl":
         q += " opłaty obywatel polski studia stacjonarne"
     elif "oplaty" in topics and prof.get("status") == "cudzoziemiec":
         q += " opłaty cudzoziemców rekrutacja"
     fac = resolve_plan_faculty(prof, base_q) if "plan" in topics else None
     PREF = {"erasmus": ["dwz"], "cudzoziemcy": ["rekrutacja", "dwz", "student"], "oplaty": ["rekrutacja", "student", "bip"],
-            "doktoranckie": ["student"], "stypendium_socjalne": ["student"], "stypendium_rektora": ["student"], "dwa_kierunki": ["student"]}
+            "doktoranckie": ["student"], "stypendium_socjalne": ["student"], "stypendium_rektora": ["student"],
+            "stypendium_niepeln": ["student"], "dwa_kierunki": ["student"]}
     if "plan" in topics:
         PREF["plan"] = [fac] if fac else list(PLAN_SOURCES)
     tp = [t for t in topics if t != "cudzoziemcy"] or topics
@@ -544,7 +634,15 @@ def answer(question, history):
             q += " Ekonomia Finanse i rachunkowość (wydział WEiF – wybierz konkretny kierunek na stronie)"
         elif prof.get("kierunek"):
             q += " " + prof["kierunek"]
-    hits = search(q, k=8, prefer=prefer, topics=topics, profile=prof)
+    hits = search(q, k=12, prefer=prefer, topics=topics, profile=prof)
+    if "stypendium_socjalne" in topics:
+        forced = socjalne_force_hits(prof, k=4)
+        if forced:
+            seen_u = {h["url"] for h in hits}
+            hits = [dict(c, score=999 - i) for i, c in enumerate(forced)] + [
+                h for h in hits if h["url"] not in seen_u
+            ]
+            hits = hits[:12]
     if "plan" in topics:
         if fac:
             files = plan_file_hits(fac, prof, k=20)

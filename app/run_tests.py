@@ -3,6 +3,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 import rag
 SC = [
  ("Stypendium socjalne", ["Jak mogę dostać stypendium socjalne?", "Jestem Polakiem, studiuję stacjonarnie na I stopniu, to mój jedyny kierunek."]),
+ ("Stypendium socjalne PESEL UKR", [
+     "Jak dostać stypendium socjalne?",
+     "Mam obywatelstwo cudzoziemca, PESEL UKR, nie mam dyplomu ani drugiego kierunku, stacjonarne, I stopień",
+ ]),
  ("Stypendium rektora – cudzoziemiec", ["Czy jako cudzoziemiec mogę dostać stypendium rektora?", "Mam kartę pobytu czasowego, studiuję tylko jeden kierunek, II stopień, 1 rok."]),
  ("Erasmus+ wyjazd", ["Jak wyjechać na Erasmus+ na semestr?", "Polskie obywatelstwo, I stopień, 2 rok."]),
  ("Opłaty", ["Ile kosztują studia i jakie są opłaty?", "Jestem z Ukrainy, niestacjonarne, I stopień."]),
