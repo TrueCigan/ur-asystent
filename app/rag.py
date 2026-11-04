@@ -80,12 +80,14 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
             break
     return out
 
-# ---------- język (PL / EN / UK / RU / MN) ----------
-LANG_NAME = {"pl": "polski", "en": "English", "uk": "українська", "ru": "русский", "mn": "монгол"}
+# ---------- język (PL / EN / UK / MN) — RU wejście → odpowiedź UK (polityka produktu) ----------
+LANG_NAME = {"pl": "polski", "en": "English", "uk": "українська", "mn": "монгол"}
 
 def detect_lang(*parts, latest=""):
-    """Język odpowiedzi: najpierw ostatnia wiadomość; 'in Polish' ≠ prośba o język."""
-    # jawna prośba o język (tryb rozkazujący / „proszę”), nie „studies in Polish”
+    """Język odpowiedzi. Rosyjski input/prośba → uk (nigdy nie odpowiadamy po rosyjsku)."""
+    def _finalize(lang):
+        return "uk" if lang == "ru" else lang
+
     if latest:
         if re.search(
             r"(?i)(?:odpowiedz|answer|reply|respond|write|switch|переключ|пиши|хариул).{0,25}"
@@ -108,20 +110,19 @@ def detect_lang(*parts, latest=""):
             latest,
         ):
             return "uk"
+        # Prośba o rosyjski → ukraiński (polityka)
         if re.search(
-            r"(?i)(?:odpowiedz|answer|reply|переключ|пиши).{0,25}"
-            r"(?:русск|russian|по\s*русск|на\s*русск)"
-            r"|(?:по\s*русски|in\s*russian)\s*$",
+            r"(?i)(?:odpowiedz|answer|reply|переключ|пиши|можешь|можеш).{0,30}"
+            r"(?:русск|russian|по\s*русск|на\s*русск)|(?:по\s*русски|in\s*russian|а\s+по-русски)",
             latest,
         ):
-            return "ru"
+            return "uk"
         if re.search(
             r"(?i)(?:odpowiedz|answer|хариул).{0,25}(?:монгол|mongolian)"
             r"|(?:монгол\s*хэлээр|in\s*mongolian)\s*$",
             latest,
         ):
             return "mn"
-    # detekcja skryptu – najpierw latest, potem reszta historii
     for text in ([latest] if latest else []) + [p for p in parts if p and p != latest]:
         if not text:
             continue
@@ -132,12 +133,13 @@ def detect_lang(*parts, latest=""):
         if re.search(r"[а-яА-ЯёЁ]", text):
             if re.search(r"тэтгэлэг|оюутан|суралц|төлбөр|иргэн|мэргэжил|докторант", text, re.I):
                 return "mn"
-            # rosyjski (ы/э/ъ, typowe słowa) vs ukraiński bez іїєґ
+            # rosyjski (bez іїєґ) → odpowiadamy ukraińskim
             if re.search(
-                r"[ыэъ]|\bчто\b|нужна|оформить|стипендия|побыт|привет|сколько|дедлайн|общежит",
+                r"[ыэъ]|\bчто\b|нужна|оформить|стипендия|побыт|привет|сколько|дедлайн|общежит|"
+                r"\bкак\b|студент\s+из",
                 text, re.I,
             ):
-                return "ru"
+                return "uk"
             return "uk"
         if re.search(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", text):
             return "pl"
@@ -152,7 +154,7 @@ def detect_lang(*parts, latest=""):
         if re.search(r"\b(як|чи|стипенд|оплат|громадян|інозем|навчан|кошту)\b", text, re.I):
             return "uk"
         if re.search(r"\b(как|нужна|стипендия|оформить|студент)\b", text, re.I):
-            return "ru"
+            return "uk"
     return "pl"
 
 # ---------- profil studenta i doprecyzowanie (PL/EN/UK/MN) ----------
@@ -161,49 +163,42 @@ SLOT_Q = {
   "pl": "Jaki jest Twój status: obywatel Polski, cudzoziemiec (np. Karta Polaka, karta pobytu, uchodźca/ochrona UKR), bezpaństwowiec, czy doktorant Szkoły Doktorskiej?",
   "en": "What is your status: Polish citizen, international student (e.g. Pole’s Card, residence permit, refugee/UKR temporary protection), stateless person, or doctoral student?",
   "uk": "Який ваш статус: громадянин Польщі, іноземець (напр. Карта поляка, карта побуту, біженець/тимчасовий захист UKR), особа без громадянства чи докторант?",
-  "ru": "Какой у вас статус: гражданин Польши, иностранец (напр. Карта поляка, карта побыта, беженец/временная защита UKR), лицо без гражданства или докторант?",
   "mn": "Таны статус юу вэ: Польш иргэн, гадаадын оюутан (ж.нь. Польшийн карт, оршин суух зөвшөөрөл, дүрвэгч/UKR), харьяалалгүй хүн, эсвэл докторант уу?",
  },
  "tryb": {
   "pl": "Studiujesz stacjonarnie czy niestacjonarnie?",
   "en": "Do you study full-time or part-time?",
   "uk": "Ви навчаєтесь на денній (стаціонар) чи заочній формі?",
-  "ru": "Вы учитесь на дневной (стационар) или заочной форме?",
   "mn": "Та өдрийн (бүтэн цагийн) эсвэл эчнээ (цагийн) хэлбэрээр суралцдаг уу?",
  },
  "poziom": {
   "pl": "Poziom: I stopień (licencjat/inżynier), II stopień (magister), jednolite magisterskie czy Szkoła Doktorska?",
   "en": "Level: first-cycle (bachelor/engineer), second-cycle (master), long-cycle master’s, or doctoral school?",
   "uk": "Рівень: І ступінь (бакалавр/інженер), ІІ ступінь (магістр), єдиний магістерський чи докторантура?",
-  "ru": "Уровень: I ступень (бакалавр/инженер), II ступень (магистр), единый магистр или докторантура?",
   "mn": "Түвшин: I зэрэг (бакалавр/инженер), II зэрэг (магистр), нэгдсэн магистр, эсвэл докторантур уу?",
  },
  "rok": {
   "pl": "Na którym roku studiów jesteś?",
   "en": "Which year of study are you in?",
   "uk": "На якому ви році навчання?",
-  "ru": "На каком вы курсе / году обучения?",
   "mn": "Та хэд дэх курст суралцаж байна вэ?",
  },
  "drugi_kierunek": {
   "pl": "Czy studiujesz równolegle drugi kierunek albo masz już ukończone studia tego poziomu? (świadczenia zwykle tylko na jednym kierunku)",
   "en": "Are you studying a second programme in parallel, or have you already completed a degree at this level? (benefits usually cover one programme)",
   "uk": "Чи навчаєтесь паралельно на другому напрямі або вже маєте диплом цього рівня? (виплати зазвичай лише на одному напрямі)",
-  "ru": "Учитесь ли вы параллельно на втором направлении или уже есть диплом этого уровня? (выплаты обычно только на одном направлении)",
   "mn": "Та зэрэгцээ хоёр мэргэжил сурдаг уу, эсвэл энэ түвшний дипломтой юу? (тэтгэлэг ихэвчлэн нэг мэргэжилд)",
  },
  "niepelnosprawnosc": {
   "pl": "Czy masz orzeczenie o niepełnosprawności?",
   "en": "Do you have a disability certificate / official disability ruling?",
   "uk": "Чи маєте посвідчення/висновок про інвалідність?",
-  "ru": "Есть ли у вас справка / заключение об инвалидности?",
   "mn": "Танд хөгжлийн бэрхшээлийн гэрчилгээ/шийдвэр бий юу?",
  },
  "kierunek": {
   "pl": "Podaj kierunek, stopień, rok i tryb (np. Informatyka, I stopień, 1 rok, stacjonarne).",
   "en": "Give your programme, level, year and mode (e.g. Computer Science, bachelor, year 1, full-time).",
   "uk": "Вкажіть напрям, рівень, рік і форму (напр. Інформатика, І ступінь, 1 рік, денна).",
-  "ru": "Укажите направление, уровень, курс и форму (напр. Информатика, I ступень, 1 курс, дневная).",
   "mn": "Мэргэжил, түвшин, курс, хэлбэрээ бичнэ үү (ж.нь. Информатик, I зэрэг, 1-р курс, өдрийн).",
  },
 }
@@ -212,8 +207,8 @@ SLOT_OPTS = {
  "status": [
   ("doktorant", r"doktorant|doktoranc|doctoral\s*school|phd\s*student|i'?m\s*a?\s*phd|doctoral\s*student|школ\w*\s*доктор|докторант|докторантур"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
-  ("pl", r"\b(a\s+pole\b|polak|polk[aąi]|polish\s*citizen|i(?:'?m|\s+am)\s+polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
-  ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|i'?m\s*a?\s*foreign|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карта\s*побуту|тимчасов\w*\s*захист|біжен|иностранец|карта\s*побыт|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
+  ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|i(?:'?m|\s+am)\s+polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
+  ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|i'?m\s*a?\s*foreign|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
  ],
  "tryb": [
   ("stacjonarne", r"(?<!nie)stacjonar|dzienn|\bdaily\b|full[-\s]?time|on[- ]campus|pe[lł]ny\s*etat|денн\w*|стаціонар\w*|дневн\w*|\bочн\w*\b|өдрийн|бүтэн\s*цаг"),
@@ -235,7 +230,7 @@ SLOT_OPTS = {
  ],
  "drugi_kierunek": [
   # „nie” najpierw – unikaj fałszywego „tak” przy „nie posiadam dyplomu” / „no second degree”
-  ("nie", r"(?i)(?:^\s*(nie|no|ні|үгүй)\.?\s*$|(?:,\s*|\s+)(nie|no|ні)\.?\s*$|^\s*(ні|nie|no)\b.{0,60}не\s*навч|jedyn\w*\s*kierun|jeden\s*kierun|jednokierunkow|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one(?:\s*,?\s*no)?|only\s*one\s*(program|programme|major|degree|field)|just\s*one\s*(program|programme|major|degree)|single\s*(major|program|programme)|one\s*program\s*only|nothing\s*else|no\s*(?:second|other)\s*(?:degree|program|programme|major|field)|without\s*(?:a\s*)?second\s*(?:degree|program|programme)|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|тільки\s*(в|на)\s*цьому|нігде\s*більше\s*не\s*навч|ніде\s*більше|не\s*навча\w*\s*(більше|ніде|нігде|на\s*друг)|не\s*маю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немаю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(інш\w*\s*)?диплом|в\s*мене\s*нема|диплом\w*\s*не\s*ма(ю|є)|диплом\w*\s*цього\s*рівн|інш\w*\s*диплом\w*\s*не|друг\w*\s*напрям\w*\s*чи\s*диплом\w*\s*не\s*ма|нет\s*втор|без\s*диплом|только\s*одно|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
+  ("nie", r"(?i)(?:^\s*(nie|no|ні|үгүй)\.?\s*$|(?:,\s*|\s+)(nie|no|ні)\.?\s*$|^\s*(ні|nie|no)\b.{0,60}не\s*навч|jedyn\w*\s*kierun|jeden\s*kierun|jednokierunkow|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one(?:\s*,?\s*no)?|only\s*one\s*(program|programme|major|degree|field)|just\s*one\s*(program|programme|major|degree)|single\s*(major|program|programme)|one\s*program\s*only|nothing\s*else|no\s*(?:second|other)\s*(?:degree|program|programme|major|field)|without\s*(?:a\s*)?second\s*(?:degree|program|programme)|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|nie\s*mam\s+drug|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|тільки\s*(в|на)\s*цьому|(?:^|[,;]\s*)(jeden|jedna|один|одна|one)\s*(?:$|[,;.])|нігде\s*більше\s*не\s*навч|ніде\s*більше|не\s*навча\w*\s*(більше|ніде|нігде|на\s*друг)|не\s*маю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немаю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(інш\w*\s*)?диплом|в\s*мене\s*нема|диплом\w*\s*не\s*ма(ю|є)|диплом\w*\s*цього\s*рівн|інш\w*\s*диплом\w*\s*не|друг\w*\s*напрям\w*\s*чи\s*диплом\w*\s*не\s*ма|нет\s*втор|без\s*диплом|только\s*одно|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
   ("tak", r"(?i)(?:(?:mam|posiadam)\s+(?:ju[zż]\s+)?(?:uko[nń]czon\w*\s+)?(?:tytu[lł]|licencjat|in[zż]ynier|magister|dyplom)(?!\w)|(?:studiuj[eę]|mam)\s+drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|(?<!\bno\s)(?<!no\s)(?<!without\s)second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*uko[nń]czy|(?:навча\w*|маю)\s+друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)\w*\s*диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
  ],
  "niepelnosprawnosc": [
@@ -301,12 +296,12 @@ PLAN_SOURCES = set(FACULTY_PLAN_URL)
 SLOTS = {k: (SLOT_Q[k]["pl"], {val: rx for val, rx in opts}) for k, opts in SLOT_OPTS.items()}
 
 TOPICS = [
- ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w*\s*materialn|[sś]wiadcze|social\s*scholarship|maintenance\s*grant|need[-\s]?based|стипенд\w*\s*соціал|соціальн\w*\s*стипенд|социальн\w*\s*стипенд|матеріальн\w*\s*допомог|тэтгэлэг|нийгмийн\s*тэтгэлэг|амьжиргааны", ["status", "drugi_kierunek", "tryb", "poziom"]),
+ ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w*\s*materialn|[sś]wiadcze|social\s*scholarship|scholarship\s*for\s*foreign|maintenance\s*grant|need[-\s]?based|стипенд\w*\s*соціал|соціальн\w*\s*стипенд|социальн\w*\s*стипенд|стипенд\w*\s*для\s*(иностран|cudzoziem)|матеріальн\w*\s*допомог|тэтгэлэг|нийгмийн\s*тэтгэлэг|амьжиргааны", ["status", "drugi_kierunek", "tryb", "poziom"]),
  ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|merit\s*scholarship|academic\s*excellence|науков\w*\s*досягнен|стипенд\w*\s*ректор|ректор|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom", "rok"]),
  ("stypendium_niepeln", r"niepe[lł]nospraw|disability\s*scholarship|інвалід|инвалидн|хөгжлийн\s*бэрхшээл", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
  ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|докторант|докторантур", ["status"]),
  ("akademik", r"akademik|dom\w*\s*studen|miejsce\s*w\s*akadem|dormitor|student\s*hous|residence\s*hall|общежит|гуртожит|дотуур\s*байр", []),
- ("oplaty", r"op[lł]at|czesne|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?\b|cost\s*of\s*stud|price\s*of\s*stud|(?:ile\s*kosztuj|how\s*much|скільки|сколько|хэд).{0,40}(?:stud|czesn|tuition|fee|навч|сургалт|програм|opłat)|оплат|вартіст|кошту|цін[ауи]\s*навч|плата\s*за\s*навч|төлбөр|сургалтын\s*төлбөр", ["status", "tryb", "poziom"]),
+ ("oplaty", r"op[lł]at|czesne|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?\b|english\s*program|program\w*\s*in\s*english|cost\s*of\s*stud|price\s*of\s*stud|(?:ile\s*kosztuj|how\s*much|скільки|сколько|хэд).{0,40}(?:stud|czesn|tuition|fee|навч|сургалт|програм|opłat|english|business)|оплат|вартіст|кошту|цін[ауи]\s*навч|плата\s*за\s*навч|төлбөр|сургалтын\s*төлбөр", ["status", "tryb", "poziom"]),
  ("erasmus", r"erasmus|wyjazd|wymian|mobilno|exchange\s*program|study\s*abroad|мобільніст|обмін|солилцоо|гадаадад\s*суралц", ["status", "poziom", "rok"]),
  ("plan", r"plan\w*\s*zaj|rozk[lł]ad|harmonogram\s*zaj|zaj[eę]cia\s*w|kiedy\s*mam\s*zaj|timetable|class\s*schedule|course\s*schedule|розклад|розклад\s*занят|хичээлийн\s*хуваарь|хуваарь", ["kierunek", "tryb", "poziom", "rok"]),
  ("cudzoziemcy", r"cudzozie|bezpa[nń]stw|bez\s*obywatel|karta\s*polaka|kart\w*\s*pobytu|legaliz|wiz\w*\b|ochron\w*\s*czasow|international\s*student|foreign\s*student|residence\s*permit|інозем|без\s*громадян|карта\s*поляка|гадаад\s*оюутан|оршин\s*суух", ["status"]),
@@ -333,8 +328,6 @@ CLARIFY = {
         "You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”."),
  "uk": ("Перш ніж відповісти – правила UR залежать від вашої ситуації. Уточніть, будь ласка:",
         "Можна однією фразою, напр. «громадянин Польщі, денна, І ступінь, тільки цей напрям, без диплома»."),
- "ru": ("Прежде чем ответить – правила UR зависят от вашей ситуации. Уточните, пожалуйста:",
-        "Можно одной фразой, напр. «гражданин Польши, дневная, I ступень, только это направление, без диплома»."),
  "mn": ("Хариулахаас өмнө – UR-ийн дүрэм таны нөхцөл байдлаас хамаарна. Тодруулна уу:",
         "Нэг өгүүлбэрээр хариулж болно, ж.нь. «оршин суух зөвшөөрөлтэй гадаадын оюутан, өдрийн, I зэрэг, 2-р курс, нэг мэргэжил»."),
 }
@@ -347,13 +340,18 @@ def extract_profile(text):
             if re.search(rx, t, re.I):
                 prof[slot] = val
                 break
-    # Podstawa pobytu (podtyp; nie osobny slot clarify)
-    if re.search(
+    # Podstawa pobytu — karta pobytu NIE jest automatycznie „ochrona UKR” (BUG-R2-06)
+    has_ukr_protection = bool(re.search(
         r"pesel\s*ukr|\bukr\b|ochron\w*\s*czasow|temporary\s*protection|"
-        r"specjaln\w*\s*ustaw\w*\s*ukrain|ustaw\w*.{0,40}ukrain|"
-        r"тимчасов\w*\s*захист|громадян\w*\s*украї|з\s*україн|гражданин\w*\s*украин",
+        r"specjaln\w*\s*ustaw\w*\s*ukrain|тимчасов\w*\s*захист|временн\w*\s*защит",
         t, re.I,
-    ):
+    ))
+    has_karta_pobytu = bool(re.search(
+        r"pobyt\w*\s*czasow|temporary\s*resid|kart\w*\s*pobytu|"
+        r"карт\w*\s*побут\w*|карт\w*\s*побыт\w*|residence\s*permit|оршин\s*суух",
+        t, re.I,
+    ))
+    if has_ukr_protection and not has_karta_pobytu:
         prof["pobyt"] = "ukr"
         prof.setdefault("status", "cudzoziemiec")
     elif re.search(r"kart\w*\s*polaka|pole'?s?\s*card|карта\s*поляка", t, re.I):
@@ -362,8 +360,11 @@ def extract_profile(text):
     elif re.search(r"pobyt\w*\s*sta[lł]|permanent\s*resid|сталий\s*побут|постоянн\w*\s*пребыв", t, re.I):
         prof["pobyt"] = "pobyt_staly"
         prof.setdefault("status", "cudzoziemiec")
-    elif re.search(r"pobyt\w*\s*czasow|temporary\s*resid|карт\w*\s*pobytu|карта\s*побуту|оршин\s*суух", t, re.I):
+    elif has_karta_pobytu:
         prof["pobyt"] = "pobyt_czasowy"
+        prof.setdefault("status", "cudzoziemiec")
+    elif re.search(r"громадян\w*\s*украї|з\s*україн|гражданин\w*\s*украин|from\s*ukraine", t, re.I):
+        # obywatelstwo UA bez PESEL UKR / ochrony → cudzoziemiec, bez wymuszania „ochrona czasowa”
         prof.setdefault("status", "cudzoziemiec")
     # krótkie tak/nie jako uzupełnienie ostatniego slotu (drugi_kierunek / niepełnosprawność)
     if re.match(r"^\s*(tak|yes|так|тийм)\s*\.?\s*$", t, re.I):
@@ -435,14 +436,11 @@ def _benefit_topics_in_order(text):
     return found
 
 def _primary_benefit_topic(question, candidates):
-    """Przy kilku tematach w jednej wiadomości – ostatnia wzmianka / kontrast wygrywa."""
+    """Jeden temat do sticky historii – ostatnia wzmianka / kontrast (nie faworyzuj akademika)."""
     if len(candidates) == 1:
         return candidates[0]
     q = question or ""
     names = {n for n, _ in candidates}
-    # akademik + ile kosztuje → akademik, nie czesne
-    if "akademik" in names:
-        return next(t for t in candidates if t[0] == "akademik")
     # „socjalne już jasne, a rektor?” / „interesuje mnie rektora”
     if "stypendium_rektora" in names and re.search(
         r"(?i)(rektor|ректор)|(socjal\w*|соціальн\w*).{0,50}(zrozum|jasn|ok|зрозум|ясн).{0,40}(rektor|ректор)"
@@ -450,11 +448,42 @@ def _primary_benefit_topic(question, candidates):
         q,
     ):
         return next(t for t in candidates if t[0] == "stypendium_rektora")
+    # akademik + „ile kosztuje” bez stypendium/czesne → akademik
+    if "akademik" in names and not (names & (_STIPEND_TOPICS | {"oplaty"})):
+        return next(t for t in candidates if t[0] == "akademik")
     ordered = _benefit_topics_in_order(q)
     for _pos, n, s in reversed(ordered):
         if n in names:
             return (n, s)
     return candidates[0]
+
+def _order_benefit_topics(question, cur_benefit):
+    """Wszystkie benefit-tematy z bieżącej wiadomości (BUG-R2-04 multi-topic)."""
+    names = {n for n, _ in cur_benefit}
+    by_name = {n: s for n, s in cur_benefit}
+    ordered, seen = [], set()
+    for _pos, n, s in _benefit_topics_in_order(question):
+        if n in names and n not in seen:
+            ordered.append((n, by_name.get(n, s)))
+            seen.add(n)
+    for n, s in cur_benefit:
+        if n not in seen:
+            ordered.append((n, s))
+            seen.add(n)
+    return ordered
+
+_DWA_KIER_NEG = (
+    r"(?i)паралельн\w*\s*не|не\s+навча\w*.{0,20}паралел|"
+    r"nie\s+(studiuj\w*\s*)?r[oó]wnoleg|równolegle\s*nie|"
+    r"nie\s+mam\s+drug|nie\s+mam\s+żadn|nie\s+posiadam\s+dyplom|"
+    r"no\s+second\s+(program|degree|major)|nothing\s+else|nic\s+wi[eę]cej|"
+    r"jednokierunkow|tylko\s+jeden|один\s+напрям|тільки\s+один"
+)
+
+def _drop_negated_dwa_kierunki(topics, text):
+    if any(n == "dwa_kierunki" for n, _ in topics) and re.search(_DWA_KIER_NEG, text or ""):
+        return [(n, s) for n, s in topics if n != "dwa_kierunki"]
+    return topics
 
 def _recent_benefit_from_history(history_text):
     """Ostatni benefit-temat z historii (nie pierwszy – inaczej sticky zostaje na socjalne)."""
@@ -464,6 +493,7 @@ def _recent_benefit_from_history(history_text):
     parts = [p.strip() for p in re.split(r"\n+", history_text) if p.strip()]
     for part in reversed(parts):
         hits = [(n, s) for n, rx, s in TOPICS if n in _BENEFIT_TOPICS and re.search(rx, part, re.I)]
+        hits = _drop_negated_dwa_kierunki(hits, part)
         if hits:
             return _primary_benefit_topic(part, hits)
     return None
@@ -471,12 +501,8 @@ def _recent_benefit_from_history(history_text):
 def needed(question, history_text):
     q = question.lower()
     topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, q, re.I)]
-    # „паралельно не навчаюсь” ≠ pytanie o dwa kierunki
-    if any(n == "dwa_kierunki" for n, _ in topics) and re.search(
-        r"(?i)паралельн\w*\s*не|не\s+навча\w*.{0,20}паралел|nie\s+(studiuj\w*\s*)?r[oó]wnoleg|równolegle\s*nie",
-        q,
-    ):
-        topics = [(n, s) for n, s in topics if n != "dwa_kierunki"]
+    # Negacja drugiego kierunku ≠ pytanie o dwa kierunki (BUG-R2-04)
+    topics = _drop_negated_dwa_kierunki(topics, q)
     hist_topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, history_text.lower(), re.I)]
     benefit_hist_last = _recent_benefit_from_history(history_text)
     cur_benefit = [(n, s) for n, s in topics if n in _BENEFIT_TOPICS]
@@ -487,15 +513,15 @@ def needed(question, history_text):
         and benefit_hist_last
         and benefit_hist_last[0] in _STIPEND_TOPICS
         and re.search(r"(?i)how\s*much|ile\s*(dost|punkt|kasy|pien)|points|money|сколько", q)
-        and not re.search(r"(?i)tuition|czesne|opłat\w*\s*za\s*stud|fee\s*for\s*stud", q)
+        and not re.search(r"(?i)tuition|czesne|opłat\w*\s*za\s*stud|fee\s*for\s*stud|english\s*program|business", q)
     ):
         cur_benefit = [benefit_hist_last]
         topics = cur_benefit
-    # Odpowiedź profilowa nie może zbić tematu na cudzoziemcy/rekrutacja ani „dwa kierunki”
+    # Zachowaj WSZYSTKIE benefit-tematy z pytania (socjalne + akademik, stypendium + czesne…)
     if cur_benefit:
-        primary = _primary_benefit_topic(question, cur_benefit)
+        ordered = _order_benefit_topics(question, cur_benefit)
         others = [(n, s) for n, s in topics if n not in _BENEFIT_TOPICS and n != "cudzoziemcy"]
-        topics = [primary] + others
+        topics = ordered + others
     elif benefit_hist_last:
         names = {n for n, _ in topics}
         if not topics or names <= {"cudzoziemcy", "dwa_kierunki"}:
@@ -510,8 +536,8 @@ def needed(question, history_text):
             if x not in req: req.append(x)
     # każda tura osobno (BUG-01: kotwice nie giną po sklejeniu historii)
     prof = merge_profile_from_turns(history_text, question)
-    if prof.get("status") == "doktorant":
-        req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek")]
+    if prof.get("status") == "doktorant" or prof.get("poziom") == "SD":
+        req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
     missing = [x for x in req if x not in prof]
     return [n for n, _ in topics], prof, missing
 
@@ -538,23 +564,23 @@ def _clarify_llm_enabled():
     return os.getenv("CLARIFY_LLM", "").strip() == "1" and llm_enabled()
 
 SYSTEM = """You are a helpful campus information assistant for students of Kazimierz Pułaski University of Radom (Uniwersytet Radomski, UR).
-Your job is to SAVE the student’s time: extract concrete rules from ŹRÓDŁA (who may apply, amounts, deadlines, documents, where to submit) so they rarely need to dig through PDFs themselves.
+Your job is to SAVE the student’s time: extract concrete rules from the provided source fragments (who may apply, amounts, deadlines, documents, where to submit) so they rarely need to dig through PDFs themselves.
 Tone: clear, calm, practical — like a well-informed staff member at Biuro Obsługi Studenta. Not a bureaucratic form, not a chatbot script.
 
 HARD RULES:
-1. Answer in {lang_name} (lang={lang}). Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) when useful. If the user asks to switch language (“po polsku”, “на польській”, “in English”), switch language — do NOT treat that as a question about tuition “in the Polish language”.
-2. Use ONLY the fragments in ŹRÓDŁA. No outside knowledge. ALWAYS first give every concrete fact that IS in the sources (eligibility yes/no for THIS profile, income thresholds, document lists, deadlines, submission channel, links). FORBIDDEN: an answer that only says you don’t know / contact BOS when ŹRÓDŁA contain a relevant section (e.g. “Stypendium dla cudzoziemców”, “obywatel Ukrainy”). Mention Biuro Obsługi Studenta / DWZ only as a short last-line tip when a personal decision or missing individual document remains — never instead of the rules.
-3. Structure: (a) direct answer first, (b) conditions/exceptions for THIS student’s profile, (c) what to do next (documents, system, deadlines), (d) sources list. Use short paragraphs or bullets.
-4. Cite claims with [n]. End with a sources heading in the answer language (Źródła / Sources / Джерела / Источники / Эх сурвалж) with URL + update date. Each URL once. Do not invent source numbers.
-5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. If a deadline already passed, say so explicitly.
+1. Answer in {lang_name} (lang={lang}). NEVER answer in Russian. If the user writes Russian or asks for Russian (“по-русски”, “in Russian”), answer in Ukrainian and do NOT offer or promise Russian. Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) when useful. If the user asks to switch language (“po polsku”, “на польській”, “in English”), switch language — do NOT treat that as a question about tuition “in the Polish language”.
+2. Use ONLY the fragments in the sources block below. No outside knowledge. ALWAYS first give every concrete fact that IS in the sources (eligibility yes/no for THIS profile, income thresholds, document lists, deadlines, submission channel, links). FORBIDDEN: an answer that only says you don’t know / contact BOS when sources contain a relevant section (e.g. “Stypendium dla cudzoziemców”, “obywatel Ukrainy”). Mention Biuro Obsługi Studenta / DWZ only as a short last-line tip when a personal decision or missing individual document remains — never instead of the rules.
+3. Structure: (a) direct answer first, (b) conditions/exceptions for THIS student’s profile, (c) what to do next (documents, channel, deadlines), (d) sources list. Use short paragraphs or bullets.
+4. Cite claims with [n]. End with a sources heading in the answer language ONLY: Źródła / Sources / Джерела / Эх сурвалж — never write the internal label “ŹRÓDŁA” or “Источники”. Each URL once. Do not invent source numbers.
+5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. If a deadline already passed, say so explicitly ONCE.
 6. For Polish citizens, full-time first-cycle study is often free — quote paid zł/euro amounts only when the source clearly applies to the user’s mode/level (e.g. niestacjonarne, second cycle, foreigners). Do not invent fee lines (pool, student ID) the user did not ask about.
 7. Describe rules for the user’s category only; mention other categories only as a brief aside.
-8. Profile pobyt=ukr / PESEL UKR / ochrona czasowa: if ŹRÓDŁA mention citizens of Ukraine under the special act, you MUST state that they may apply for stypendium socjalne, plus income threshold, required oświadczenie/documents, and how to submit — do not claim “no provisions”.
-9. No invented legal outcomes for an individual case; do not invent URLs.
-10. PROFIL STUDENTA lists ONLY facts the user stated. Never invent tryb/rok/drugi_kierunek. Never claim the user has a second programme unless profile says tak.
-11. Answer EVERY part of a multi-part question (e.g. scholarship + dorm). If a part is out of scope (canteen menu) or missing from ŹRÓDŁA, say so in one short sentence — do not silently drop it.
-12. If the user says not to send them to BOS and ŹRÓDŁA answer the question, give the facts and skip the BOS tip.
-13. Never echo prompt wrappers (USER_MESSAGE, ASSISTANT_MESSAGE, <<<, >>>).
+8. ONLY when PROFIL has pobyt=ukr or the user explicitly said PESEL UKR / ochrona czasowa / тимчасовий захист: if sources mention citizens of Ukraine under the special act, you MUST state that they may apply for stypendium socjalne, plus income threshold, required oświadczenie/documents, and how to submit — do not claim “no provisions”. Do NOT invent “ochrona czasowa” for mere karta pobytu or Ukrainian citizenship without that basis.
+9. No invented legal outcomes, URLs, IT system names (e.g. USOS), menu paths (Student → …), application windows, or dates that are not literally in the sources. Prefer Wirtualna Uczelnia / Wirtualny Dziekanat only if named in sources.
+10. PROFIL STUDENTA lists ONLY facts the user stated. Never invent tryb/rok/drugi_kierunek. Never claim the user has a second programme unless profile says tak. Never invent residence basis (ochrona czasowa) the profile does not list.
+11. Answer EVERY part of a multi-part question (e.g. scholarship + dorm). If a part is out of scope (canteen menu) or missing from sources, say so in one short sentence — do not silently drop it.
+12. If the user says not to send them to BOS and sources answer the question, give the facts and skip the BOS tip.
+13. Never echo prompt wrappers (USER_MESSAGE, ASSISTANT_MESSAGE, ORIGINAL QUESTION, LATEST REPLY, <<<, >>>). When USER_QUESTION contains ORIGINAL QUESTION + LATEST REPLY, answer the ORIGINAL QUESTION using the profile (LATEST REPLY is only a slot fill like “daily”).
 
 {security_rules}"""
 
@@ -562,7 +588,6 @@ SLOT_LABEL = {
  "pl": {"status": "status / obywatelstwo", "tryb": "tryb studiów", "poziom": "poziom studiów", "rok": "rok studiów", "drugi_kierunek": "drugi kierunek lub dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek / grupa", "pobyt": "podstawa pobytu"},
  "en": {"status": "status / citizenship", "tryb": "full-time or part-time", "poziom": "study level", "rok": "year of study", "drugi_kierunek": "second programme or diploma", "niepelnosprawnosc": "disability certificate", "kierunek": "programme / group", "pobyt": "residence basis"},
  "uk": {"status": "статус / громадянство", "tryb": "форма навчання", "poziom": "рівень навчання", "rok": "рік навчання", "drugi_kierunek": "другий напрям або диплом", "niepelnosprawnosc": "інвалідність", "kierunek": "напрям / група", "pobyt": "підстава перебування"},
- "ru": {"status": "статус / гражданство", "tryb": "форма обучения", "poziom": "уровень обучения", "rok": "курс", "drugi_kierunek": "второе направление или диплом", "niepelnosprawnosc": "инвалидность", "kierunek": "направление / группа", "pobyt": "основание пребывания"},
  "mn": {"status": "статус / иргэншил", "tryb": "сургалтын хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил эсвэл диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил / бүлэг", "pobyt": "оршин суух үндэслэл"},
 }
 
@@ -758,52 +783,124 @@ PROF_LABEL = {
  "pl": {"status": "status", "tryb": "tryb", "poziom": "poziom", "rok": "rok", "drugi_kierunek": "drugi kierunek / dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek/grupa", "pobyt": "pobyt"},
  "en": {"status": "status", "tryb": "mode", "poziom": "level", "rok": "year", "drugi_kierunek": "second programme / diploma", "niepelnosprawnosc": "disability certificate", "kierunek": "programme/group", "pobyt": "residence"},
  "uk": {"status": "статус", "tryb": "форма", "poziom": "рівень", "rok": "рік", "drugi_kierunek": "другий напрям / диплом", "niepelnosprawnosc": "інвалідність", "kierunek": "напрям/група", "pobyt": "перебування"},
- "ru": {"status": "статус", "tryb": "форма", "poziom": "уровень", "rok": "курс", "drugi_kierunek": "второе направление / диплом", "niepelnosprawnosc": "инвалидность", "kierunek": "направление/группа", "pobyt": "пребывание"},
  "mn": {"status": "статус", "tryb": "хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил / диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил/бүлэг", "pobyt": "оршин суух"},
 }
 NO_LLM = {
  "pl": "Na podstawie oficjalnych stron UR (profil: {prof}):",
  "en": "Based on official UR pages (profile: {prof}):",
  "uk": "На основі офіційних сторінок UR (профіль: {prof}):",
- "ru": "На основе официальных страниц UR (профиль: {prof}):",
  "mn": "UR-ийн албан ёсны хуудаснууд дээр үндэслэн (профайл: {prof}):",
 }
-SRC_HDR = {"pl": "Źródła", "en": "Sources", "uk": "Джерела", "ru": "Источники", "mn": "Эх сурвалж"}
-OUTDATED = {"pl": "informacja może być nieaktualna", "en": "may be outdated", "uk": "може бути неактуальною", "ru": "информация может быть устаревшей", "mn": "хуучирсан байж болно"}
+SRC_HDR = {"pl": "Źródła", "en": "Sources", "uk": "Джерела", "mn": "Эх сурвалж"}
+OUTDATED = {"pl": "informacja może być nieaktualna", "en": "may be outdated", "uk": "може бути неактуальною", "mn": "хуучирсан байж болно"}
 LLM_ERR = {
  "pl": "(Model językowy chwilowo niedostępny – poniżej zestawienie z oficjalnych źródeł.)\n\n",
  "en": "(Language model temporarily unavailable – below is a summary from official sources.)\n\n",
  "uk": "(Мовна модель тимчасово недоступна – нижче стислий виклад з офіційних джерел.)\n\n",
- "ru": "(Языковая модель временно недоступна – ниже краткое изложение из официальных источников.)\n\n",
  "mn": "(Хэлний загвар түр ажиллахгүй байна – доор албан ёсны эх сурвалжаас товчлол.)\n\n",
 }
 
+_MONTH_NUM = {
+    "jan": 1, "january": 1, "sty": 1, "stycznia": 1, "styczeń": 1, "січ": 1, "січня": 1,
+    "feb": 2, "february": 2, "lut": 2, "lutego": 2, "лют": 2, "лютого": 2,
+    "mar": 3, "march": 3, "marca": 3, "берез": 3, "березня": 3,
+    "apr": 4, "april": 4, "kwi": 4, "kwietnia": 4, "квіт": 4, "квітня": 4,
+    "may": 5, "maja": 5, "май": 5, "трав": 5, "травня": 5,
+    "jun": 6, "june": 6, "cze": 6, "czerwca": 6, "черв": 6, "червня": 6,
+    "jul": 7, "july": 7, "lip": 7, "lipca": 7, "лип": 7, "липня": 7,
+    "aug": 8, "august": 8, "sie": 8, "sierpnia": 8, "серп": 8, "серпня": 8,
+    "sep": 9, "sept": 9, "september": 9, "wrz": 9, "września": 9, "вер": 9, "вересня": 9,
+    "oct": 10, "october": 10, "paź": 10, "paz": 10, "października": 10, "жовп": 10, "жовтня": 10,
+    "nov": 11, "november": 11, "lis": 11, "listopada": 11, "лист": 11, "листопада": 11,
+    "dec": 12, "december": 12, "gru": 12, "grudnia": 12, "груд": 12, "грудня": 12,
+}
+
+def _fmt_deadline_date(d, lang="pl"):
+    if lang == "en":
+        return d.strftime("%d %b %Y")
+    return d.strftime("%d.%m.%Y")
+
+def _deadline_msg(disp, today, lang):
+    return {
+        "pl": f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()}).",
+        "en": f"⚠️ This deadline ({disp}) has already passed (today: {today.isoformat()}).",
+        "uk": f"⚠️ Цей термін ({disp}) уже минув (сьогодні: {today.isoformat()}).",
+        "mn": f"⚠️ Энэ хугацаа ({disp}) өнгөрсөн (өнөөдөр: {today.isoformat()}).",
+    }.get(lang) or {
+        "pl": f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()}).",
+    }["pl"]
+
 def deadline_passed_note(text, lang="pl"):
-    """Jeśli w tekście jest zakres dat, a koniec < dziś – dopisz ostrzeżenie (BUG-10)."""
+    """Ostrzeżenie o minionym terminie: zakresy, pojedyncze daty, nazwy miesięcy (BUG-R2-05)."""
     import datetime
     if not text:
         return ""
+    # nie duplikuj, jeśli LLM już napisał ostrzeżenie
+    if re.search(
+        r"(?i)⚠️.*(minął|passed|минув|өнгөрсөн)|termin już minął|deadline.{0,40}already\s+passed|"
+        r"термін.{0,40}минув|no applications accepted after",
+        text,
+    ):
+        return ""
     today = datetime.date.today()
-    notes = []
+    found = {}  # end_date -> display
+
+    def _add(end, disp):
+        if end < today:
+            found[end] = disp
+
     for m in re.finditer(
-        r"(?:od\s*)?(\d{1,2})[./](\d{1,2})[./](\d{4})\s*[–\-do]+\s*(\d{1,2})[./](\d{1,2})[./](\d{4})",
+        r"(?:od\s+)?(\d{1,2})[./](\d{1,2})[./](\d{4})\s*(?:[–—−\-]|do)\s*(?:do\s+)?(\d{1,2})[./](\d{1,2})[./](\d{4})",
         text, re.I,
     ):
         try:
+            start = datetime.date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
             end = datetime.date(int(m.group(6)), int(m.group(5)), int(m.group(4)))
         except ValueError:
             continue
-        if end < today:
-            msg = {
-                "pl": f"⚠️ Ten termin ({m.group(0)}) już minął (dziś: {today.isoformat()}).",
-                "en": f"⚠️ This deadline ({m.group(0)}) has already passed (today: {today.isoformat()}).",
-                "uk": f"⚠️ Цей термін ({m.group(0)}) уже минув (сьогодні: {today.isoformat()}).",
-                "ru": f"⚠️ Этот срок ({m.group(0)}) уже прошёл (сегодня: {today.isoformat()}).",
-                "mn": f"⚠️ Энэ хугацаа ({m.group(0)}) өнгөрсөн (өнөөдөр: {today.isoformat()}).",
-            }.get(lang, "")
-            if msg and msg not in notes:
-                notes.append(msg)
-    return ("\n" + "\n".join(notes)) if notes else ""
+        disp = f"{_fmt_deadline_date(start, lang)} – {_fmt_deadline_date(end, lang)}"
+        _add(end, disp)
+
+    for m in re.finditer(r"(?<!\d)(\d{1,2})[./](\d{1,2})[./](\d{4})(?!\d)", text):
+        # pomiń daty już w zakresach (proste: każdą pojedynczą też sprawdzamy; dedupe po end)
+        try:
+            d = datetime.date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+        except ValueError:
+            continue
+        # nie nadpisuj ładniejszego zakresu tą samą datą końcową
+        if d not in found:
+            _add(d, _fmt_deadline_date(d, lang))
+
+    for m in re.finditer(
+        r"(?:by\s+|until\s+|do\s+|до\s+)?(\d{1,2})\s+([A-Za-zÀ-žа-яА-ЯіІїЇєЄґҐ]+)\s+(\d{4})",
+        text, re.I,
+    ):
+        mon = re.sub(r"[^a-zа-яіїєґ]", "", m.group(2).lower())
+        # skróty PL: paź → paz already; жовтня → жовп via startswith
+        num = _MONTH_NUM.get(mon)
+        if num is None:
+            for k, v in _MONTH_NUM.items():
+                if mon.startswith(k) or k.startswith(mon[:3]):
+                    num = v
+                    break
+        if not num:
+            continue
+        try:
+            d = datetime.date(int(m.group(3)), num, int(m.group(1)))
+        except ValueError:
+            continue
+        if d not in found:
+            _add(d, _fmt_deadline_date(d, lang))
+
+    if not found:
+        return ""
+    notes = [_deadline_msg(disp, today, lang) for _, disp in sorted(found.items())]
+    # jeden komunikat na unikalny tekst
+    uniq = []
+    for n in notes:
+        if n not in uniq:
+            uniq.append(n)
+    return "\n" + "\n".join(uniq)
 
 def _hit_blob(hits):
     return "\n".join((h.get("text") or "") for h in hits)
@@ -978,6 +1075,61 @@ def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=""):
         lines.append(tip.get(lang, tip["pl"]))
     return "\n".join(lines)
 
+def _last_assistant_was_clarify(history):
+    for m in reversed(history or []):
+        if m.get("role") == "assistant":
+            c = m.get("content") or ""
+            return bool(re.search(
+                r"(?i)zanim odpowiem|before i answer|перш ніж|doprecyzuj|please clarify|уточн|"
+                r"jaki jest tw[oó]j status|what is your status|який ваш статус|"
+                r"studiujesz stacjonarnie|full-time or part-time|денній\s*\(стаціонар\)|"
+                r"на якому ви році|which year of study|czy studiujesz równolegle|"
+                r"are you studying a second",
+                c,
+            ))
+    return False
+
+def _user_question_for_llm(question, history):
+    """Po clarify: ORIGINAL QUESTION + LATEST REPLY, żeby LLM nie odpowiadał na samo „daily” (BUG-R2-02)."""
+    if not history or not _last_assistant_was_clarify(history):
+        return question
+    substantive = [
+        m["content"] for m in history
+        if m.get("role") == "user" and any(re.search(rx, m.get("content") or "", re.I) for _, rx, _ in TOPICS)
+    ]
+    if not substantive:
+        return question
+    orig = substantive[-1].strip()
+    if orig.lower() == (question or "").strip().lower():
+        return question
+    return f"ORIGINAL QUESTION: {orig}\nLATEST REPLY: {question}"
+
+def _scrub_hallucinations(text, hits_blob=""):
+    """Usuń typowe halucynacje spoza źródeł (USOS) i obietnice odpowiedzi po rosyjsku."""
+    if not text:
+        return text
+    blob = (hits_blob or "").upper()
+    if "USOS" in text.upper() and "USOS" not in blob:
+        text = re.sub(r"(?i)\(?\s*(?:przez|via|through|через)\s+(?:system\s+)?USOS[^)\n]*\)?", "", text)
+        text = re.sub(r"(?i)(?:system\s+)?USOS(?:\s*\([^)]*\))?", "", text)
+        text = re.sub(r"[ \t]{2,}", " ", text)
+    text = re.sub(
+        r"(?i)tak,?\s*ja\s*mog[ęe]\s*odpowiad\w*.{0,100}rosyjsk\w*",
+        "Mogę odpowiadać po polsku, angielsku i ukraińsku",
+        text,
+    )
+    text = re.sub(
+        r"(?i)так,?\s*я\s*можу\s*відповіда\w*.{0,100}(?:російськ\w*|русск\w*)",
+        "Можу відповідати українською, польською та англійською",
+        text,
+    )
+    text = re.sub(
+        r"(?i)yes,?\s*i\s*can\s*(?:reply|answer|respond).{0,80}russian",
+        "I can reply in Polish, English and Ukrainian",
+        text,
+    )
+    return text
+
 def answer(question, history):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang)"""
     question = redact_secrets((question or "").strip())
@@ -990,16 +1142,17 @@ def answer(question, history):
     lang = detect_lang(question, hist_user, latest=question)
     # Deterministyczna bramka: klucze API, konta wykładowców, jailbreak – bez wywołania LLM
     if is_security_probe(question) or is_security_probe(hist_user[-500:], question):
-        return dict(clarify=False, mode="security", sources=[], profile={}, lang=lang,
+        return dict(clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
                     answer=refuse_message(lang))
     topics, prof, missing = needed(question, hist_user)
     if missing:
         text, mode = clarify_answer(lang, missing, question, history, topics, prof)
-        return dict(clarify=True, mode=mode, sources=[], profile=prof, lang=lang, answer=text)
+        return dict(clarify=True, mode=mode, sources=[], profile=prof, topics=topics, lang=lang, answer=text)
     base_q = question
     if history:
         prev = [m["content"] for m in history if m["role"] == "user" and any(re.search(rx, m["content"], re.I) for _, rx, _ in TOPICS)]
         if prev: base_q = prev[-1] + " " + question
+    llm_q = _user_question_for_llm(question, history)
     stipend_topics = {"stypendium_socjalne", "stypendium_rektora", "stypendium_niepeln", "dwa_kierunki", "doktoranckie"}
     if not (set(topics) & stipend_topics):
         q = base_q + " " + " ".join(
@@ -1073,19 +1226,22 @@ def answer(question, history):
                      .replace("{security_rules}", SECURITY_RULES))
         msgs = [{"role": "system", "content": sys}] + _safe_history(history, 8) + [{"role": "user", "content":
                 f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\nTEMATY: {', '.join(topics) or '—'}\n"
-                "QUALITY: Use canonical UR pages from ŹRÓDŁA first. Give eligibility/amounts/steps when present. "
-                "Never answer with only “contact BOS” if fragments already answer the question.\n\n"
-                f"ŹRÓDŁA:\n{fmt_sources(hits)}\n\n"
-                + wrap_untrusted("USER_QUESTION", question)
+                "QUALITY: Use canonical UR pages from the sources first. Give eligibility/amounts/steps when present. "
+                "Never answer with only “contact BOS” if fragments already answer the question. "
+                "Never invent USOS, menu paths, or dates absent from sources. Never write the word ŹRÓDŁA.\n\n"
+                f"SOURCES:\n{fmt_sources(hits)}\n\n"
+                + wrap_untrusted("USER_QUESTION", llm_q)
                 + "\n\nNapisz konkretną, naturalną odpowiedź według zasad systemowych."}]
         try:
             out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.3)))
-            out += deadline_passed_note(out + "\n" + fmt_sources(hits[:4]), lang)
-            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, lang=lang, answer=out)
+            out = _scrub_hallucinations(out, _hit_blob(hits[:6]))
+            out += deadline_passed_note(out, lang)
+            return dict(clarify=False, mode="llm", sources=srcs, profile=prof, topics=topics, lang=lang, answer=out)
         except Exception:
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
     else:
         err = ""
     ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err)))
-    ans += deadline_passed_note(ans + "\n" + _hit_blob(hits[:4]), lang)
-    return dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, lang=lang, answer=ans)
+    ans = _scrub_hallucinations(ans, _hit_blob(hits[:6]))
+    ans += deadline_passed_note(ans, lang)
+    return dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, topics=topics, lang=lang, answer=ans)

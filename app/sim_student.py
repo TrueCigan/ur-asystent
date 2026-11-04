@@ -82,10 +82,58 @@ SCENARIOS = [
     ], {"expect_profile": {"status": "pl", "tryb": "stacjonarne", "drugi_kierunek": "nie"}, "max_clarify_turns": 2}),
     ("QA tuition in Polish stays EN", [
         "Hello, I am Pole studying part-time bachelors. How much do I pay for studies in Polish?",
-    ], {"expect_lang": "en", "max_clarify_turns": 1}),
+    ], {
+        "expect_lang": "en",
+        "max_clarify_turns": 0,
+        "expect_profile": {"status": "pl", "tryb": "niestacjonarne", "poziom": "I"},
+    }),
+    ("QA RU input → UK reply (never Russian)", [
+        "Привет, я студент из Польши, учусь на бакалавре. Как получить ректорскую стипендию и сколько платят?",
+    ], {
+        "expect_lang": "uk",
+        "expect_profile": {"status": "pl", "poziom": "I"},
+        "forbid_substr": "Какой у вас",
+        "max_clarify_turns": 2,
+    }),
     ("QA RU social scholarship", [
         "Привет, я студент из Украины с картой побыту. Нужна социальная стипендия, как оформить?",
-    ], {"expect_lang": "ru", "expect_mode_contains": "doprecyzowanie"}),
+    ], {"expect_lang": "uk", "expect_mode_contains": "doprecyzowanie", "expect_profile_pobyt": "pobyt_czasowy"}),
+    ("QA R2 multi-topic socjalne+akademik", [
+        "Привіт, я студент з України з картою побуту. Хочу соціальну стипендію і місце в гуртожитку. Скільки коштує?",
+    ], {
+        "expect_lang": "uk",
+        "expect_topics": ["stypendium_socjalne", "akademik"],
+        "forbid_profile_pobyt": "ukr",
+        "max_clarify_turns": 2,
+    }),
+    ("QA R2 disability not dwa_kierunki", [
+        "Dzień dobry, mam orzeczenie o niepełnosprawności w stopniu znacznym. Jakie stypendium mi przysługuje?",
+        "polak, mgr, nie mam drugiego kierunku, nic wiecej",
+        "full time",
+    ], {
+        "expect_topics": ["stypendium_niepeln"],
+        "expect_profile": {"status": "pl", "drugi_kierunek": "nie", "tryb": "stacjonarne", "poziom": "II"},
+        "forbid_substr": "USOS",
+        "max_clarify_turns": 1,
+    }),
+    ("QA R2 daily after clarify keeps socjalne", [
+        "czesc, jak dostac stypendium socjalne?",
+        "z polski jestem, mgr, jednokierunkowo",
+        "daily",
+    ], {
+        "expect_url": "stypendia-socjalne",
+        "expect_profile": {"status": "pl", "tryb": "stacjonarne", "poziom": "II", "drugi_kierunek": "nie"},
+        "forbid_substr": "Nie rozumiem pytania",
+        "max_clarify_turns": 2,
+    }),
+    ("QA R2 polaк jeden", [
+        "Привет, я студент из Польши, учусь на бакалавре. Как получить ректорскую стипендию?",
+        "3 курс, поляк, один",
+    ], {
+        "expect_lang": "uk",
+        "expect_profile": {"status": "pl", "poziom": "I", "rok": "3", "drugi_kierunek": "nie"},
+        "max_clarify_turns": 1,
+    }),
     ("QA akademik not tuition", [
         "Dzień dobry, mam orzeczenie o niepełnosprawności. Jakie stypendium mi przysługuje?",
         "z polski jestem, mgr, jednokierunkowo",
@@ -251,6 +299,9 @@ def check(name, r, rules, blob, clarify_turns=0):
     if rules.get("expect_profile_pobyt"):
         if (r.get("profile") or {}).get("pobyt") != rules["expect_profile_pobyt"]:
             fails.append(f"profile.pobyt={(r.get('profile') or {}).get('pobyt')} want={rules['expect_profile_pobyt']}")
+    if rules.get("forbid_profile_pobyt"):
+        if (r.get("profile") or {}).get("pobyt") == rules["forbid_profile_pobyt"]:
+            fails.append(f"profile.pobyt unexpectedly {rules['forbid_profile_pobyt']}")
     if rules.get("expect_lang") and r.get("lang") != rules["expect_lang"]:
         fails.append(f"lang={r.get('lang')} want={rules['expect_lang']}")
     if rules.get("expect_profile"):
@@ -263,6 +314,11 @@ def check(name, r, rules, blob, clarify_turns=0):
         for k, v in rules["forbid_profile"].items():
             if got.get(k) == v:
                 fails.append(f"profile.{k} unexpectedly {v}")
+    if rules.get("expect_topics"):
+        got_t = set(r.get("topics") or [])
+        for t in rules["expect_topics"]:
+            if t not in got_t:
+                fails.append(f"missing topic {t} in {sorted(got_t)}")
     if rules.get("forbid_substr2") and rules["forbid_substr2"] in blob:
         fails.append(f"forbidden substr {rules['forbid_substr2']}")
     if rules.get("max_clarify_turns") is not None and clarify_turns > rules["max_clarify_turns"]:
