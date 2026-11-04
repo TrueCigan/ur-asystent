@@ -5,6 +5,10 @@ from security import (
     SECURITY_RULES, is_security_probe, refuse_message, wrap_untrusted,
     redact_secrets, safe_error,
 )
+from topic_policy import (
+    TOPIC_POLICY, apply_policy_scores, force_topic_hits, hits_match_canonical,
+    query_extras, prefer_sources, policy_for,
+)
 
 IDX = None
 def load():
@@ -43,57 +47,37 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
     for r in ranks:
         sc[r[:200]] += 1.0 / (60 + np.arange(1, min(200, n) + 1))
     topics = set(topics or [])
-    status = (profile or {}).get("status")
     for i, c in enumerate(ch):
-        title = (c.get("title") or "").lower()
-        text = c.get("text") or ""
-        if (c["modified"] or "0") < "2024": sc[i] *= 0.6
-        if prefer and c["source"] in prefer: sc[i] *= 1.6
-        # opłaty: trzymaj zarządzenia z tabelami, odsuń szum konferencji
-        if "oplaty" in topics:
-            if re.search(r"konferenc|monografia|isbn|mstudia", title): sc[i] *= 0.12
-            if re.search(r"usługi edukacyjne|wysokość opłat|akty-prawne-opłat|opłaty\b", title): sc[i] *= 2.5
-            if re.search(r"\br-\d{1,3}-\d{4}\b", title) and re.search(r"\d[\d\s]*zł", text[:1500], re.I): sc[i] *= 2.2
-            if "cudzoziem" in title:
-                sc[i] *= 2.6 if status == "cudzoziemiec" else (0.2 if status == "pl" else 1.0)
-            elif status == "pl" and re.search(r"\d[\d\s]*zł", text[:1500], re.I) and re.search(r"opłat|czesne|r-\d+", title):
-                sc[i] *= 1.8
-            if c.get("source") == "bip" and re.search(r"opłat|czesne", title): sc[i] *= 1.5
-        # plan zajęć: nie mylić z BIP „plan studiów” / programem; trzymaj aktualne pliki wydziału
-        if "plan" in topics:
+        if (c["modified"] or "0") < "2024":
+            sc[i] *= 0.6
+        if prefer and c["source"] in prefer:
+            sc[i] *= 1.6
+    apply_policy_scores(sc, ch, topics, profile)
+    # plan: preferencja wydziału po kierunku
+    if "plan" in topics:
+        kier = (profile or {}).get("kierunek")
+        fac = KIEROUNEK_FACULTY.get(kier) if kier else None
+        for i, c in enumerate(ch):
+            title = (c.get("title") or "").lower()
             if c.get("source") == "bip" or re.search(r"plan\s*studi|program\s*studi|opis\s*programu|uchwa[łl]a", title):
                 sc[i] *= 0.08
             if re.search(r"plan\s*zaj|rozk[lł]ad|timetable", title) or c.get("source") in PLAN_SOURCES:
-                sc[i] *= 2.4
+                sc[i] *= 2.0
             if c.get("kind") == "file" and (c.get("modified") or "0") < "2025" and c.get("source") in PLAN_SOURCES:
                 sc[i] *= 0.25
-            kier = (profile or {}).get("kierunek")
-            fac = KIEROUNEK_FACULTY.get(kier) if kier else None
             if fac and c.get("source") == fac:
                 sc[i] *= 2.0
             elif fac and c.get("source") in PLAN_SOURCES and c.get("source") != fac:
                 sc[i] *= 0.15
-        # stypendium socjalne: trzymaj student/świadczenia, nie rekrutację
-        if "stypendium_socjalne" in topics:
-            url = (c.get("url") or "").lower()
-            blob = title + " " + url
-            if c.get("source") == "rekrutacja" or re.search(r"rekrutacj|konferenc|monografia", blob):
-                sc[i] *= 0.08
-            if re.search(r"stypendia-socjalne|swiadczenia|świadczenia|r-41|r-32|pomoc-materialn", blob):
-                sc[i] *= 3.0
-            if (profile or {}).get("pobyt") == "ukr" and re.search(
-                r"ukrain|ukr|za[lł][aą]cznik|ochron\w*\s*czasow|cudzoziem", title + " " + text[:800], re.I
-            ):
-                sc[i] *= 2.2
-            if c.get("source") == "student" and re.search(r"socjaln|świadcze|stypend", title):
-                sc[i] *= 1.8
     out, per_url = [], {}
     for i in np.argsort(-sc):
         c = ch[i]
-        if per_url.get(c["url"], 0) >= 2: continue
+        if per_url.get(c["url"], 0) >= 2:
+            continue
         per_url[c["url"]] = per_url.get(c["url"], 0) + 1
         out.append(dict(c, score=float(sc[i])))
-        if len(out) >= k: break
+        if len(out) >= k:
+            break
     return out
 
 # ---------- język (PL / EN / UK / MN) ----------
@@ -172,7 +156,7 @@ SLOT_OPTS = {
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|i'?m\s*a?\s*foreign|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карта\s*побуту|тимчасов\w*\s*захист|біжен|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
  ],
  "tryb": [
-  ("stacjonarne", r"(?<!nie)stacjonar|dzienn|full[-\s]?time|on[- ]campus|денн|стаціонар|очна\s*форм|өдрийн|бүтэн\s*цаг"),
+  ("stacjonarne", r"(?<!nie)stacjonar|dzienn|full[-\s]?time|on[- ]campus|pe[lł]ny\s*etat|денн|стаціонар|очна\s*форм|өдрийн|бүтэн\s*цаг"),
   ("niestacjonarne", r"niestacjonar|zaoczn|weekend|part[-\s]?time|extramural|заочн|вечірнь|эчнээ|цагийн\s*сургалт"),
  ],
  "poziom": [
@@ -182,7 +166,12 @@ SLOT_OPTS = {
   ("I", r"\bi\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|bachelor|undergraduate|licencj|in[zż]ynier|і\s*ступ|бакалавр|інженер|i\s*зэрэг|1\s*зэрэг"),
  ],
  "rok": [
-  ("rok", r"(\b[1-6]\s*(rok|year|курс|жил|курс[т]?)\b|\byear\s*[1-6]\b|\b[1-6](st|nd|rd|th)\s*year\b|\bi+\s*rok|\bpierwsz\w*\s*rok|\bdrugi\w*\s*rok|\btrzeci\w*\s*rok|\bczwart\w*\s*rok|\bpi[aą]t\w*\s*rok|\bfirst\s*year|\bsecond\s*year|\bthird\s*year|\bfreshman|\bsophomore|\bперш\w*\s*рік|\bдруг\w*\s*рік|\bтрет\w*\s*рік|\b[1-6][- ]?р\s*курс|\b(?:na|jestem na)\s+(?:i|ii|iii|iv|v)\s+roku|\bpierwszoroczn)"),
+  ("1", r"(\b1\s*(rok|year|курс|жил)\b|\byear\s*1\b|\b1(st)?\s*year\b|\bpierwsz\w*\s*rok|\bfirst\s*year|\bfreshman|\bперш\w*\s*рік|\b(?:na|jestem na)\s+i\s+roku|\bpierwszoroczn|^\s*1\s*$)"),
+  ("2", r"(\b2\s*(rok|year|курс|жил)\b|\byear\s*2\b|\b2(nd)?\s*year\b|\bii\s*rok|\bdrugi\w*\s*rok|\bsecond\s*year|\bsophomore|\bдруг\w*\s*рік|\b(?:na|jestem na)\s+ii\s+roku|^\s*2\s*$)"),
+  ("3", r"(\b3\s*(rok|year|курс|жил)\b|\byear\s*3\b|\b3(rd)?\s*year\b|\biii\s*rok|\btrzeci\w*\s*rok|\bthird\s*year|\bтрет\w*\s*рік|\b(?:na|jestem na)\s+iii\s+roku|^\s*3\s*$)"),
+  ("4", r"(\b4\s*(rok|year|курс|жил)\b|\byear\s*4\b|\b4(th)?\s*year\b|\biv\s*rok|\bczwart\w*\s*rok|\b(?:na|jestem na)\s+iv\s+roku|^\s*4\s*$)"),
+  ("5", r"(\b5\s*(rok|year|курс|жил)\b|\byear\s*5\b|\b5(th)?\s*year\b|\bv\s*rok|\bpi[aą]t\w*\s*rok|^\s*5\s*$)"),
+  ("6", r"(\b6\s*(rok|year|курс|жил)\b|\byear\s*6\b|\b6(th)?\s*year\b|^\s*6\s*$)"),
  ],
  "drugi_kierunek": [
   # „nie” najpierw – unikaj fałszywego „tak” przy „nie posiadam dyplomu”
@@ -294,7 +283,7 @@ def extract_profile(text):
             if re.search(rx, t, re.I):
                 prof[slot] = val
                 break
-    # PESEL UKR / ochrona czasowa – podtyp pobytu (nie osobny status slot)
+    # Podstawa pobytu (podtyp; nie osobny slot clarify)
     if re.search(
         r"pesel\s*ukr|\bukr\b|ochron\w*\s*czasow|temporary\s*protection|"
         r"specjaln\w*\s*ustaw\w*\s*ukrain|ustaw\w*.{0,40}ukrain|"
@@ -303,8 +292,22 @@ def extract_profile(text):
     ):
         prof["pobyt"] = "ukr"
         prof.setdefault("status", "cudzoziemiec")
+    elif re.search(r"kart\w*\s*polaka|pole'?s?\s*card|карта\s*поляка", t, re.I):
+        prof["pobyt"] = "karta_polaka"
+        prof.setdefault("status", "cudzoziemiec")
+    elif re.search(r"pobyt\w*\s*sta[lł]|permanent\s*resid|сталий\s*побут|постоянн\w*\s*пребыв", t, re.I):
+        prof["pobyt"] = "pobyt_staly"
+        prof.setdefault("status", "cudzoziemiec")
+    elif re.search(r"pobyt\w*\s*czasow|temporary\s*resid|карт\w*\s*pobytu|карта\s*побуту|оршин\s*суух", t, re.I):
+        prof["pobyt"] = "pobyt_czasowy"
+        prof.setdefault("status", "cudzoziemiec")
+    # krótkie tak/nie jako uzupełnienie ostatniego slotu (drugi_kierunek / niepełnosprawność)
+    if re.match(r"^\s*(tak|yes|так|тийм)\s*\.?\s*$", t, re.I):
+        prof.setdefault("drugi_kierunek", "tak")
+    if re.match(r"^\s*(nie|no|ні|үгүй)\s*\.?\s*$", t, re.I):
+        prof.setdefault("drugi_kierunek", "nie")
     if prof.get("status") == "doktorant":
-        prof.setdefault("poziom", "SD"); prof.setdefault("tryb", "stacjonarne"); prof.setdefault("rok", "rok")
+        prof.setdefault("poziom", "SD"); prof.setdefault("tryb", "stacjonarne"); prof.setdefault("rok", "1")
     if prof.get("poziom") == "SD":
         prof.setdefault("status_doktor", True)
     if re.search(r"drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(major|program|programme)|double\s*major|друг\w*\s*напрям|хоёр\s*мэргэжил", t, re.I) and \
@@ -453,17 +456,35 @@ def plan_file_hits(faculty, profile=None, k=12):
         seen_u.add(c["url"])
         files.append(c)
     kier = (profile or {}).get("kierunek")
-    # lekkie preferencje po fragmencie nazwy pliku/tytułu
+    rok = (profile or {}).get("rok")
+    # kody plików WEiF/WTEiI: I_E_=Ekonomia, FiR=Finanse, IN=Informatyka, E_=Elektrotechnika
     boost = {
-        "ekonomia": r"ekonom", "finanse": r"finans|rachunk", "informatyka": r"\bIN[_-]|informat",
-        "elektrotechnika": r"\bE[_-]|elektrotech", "transport": r"TiL|TIL|transport",
-        "prawo": r"prawo|PR[_-]", "administracja": r"admin",
+        "ekonomia": r"ekonom|(?:^|/)I_E_|_E_\d",
+        "finanse": r"finans|rachunk|FiR|_FiR_",
+        "informatyka": r"\bIN[_-]|informat|(?:^|/)I?_?IN[_-]",
+        "informatyka_techniczna": r"\bIT[_-]|technicz",
+        "elektrotechnika": r"(?:^|/)[IE]?_?E[_-]\d|elektrotech",
+        "transport": r"TiL|TIL|transport",
+        "prawo": r"prawo|PR[_-]",
+        "administracja": r"admin",
+        "zarzadzanie": r"zarz[aą]dz|_Z_\d|(?:^|/)I_Z_",
+        "ai_biznes": r"IAwB|inteligenc|AI",
+        "analityka": r"analityk",
     }.get(kier)
-    if boost:
-        files.sort(key=lambda c: (0 if re.search(boost, c.get("title", "") + c.get("url", ""), re.I) else 1,
-                                  c.get("title") or ""))
-    else:
-        files.sort(key=lambda c: c.get("title") or "")
+    # rok 1 → sem 1–2, rok 2 → 3–4, rok 3 → 5–6
+    sem_rx = None
+    if rok and str(rok).isdigit():
+        y = int(rok)
+        sems = (2 * y - 1, 2 * y)
+        sem_rx = re.compile(rf"({sems[0]}|{sems[1]})\s*sem", re.I)
+
+    def rank(c):
+        blob = (c.get("title") or "") + " " + (c.get("url") or "")
+        hit_kier = 0 if (boost and re.search(boost, blob, re.I)) else 1
+        hit_rok = 0 if (sem_rx and sem_rx.search(blob)) else 1
+        return (hit_kier, hit_rok, c.get("title") or "")
+
+    files.sort(key=rank)
     return files[:k]
 
 def fmt_sources(hits):
@@ -472,44 +493,36 @@ def fmt_sources(hits):
         out.append(f"[{n}] {h['title']} | URL: {h['url']} | aktualizacja: {h['modified'] or 'brak daty'} | nieaktualne: {'TAK' if outdated(h['modified']) else 'nie'}\n{h['text'][:2500]}")
     return "\n\n".join(out)
 
-def socjalne_force_hits(profile, k=4):
-    """Wymuś kluczowe fragmenty stypendiów (UKR / cudzoziemcy / próg dochodu)."""
+def outdated(m): return (not m) or m[:4] < "2024"
+
+def merge_forced_hits(hits, forced, k=12):
+    if not forced:
+        return hits[:k]
+    seen = {h["url"] for h in forced}
+    merged = [dict(c, score=999 - i) for i, c in enumerate(forced)]
+    merged += [h for h in hits if h["url"] not in seen]
+    return merged[:k]
+
+def ensure_canonical_hits(hits, topics, profile, q):
+    """Quality gate: jeśli brak kanonicznych URL – dociągnij force + ewentualnie drugi search."""
     if IDX is None:
         load()
-    ukr = (profile or {}).get("pobyt") == "ukr"
-    scored = []
-    for c in IDX["chunks"]:
-        url = c.get("url") or ""
-        title = c.get("title") or ""
-        text = c.get("text") or ""
-        blob = f"{title}\n{text}"
-        score = 0
-        if "stypendia-socjalne" in url:
-            score += 5
-            if re.search(r"Stypendium dla cudzoziemc|obywatel Ukrainy|ochrony czasowej|Za[lł][aą]cznik", blob, re.I):
-                score += 8
-            if re.search(r"2099|dochód na osobę|Wirtualny Dziekanat|wniosek o stypendium socjalne", blob, re.I):
-                score += 3
-        if "Zalacznik-Nr-8-Ukraina" in url or re.search(r"Za[lł][aą]cznik\s*Nr\s*8.*Ukrain", title, re.I):
-            score += 10 if ukr else 2
-        if re.search(r"R-41-2025|R-32-2024", url) and re.search(r"swiadczen|świadcze|socjal", title, re.I):
-            score += 4
-        if ukr and re.search(r"obywatel Ukrainy|PESEL|ochrony czasowej|specjalnej ustawy", blob, re.I):
-            score += 6
-        if score:
-            scored.append((score, c))
-    scored.sort(key=lambda x: -x[0])
-    out, seen = [], set()
-    for _, c in scored:
-        if c["url"] in seen:
+    for topic in topics:
+        if topic == "plan":
             continue
-        seen.add(c["url"])
-        out.append(c)
-        if len(out) >= k:
-            break
-    return out
-
-def outdated(m): return (not m) or m[:4] < "2024"
+        if hits_match_canonical(hits, topic):
+            forced = force_topic_hits(topic, profile, k=4, chunks=IDX["chunks"])
+            hits = merge_forced_hits(hits, forced)
+            continue
+        forced = force_topic_hits(topic, profile, k=5, chunks=IDX["chunks"])
+        hits = merge_forced_hits(hits, forced)
+        if not hits_match_canonical(hits, topic):
+            pol = policy_for(topic)
+            extra = (pol.get("query_extra") or "") + " " + (pol.get("canonical") or "").replace("|", " ")
+            prefer = prefer_sources([topic])
+            more = search(q + " " + extra, k=12, prefer=prefer, topics=[topic], profile=profile)
+            hits = merge_forced_hits(more, forced)
+    return hits[:12]
 
 def call_llm(messages, temperature=0.25):
     prov = os.getenv("LLM_PROVIDER", "").lower(); key = os.getenv("LLM_API_KEY", "")
@@ -600,32 +613,18 @@ def answer(question, history):
     if history:
         prev = [m["content"] for m in history if m["role"] == "user" and any(re.search(rx, m["content"], re.I) for _, rx, _ in TOPICS)]
         if prev: base_q = prev[-1] + " " + question
-    # Nie doklejaj gołego „cudzoziemiec” do zapytań o stypendia – to ściąga rekrutację
-    if "stypendium_socjalne" not in topics and "stypendium_rektora" not in topics:
+    stipend_topics = {"stypendium_socjalne", "stypendium_rektora", "stypendium_niepeln", "dwa_kierunki", "doktoranckie"}
+    if not (set(topics) & stipend_topics):
         q = base_q + " " + " ".join(
             str(v) for k, v in prof.items() if k in ("status",) and v in ("cudzoziemiec", "bezpanstwowiec", "doktorant")
         )
     else:
         q = base_q
     q += " " + " ".join(TOPIC_PL_QUERY[t] for t in topics if t in TOPIC_PL_QUERY and t != "cudzoziemcy")
-    if "stypendium_socjalne" in topics:
-        q += " stypendium socjalne regulamin świadczeń student"
-        if prof.get("pobyt") == "ukr":
-            q += " obywatel Ukrainy ochrona czasowa oświadczenie załącznik Nr 8"
-        elif prof.get("status") == "cudzoziemiec":
-            q += " stypendium dla cudzoziemców uprawnienia świadczenia"
-    if "oplaty" in topics and prof.get("status") == "pl":
-        q += " opłaty obywatel polski studia stacjonarne"
-    elif "oplaty" in topics and prof.get("status") == "cudzoziemiec":
-        q += " opłaty cudzoziemców rekrutacja"
+    q += " " + query_extras(topics, prof)
     fac = resolve_plan_faculty(prof, base_q) if "plan" in topics else None
-    PREF = {"erasmus": ["dwz"], "cudzoziemcy": ["rekrutacja", "dwz", "student"], "oplaty": ["rekrutacja", "student", "bip"],
-            "doktoranckie": ["student"], "stypendium_socjalne": ["student"], "stypendium_rektora": ["student"],
-            "stypendium_niepeln": ["student"], "dwa_kierunki": ["student"]}
-    if "plan" in topics:
-        PREF["plan"] = [fac] if fac else list(PLAN_SOURCES)
     tp = [t for t in topics if t != "cudzoziemcy"] or topics
-    prefer = sorted({x for t in tp for x in PREF.get(t, [])})
+    prefer = prefer_sources(tp, fac=fac)
     if tp is not topics:
         q = re.sub(r"(?i)\b(jako\s+)?cudzoziem\w*|international\s+student|foreign\s+student|інозем\w*|гадаад\s+оюутан", " ", q)
     if "plan" in topics and fac:
@@ -635,14 +634,7 @@ def answer(question, history):
         elif prof.get("kierunek"):
             q += " " + prof["kierunek"]
     hits = search(q, k=12, prefer=prefer, topics=topics, profile=prof)
-    if "stypendium_socjalne" in topics:
-        forced = socjalne_force_hits(prof, k=4)
-        if forced:
-            seen_u = {h["url"] for h in hits}
-            hits = [dict(c, score=999 - i) for i, c in enumerate(forced)] + [
-                h for h in hits if h["url"] not in seen_u
-            ]
-            hits = hits[:12]
+    hits = ensure_canonical_hits(hits, topics, prof, q)
     if "plan" in topics:
         if fac:
             files = plan_file_hits(fac, prof, k=20)
@@ -691,7 +683,10 @@ def answer(question, history):
                      .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
                      .replace("{security_rules}", SECURITY_RULES))
         msgs = [{"role": "system", "content": sys}] + _safe_history(history, 8) + [{"role": "user", "content":
-                f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\nTEMATY: {', '.join(topics) or '—'}\n\nŹRÓDŁA:\n{fmt_sources(hits)}\n\n"
+                f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\nTEMATY: {', '.join(topics) or '—'}\n"
+                "QUALITY: Use canonical UR pages from ŹRÓDŁA first. Give eligibility/amounts/steps when present. "
+                "Never answer with only “contact BOS” if fragments already answer the question.\n\n"
+                f"ŹRÓDŁA:\n{fmt_sources(hits)}\n\n"
                 + wrap_untrusted("USER_QUESTION", question)
                 + "\n\nNapisz konkretną, naturalną odpowiedź według zasad systemowych."}]
         try:
