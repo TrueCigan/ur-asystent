@@ -233,24 +233,77 @@ def computed_income_line(income: float, groups: Any, academic_year: str | None, 
     return labels.get(lang, labels["pl"])
 
 
+def format_fact_value(val: Any, unit: str = "", lang: str = "pl", indent: str = "  ") -> str:
+    """Human-readable fact value — never Python ``str(dict)`` / ``repr``."""
+    u = f" {unit}" if unit else ""
+    if isinstance(val, dict):
+        note = val.get("note")
+        items = [(k, v) for k, v in val.items() if k != "note"]
+        if not items and note is not None:
+            return f"({note})" if not isinstance(note, (dict, list)) else format_fact_value(note, unit, lang, indent)
+        lines: list[str] = []
+        for k, v in items:
+            if isinstance(v, (dict, list)):
+                lines.append(f"{indent}- {k}:")
+                nested = format_fact_value(v, unit, lang, indent + "  ")
+                for nl in nested.splitlines():
+                    lines.append(nl if nl.startswith(indent) else f"{indent}  {nl}")
+            else:
+                lines.append(f"{indent}- {k}: {v}{u}")
+        if note is not None and not isinstance(note, (dict, list)):
+            lines.append(f"{indent}({note})")
+        return "\n".join(lines) if lines else ""
+    if isinstance(val, (list, tuple)):
+        lines = []
+        for item in val:
+            if isinstance(item, (dict, list)):
+                lines.append(f"{indent}-")
+                nested = format_fact_value(item, unit, lang, indent + "  ")
+                for nl in nested.splitlines():
+                    lines.append(nl if nl.startswith(indent) else f"{indent}  {nl}")
+            else:
+                lines.append(f"{indent}- {item}{u}")
+        return "\n".join(lines)
+    return f"{val}{u}"
+
+
+def _fact_entry_lines(f: Fact, i: int, lang: str, *, for_user: bool) -> list[str]:
+    label = f.i18n_label.get(lang) or f.i18n_label.get("pl") or f.id
+    unit = f.unit or ""
+    year = f" ({f.academic_year})" if f.academic_year else ""
+    unver = " (unverified)" if f.status != "verified" else ""
+    src = ""
+    if not for_user and f.source.get("url"):
+        src = f" | source: {f.source['url']}"
+    body = format_fact_value(f.value, unit=unit if not isinstance(f.value, (dict, list)) else "", lang=lang)
+    if isinstance(f.value, (dict, list)):
+        head_unit = f" {unit}" if unit else ""
+        head = f"[F{i}] {label}{head_unit}{year}{unver}{src}:"
+        return [head] + ([body] if body else [])
+    return [f"[F{i}] {label}: {body}{year}{unver}{src}"]
+
+
 def render_facts_block(facts: list[Fact], lang: str = "pl", computed_lines: list[str] | None = None) -> str:
+    """Machine header for the LLM prompt only."""
     if not facts and not computed_lines:
         return ""
     lines = ["FACTS (authoritative — quote exactly, cite as [F1], [F2], …):"]
     for i, f in enumerate(facts, 1):
-        label = f.i18n_label.get(lang) or f.i18n_label.get("pl") or f.id
-        val = f.value
-        unit = f" {f.unit}" if f.unit else ""
-        year = f" ({f.academic_year})" if f.academic_year else ""
-        src = ""
-        if f.source.get("url"):
-            src = f" | source: {f.source['url']}"
-        if f.status != "verified":
-            lines.append(f"[F{i}] {label}: {val}{unit}{year} (unverified){src}")
-        else:
-            lines.append(f"[F{i}] {label}: {val}{unit}{year}{src}")
+        lines.extend(_fact_entry_lines(f, i, lang, for_user=False))
     for j, line in enumerate(computed_lines or [], 1):
         lines.append(f"[F{len(facts) + j}] COMPUTED: {line}")
+    return "\n".join(lines)
+
+
+def render_facts_for_user(facts: list[Fact], lang: str = "pl", computed_lines: list[str] | None = None) -> str:
+    """User-visible facts block — no 'authoritative / quote exactly' header."""
+    if not facts and not computed_lines:
+        return ""
+    lines: list[str] = []
+    for i, f in enumerate(facts, 1):
+        lines.extend(_fact_entry_lines(f, i, lang, for_user=True))
+    for j, line in enumerate(computed_lines or [], 1):
+        lines.append(f"[F{len(facts) + j}] {line}")
     return "\n".join(lines)
 
 

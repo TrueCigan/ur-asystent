@@ -330,3 +330,17 @@
     lang_in: [uk]
     must_not_match: ["2099"]
     must_match: ["1908"]
+
+# ---------- round 6: facts render ----------
+- id: r6-facts-dict-not-repr
+  origin: r6-S5
+  turns: ["Hello, I am Ahmed, a foreigner studying in an English-language programme. How much is the tuition fee per semester?", "im on a full time bachelors, first yr, so basically the usual stuff"]
+  e2e:
+    lang_in: [en]
+    must_match: ["2100", "2600"]
+    must_not_match: ["FACTS \\(authoritative", "\\{'International Business", "quote exactly"]
+- id: r6-no-internal-markers
+  origin: r6-S2
+  turns: ["Hej, jestem Marek, 2 rok informatyki stacjonarnie, I stopień. Interesuje mnie stypendium doktoranckie, ile wynosi?", "ups pomyłka, ja ni jestem doktorantem, tylko licencjat. Ale kumpel z doktoratu pyta, ile ma dostawać"]
+  e2e:
+    must_not_match: ["PYTANIE ORYGINALNE", "ORIGINAL QUESTION", "FOLLOW-UP:", "LATEST REPLY"]

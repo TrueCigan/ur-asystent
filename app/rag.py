@@ -16,8 +16,9 @@ from lang import (
 from deadlines import deadline_passed_note, strip_llm_deadline_notes
 from decimal import Decimal
 from facts import (
-    load_facts, select_facts, render_facts_block, amounts_in, fact_amounts,
-    extract_income, computed_income_line, income_group, strip_unknown_amounts,
+    load_facts, select_facts, render_facts_block, render_facts_for_user,
+    amounts_in, fact_amounts, extract_income, computed_income_line, income_group,
+    strip_unknown_amounts,
 )
 
 IDX = None
@@ -1096,12 +1097,35 @@ def extract_source_facts(hits):
     facts["sents"] = sents[:4]
     return facts
 
+def strip_internal_markers(text: str) -> str:
+    """Remove prompt wrappers / strip-notes that must never reach the user (R6-2)."""
+    if not text:
+        return text
+    t = text
+    t = re.sub(r"(?i)FACTS\s*\(authoritative[^\n]*\n?", "", t)
+    t = re.sub(
+        r"(?im)^\s*(ORIGINAL QUESTION\(S\)?|PYTANIE ORYGINALNE|FOLLOW-UP|LATEST REPLY)\s*:\s*",
+        "",
+        t,
+    )
+    t = re.sub(
+        r"(?i)\n?\(?\s*(Kwoty spoza FACTS[^\n]*|Amounts not in FACTS[^\n]*|Суми поза FACTS[^\n]*|FACTS/эх сурвалжид[^\n]*)\)?",
+        "",
+        t,
+    )
+    t = re.sub(r"(?i)quote exactly,?\s*cite as\s*\[F\d+\][^\n]*", "", t)
+    return re.sub(r"\n{3,}", "\n\n", t).strip() or t
+
+
 def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=""):
     """Czytelna odpowiedź bez LLM – fakty + kroki + URL, nie surowy dump."""
     facts = extract_source_facts(hits)
     lines = [err + NO_LLM.get(lang, NO_LLM["pl"]).format(prof=prof_txt)]
     if facts_block:
-        lines.append("\n" + facts_block)
+        # Never dump the LLM prompt header into the user-visible answer
+        user_facts = strip_internal_markers(facts_block)
+        if user_facts:
+            lines.append("\n" + user_facts)
     tset = set(topics or [])
 
     if "stypendium_socjalne" in tset:
@@ -1568,6 +1592,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         if line:
             computed_lines.append(line)
     facts_block = render_facts_block(selected_facts, lang, computed_lines=computed_lines)
+    facts_for_user = render_facts_for_user(selected_facts, lang, computed_lines=computed_lines)
     # FACTS-only allow-list (do not union hit-blob amounts — stale chunk figures like 2099,70)
     allowed_amounts = fact_amounts(selected_facts)
     if income_val is not None:
@@ -1620,7 +1645,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
             if not output_lang_ok(out, lang):
                 # Skip language regen if remaining budget < 20s → fallback (R5-8)
                 if _time.monotonic() + 20 > _t_deadline:
-                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
+                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
                 else:
                     msgs[0] = {
                         "role": "system",
@@ -1637,7 +1662,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                     except Exception:
                         out = ""
                     if not out or not output_lang_ok(out, lang):
-                        out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
+                        out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
             out = strip_llm_deadline_notes(out)
             out = _postcheck_amounts(out)
             # One silent regen if amounts still unknown or answer cut mid-bullet (R6-1)
@@ -1657,6 +1682,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                         out = out2
                 except Exception:
                     pass
+            out = strip_internal_markers(out)
             fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
             out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
             out += deadline_passed_note(out, lang)
@@ -1667,10 +1693,11 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     else:
         err = ""
     blob6 = _hit_blob(hits[:6])
-    ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_block)))
+    ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)))
     ans = _scrub_hallucinations(ans, blob6, lang=lang)
     ans = strip_llm_deadline_notes(ans)
     ans = _postcheck_amounts(ans)
+    ans = strip_internal_markers(ans)
     fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
     ans = finalize_answer_urls(ans, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
     ans += deadline_passed_note(ans, lang)
