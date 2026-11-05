@@ -131,3 +131,26 @@
   turns: ["Mam orzeczenie o niepełnosprawności, jak dostać stypendium dla niepełnosprawnych?", "Polka, stacjonarne, I stopień, 2 rok, jeden kierunek", "A ile kosztuje akademik?"]
   unit: {topics_include: [akademik]}
   e2e: {must_not_match: ["(?i)orzeczeni\\w* o niepełnosprawno"]}
+
+# ---------- round 5: language ----------
+- id: r5-ru-then-en-sentence-switches-to-en
+  origin: r5-S8
+  turns: ["Здравствуйте! Как получить социальную стипендию в Радомском университете?", "im from belarus, have a karta pobytu, stationary, first degre, 2 year, one major only"]
+  per_turn_lang_not: [ru]
+  unit: {lang: en}
+  e2e: {lang_in: [en], must_not_match: ["Джерела", "Чи навчаєтесь"]}
+- id: r5-uk-short-reply-stays-uk
+  origin: r2/r3 regression guard
+  turns: ["Привіт! Скільки коштує гуртожиток?", "так"]
+  unit: {lang: uk}
+- id: r5-no-mixed-script-tokens
+  origin: r5-S8
+  turns: ["Здравствуйте! Как получить социальную стипендию в Радомском университете?", "im from belarus, have a karta pobytu, stationary, first degre, 2 year, one major only", "Full-time (stacjonarne), bachelor first cycle, I do not study a second programme and have no previous degree."]
+  per_turn_lang_not: [ru]
+  e2e: {every_turn: true, lang_in: [en, uk], must_not_match: ["\\b(?=\\w*[A-Za-z])(?=\\w*[А-Яа-яІіЇїЄєҐґ])\\w+\\b", "Statус", "diплом"]}
+- id: r5-output-lang-ok-rejects-mixed
+  origin: r5-S8 (pure function)
+  output_lang_check: {text: "PROFIL STUDENTA - Statус: cudzoziemiec - Drugi kierunek/diплом: tak", target: pl, expect_ok: false}
+- id: r5-output-lang-ok-rejects-pl-as-uk
+  origin: r5-S8 (pure function)
+  output_lang_check: {text: "Jako cudzoziemiec z kartą pobytu możesz ubiegać się o stypendium socjalne. Wniosek składasz w systemie, a próg dochodu sprawdzisz w zarządzeniu rektora na bieżący rok akademicki.", target: uk, expect_ok: false}

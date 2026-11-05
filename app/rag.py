@@ -546,7 +546,7 @@ def clarify_answer(lang, missing, question, history, topics, prof):
     if _clarify_llm_enabled():
         labels = SLOT_LABEL.get(lang, SLOT_LABEL["pl"])
         miss_l = ", ".join(labels.get(m, m) for m in missing)
-        prof_txt = ", ".join(f"{labels.get(k, k)}: {v}" for k, v in prof.items() if k in labels) or "—"
+        prof_txt = format_profile_txt(prof, lang)
         sys = (CLARIFY_SYS.replace("{lang}", lang)
                           .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
                           .replace("{missing_labels}", miss_l)
@@ -735,6 +735,45 @@ PROF_LABEL = {
  "uk": {"status": "статус", "tryb": "форма", "poziom": "рівень", "rok": "рік", "drugi_kierunek": "другий напрям / диплом", "niepelnosprawnosc": "інвалідність", "kierunek": "напрям/група", "pobyt": "перебування"},
  "mn": {"status": "статус", "tryb": "хэлбэр", "poziom": "түвшин", "rok": "курс", "drugi_kierunek": "хоёр мэргэжил / диплом", "niepelnosprawnosc": "хөгжлийн бэрхшээл", "kierunek": "мэргэжил/бүлэг", "pobyt": "оршин суух"},
 }
+# Canonical slot values → display in target reply language (avoid Polish tokens leaking into EN/UK/MN).
+PROF_VAL = {
+ "pl": {},
+ "en": {
+  "pl": "Polish citizen", "cudzoziemiec": "international student", "doktorant": "doctoral student",
+  "bezpanstwowiec": "stateless", "stacjonarne": "full-time", "niestacjonarne": "part-time",
+  "I": "1st cycle", "II": "2nd cycle", "SD": "doctoral school", "jednolite": "long-cycle",
+  "tak": "yes", "nie": "no", "pobyt_czasowy": "temporary residence", "pobyt_staly": "permanent residence",
+  "karta_polaka": "Pole's Card", "ukr": "UKR temporary protection",
+ },
+ "uk": {
+  "pl": "громадянин Польщі", "cudzoziemiec": "іноземець", "doktorant": "докторант",
+  "bezpanstwowiec": "особа без громадянства", "stacjonarne": "денна", "niestacjonarne": "заочна",
+  "I": "І ступінь", "II": "ІІ ступінь", "SD": "докторантура", "jednolite": "єдиний магістерський",
+  "tak": "так", "nie": "ні", "pobyt_czasowy": "тимчасове перебування", "pobyt_staly": "постійне перебування",
+  "karta_polaka": "Карта поляка", "ukr": "тимчасовий захист UKR",
+ },
+ "mn": {
+  "pl": "Польш иргэн", "cudzoziemiec": "гадаадын оюутан", "doktorant": "докторант",
+  "bezpanstwowiec": "харьяалалгүй", "stacjonarne": "өдрийн", "niestacjonarne": "эчнээ",
+  "I": "I зэрэг", "II": "II зэрэг", "SD": "докторантур", "jednolite": "нэгдсэн магистр",
+  "tak": "тийм", "nie": "үгүй", "pobyt_czasowy": "түр оршин суух", "pobyt_staly": "байнгын оршин суух",
+  "karta_polaka": "Польшийн карт", "ukr": "UKR түр хамгаалалт",
+ },
+}
+
+
+def format_profile_txt(prof, lang="pl"):
+    """Profile line with labels+values in the reply language (never mix scripts)."""
+    labels = PROF_LABEL.get(lang, PROF_LABEL["pl"])
+    vals = PROF_VAL.get(lang, {})
+    parts = []
+    for k, v in (prof or {}).items():
+        if k not in labels:
+            continue
+        disp = vals.get(v, v) if isinstance(v, str) else v
+        parts.append(f"{labels.get(k, k)}: {disp}")
+    return ", ".join(parts) or "—"
+
 NO_LLM = {
  "pl": "Na podstawie oficjalnych stron UR (profil: {prof}):",
  "en": "Based on official UR pages (profile: {prof}):",
@@ -1174,8 +1213,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     srcs = [dict(n=i, title=h["title"], url=h["url"], modified=h["modified"],
                  outdated=outdated(h["modified"], h.get("url") or ""), snippet=h["text"][:400])
             for i, h in enumerate(hits, 1)]
-    labels = PROF_LABEL.get(lang, PROF_LABEL["pl"])
-    prof_txt = ", ".join(f"{labels.get(k, k)}: {v}" for k, v in prof.items() if k in labels) or "—"
+    prof_txt = format_profile_txt(prof, lang)
     selected_facts = select_facts(load_facts(), topics, prof)
     facts_block = render_facts_block(selected_facts, lang)
     allowed_amounts = fact_amounts(selected_facts) | amounts_in(_hit_blob(hits[:8]))
@@ -1223,7 +1261,9 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                 msgs[0] = {
                     "role": "system",
                     "content": (
-                        f"CRITICAL: Respond ONLY in {LANG_NAME.get(lang, 'polski')}. Never use Russian.\n\n"
+                        f"CRITICAL: Respond ONLY in {LANG_NAME.get(lang, 'polski')} (lang={lang}). "
+                        "Never use Russian. Never mix Latin and Cyrillic letters in the same word "
+                        "(no forms like Statус / diплом). Sources header language must match the body.\n\n"
                         + sys
                     ),
                 }
