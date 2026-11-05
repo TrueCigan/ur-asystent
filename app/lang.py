@@ -1,10 +1,13 @@
-"""Session language policy: sticky lang with substantive switch, ru→uk, output validation."""
+"""Session language policy: sticky lang with substantive switch, ru→uk, output validation.
+
+Output languages: pl / en / uk only (redesign P3). Mongolian script → en. Russian → uk.
+"""
 from __future__ import annotations
 
 import re
 
-ALLOWED = ("pl", "en", "uk", "mn")
-LANG_NAME = {"pl": "polski", "en": "English", "uk": "українська", "mn": "монгол"}
+ALLOWED = ("pl", "en", "uk")
+LANG_NAME = {"pl": "polski", "en": "English", "uk": "українська"}
 
 _RU_MARKERS = re.compile(r"[ыэъЫЭЪёЁ]|\b(что|спасибо|вот|сколько|можно|привет|нужна|оформить)\b", re.I)
 _UK_MARKERS = re.compile(r"[іїєґІЇЄҐ]")
@@ -32,14 +35,16 @@ _MIXED_TOKEN = re.compile(
 
 
 def map_policy(lang: str) -> str:
-    """ru -> uk, unknown -> pl."""
+    """ru → uk; legacy mn → en; unknown → pl."""
     if lang == "ru":
         return "uk"
+    if lang == "mn":
+        return "en"
     return lang if lang in ALLOWED else "pl"
 
 
 def explicit_switch_request(text: str) -> str | None:
-    """Detect explicit language switch. 'по-русски' maps to uk (policy)."""
+    """Detect explicit language switch. 'по-русски' / Mongolian → policy targets (uk / en)."""
     if not text:
         return None
     t = text.strip()
@@ -75,12 +80,12 @@ def explicit_switch_request(text: str) -> str | None:
         r"|(?:монгол\s*хэлээр|in\s*mongolian)\s*$",
         t,
     ):
-        return "mn"
+        return "en"  # no mn output
     return None
 
 
 def detect_message_lang(text: str) -> tuple[str, float]:
-    """(lang, confidence). Low confidence for short / no-script messages."""
+    """(lang, confidence). Mongolian script → en (no mn in ALLOWED)."""
     if not text or not text.strip():
         return "pl", 0.0
     t = text.strip()
@@ -88,8 +93,9 @@ def detect_message_lang(text: str) -> tuple[str, float]:
     short = len(words) < 3
     letters = len(re.findall(r"[A-Za-zА-Яа-яІіЇїЄєҐґӨөҮүЁёąćęłńóśźż]", t))
 
+    # Mongolian letters / stopwords → English (policy: no mn replies)
     if _MN_MARKERS.search(t) or _MN_STOP.search(t):
-        return "mn", 0.95 if _MN_MARKERS.search(t) else 0.75
+        return "en", 0.9 if _MN_MARKERS.search(t) else 0.7
     if _UK_MARKERS.search(t):
         return "uk", 0.95
     if re.search(r"[а-яА-ЯёЁ]", t):
@@ -99,7 +105,6 @@ def detect_message_lang(text: str) -> tuple[str, float]:
     if _PL_MARKERS.search(t):
         return "pl", 0.9
     if _EN_STOP.search(t):
-        # Longer English sentences get high confidence
         conf = 0.9 if (len(words) >= 4 or letters >= 25) else (0.85 if not short else 0.5)
         return "en", conf
     if _PL_STOP.search(t):
@@ -120,10 +125,11 @@ def resolve_session_lang(state_lang: str | None, message: str) -> str:
     words = re.findall(r"\w+", message or "", re.U)
     letters = len(re.findall(r"[A-Za-zА-Яа-яІіЇїЄєҐґӨөҮүЁёąćęłńóśźż]", message or ""))
     substantive = conf >= 0.85 and (len(words) >= 4 or letters >= 25)
-    if state_lang and state_lang in ALLOWED:
-        if substantive and mapped != state_lang and mapped in ALLOWED:
-            return mapped  # full sentence in another allowed language
-        return state_lang  # sticky for short replies
+    sticky = map_policy(state_lang) if state_lang else None
+    if sticky and sticky in ALLOWED:
+        if substantive and mapped != sticky and mapped in ALLOWED:
+            return mapped
+        return sticky
     return mapped if conf >= 0.6 else map_policy(state_lang or lang)
 
 
@@ -157,18 +163,23 @@ def _strip_sources_block(text: str) -> str:
 
 
 def output_lang_ok(answer: str, target: str) -> bool:
-    """False if Russian, wrong language body, or mixed-script tokens."""
+    """False if Russian, Mongolian, wrong language body, or mixed-script tokens."""
     if not answer or not answer.strip():
         return True
     target = map_policy(target)
+    if target not in ALLOWED:
+        target = "pl"
     body = _strip_sources_block(answer)
     if mixed_script_tokens(body) or mixed_script_tokens(answer):
         return False
-    # Russian markers must not dominate
+    # Mongolian letters never OK in user-visible answers
+    if _MN_MARKERS.search(body) or _MN_MARKERS.search(answer):
+        return False
+    if _MN_STOP.search(body):
+        return False
     ru_hits = len(re.findall(r"[ыэъЫЭЪ]", body))
     ru_words = len(_RU_MARKERS.findall(body))
     uk_hits = len(_UK_MARKERS.findall(body))
-    mn_hits = len(_MN_MARKERS.findall(body))
     if ru_hits + ru_words >= 2 and ru_hits >= uk_hits:
         return False
     words = re.findall(r"\w+", body, re.U)
@@ -176,25 +187,16 @@ def output_lang_ok(answer: str, target: str) -> bool:
         detected, _conf = detect_message_lang(body)
         detected = map_policy(detected)
         if detected != target:
-            # Allow mn/uk when script markers match target even if detector soft
             if target == "uk" and uk_hits > 0 and ru_hits == 0:
-                pass
-            elif target == "mn" and mn_hits > 0:
                 pass
             else:
                 return False
     if target == "uk":
-        # Polish answer must not pass as Ukrainian
         if _PL_MARKERS.search(body) and uk_hits == 0 and len(words) >= 20:
             return False
         if ru_hits >= 2 and uk_hits == 0:
             return False
-        # Detect clear Polish via stopwords without UK markers
         if len(words) >= 20 and _PL_STOP.search(body) and uk_hits == 0 and not _UK_STOP.search(body):
-            return False
-        return True
-    if target == "mn":
-        if ru_hits >= 2 and mn_hits == 0 and uk_hits == 0:
             return False
         return True
     if target in ("pl", "en"):

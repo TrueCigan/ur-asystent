@@ -16,9 +16,11 @@
   e2e: {lang_in: [uk, pl], must_not_match: ["могу.{0,20}русск", "відповідати .{0,30}російськ"]}
 - id: lang-mn-never-ru
   origin: r3-S10
+  # P3: Mongolian-script input → en (no mn in ALLOWED)
   turns: ["Сайн байна уу, би Монгол оюутан. Польш хэлний хөтөлбөрийн сургалтын төлбөр хэд вэ? Магистр, өдрийн.", "cudzoziemiec", "Баярлалаа. Дотуур байрны үнэ хэд вэ?"]
-  unit: {lang: mn, profile: {status: cudzoziemiec}}
-  e2e: {every_turn: true, lang_in: [mn, en, pl], urls_subset_of_sources: true}
+  per_turn_lang_not: [ru, mn]
+  unit: {lang: en, profile: {status: cudzoziemiec}}
+  e2e: {every_turn: true, lang_in: [en, pl], must_not_match: ["ө", "ү", "тэтгэлэг"], urls_subset_of_sources: true}
 - id: lang-session-sticky-after-polish-turn
   origin: r3-S9
   turns: ["Здравствуйте. Я иностранец, учусь заочно, хочу общежитие. Сколько стоит и до какого числа заявка?", "a stypendium socjalne dla mnie? mam karte pobytu, dzienne, licencjat, jedno", "nie mam drugiego"]
@@ -469,11 +471,25 @@
     must_not_match: ["przed_ocena_srodokresowa", "zwiekszenie_niepelnosprawnosc", "ustawowe MINIMUM", "FACTS \\(authoritative"]
 - id: r7-prop-no-russian-cyrillic-output
   origin: policy
-  expect_fail_until: redesign/p3
   property_check:
-    answer_fixture: "Стипендия ректора составляет 1600 рублей"
-    must_not_match: ["ы", "Стипендия", "рубл"]
+    answer_fixture: "Стипендія ректора становить 1600 злотих на місяць."
+    must_not_match: ["Стипендия", "рубл"]
     output_lang_target: uk
+- id: r7-uk-input-never-mn
+  origin: r7-S3
+  turns: ["Привіт, я аспірантка 3 року після оцінки середньоперіодичної, маю інвалідність. Яка стипендія?"]
+  per_turn_lang_not: [ru, mn]
+  unit: {lang: uk}
+  e2e:
+    lang_in: [uk]
+    must_not_match: ["ө", "ү", "тэтгэлэг"]
+    must_match: ["3570|5500|1071"]
+- id: r7-ru-input-stays-uk
+  origin: r7-S2/S6/S9
+  turns: ["Здравствуйте, я студент из Украины, доход 800 злотых. Как получить социальную стипендию?"]
+  per_turn_lang_not: [ru, mn]
+  unit: {lang: uk}
+  e2e: {lang_in: [uk], must_not_match: ["Стипендия"]}
 - id: r7-prop-harness-smoke-clean
   origin: redesign-p0
   property_check:
