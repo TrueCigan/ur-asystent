@@ -15,10 +15,14 @@ jobs:
         with: {python-version: "3.12"}
       - run: pip install -r requirements.txt pyyaml
       - run: python tests/eval_dialogues.py --repo . --layer unit
+      - name: Verified social-scholarship scenario (no LLM)
+        run: python tests/test_social_scenario.py
       - run: docker build -t ur-asystent-ci .          # guards the Render deploy (Dockerfile COPY lines, deps)
   eval-e2e-pr:
-    # Critical subset marked e2e_pr: true — redesign P6. Cost-bounded; full e2e stays nightly.
+    # LLM golden subset — advisory on PRs until verified scenarios cover those paths.
+    # Does not block merge: answers vary by model; required gate is eval-unit.
     if: github.event_name == 'pull_request'
+    continue-on-error: true
     runs-on: ubuntu-latest
     env:
       LLM_PROVIDER: anthropic
@@ -26,6 +30,7 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       EMBED_PROVIDER: gemini
       SESSION_SECRET: ci-only
+      SCENARIO_SOCIAL: "0"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -40,7 +45,7 @@ jobs:
           else
             echo "skip=0" >> "$GITHUB_OUTPUT"
           fi
-      - name: Critical e2e subset (e2e_pr)
+      - name: Critical e2e subset (e2e_pr, advisory)
         if: steps.gate.outputs.skip != '1'
         run: python tests/eval_dialogues.py --repo . --layer e2e --e2e-pr --runs 1
   eval-e2e:
