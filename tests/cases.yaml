@@ -485,10 +485,8 @@
     answer_fixture: "Maksymalna łączna kwota stypendium socjalnego i rektora wynosi 3667 zł/miesiąc."
     must_match: ["3667"]
     must_not_match: ["= miesięcznie", "FOLLOW-UP", "FACTS \\(authoritative", "in the in the"]
-# render_check cases land with P1; skip until then
 - id: r7-render-doctoral-total
   origin: r7-S3
-  expect_fail_until: redesign/p1
   render_check:
     template: "Razem: {{F:doctoral_stipend_amount.po_ocenie_srodokresowej}} + {{F:doctoral_disability_topup_monthly}} = {{C:doctoral_with_disability_po}}."
     lang: uk
@@ -498,7 +496,6 @@
     must_not_match: ["= ---", "przed_ocena_srodokresowa"]
 - id: r7-render-social-dorm-total
   origin: r7-S1
-  expect_fail_until: redesign/p1
   render_check:
     template: "Razem otrzymasz: {{F:social_income_threshold.amounts.II}} + {{F:social_income_threshold.zwiekszenie_akademik}} = {{C:social_ii_plus_dorm}}."
     lang: pl
@@ -506,3 +503,8 @@
     computed_need: [social_ii_plus_dorm]
     must_match: ["1400", "400", "1800"]
     must_not_match: ["= miesięcznie"]
+- id: r7-json-rejects-raw-money
+  origin: redesign
+  property_check:
+    answer_fixture: "cap is 3667 zł"
+    expect_raw_money: true

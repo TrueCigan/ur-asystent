@@ -223,6 +223,13 @@ def run_property_check(ctx, case):
         from lang import output_lang_ok
         if not output_lang_ok(text, pc["output_lang_target"]):
             f.append(f"property output_lang_ok failed for target={pc['output_lang_target']}")
+    if pc.get("expect_raw_money"):
+        try:
+            from render import template_has_raw_money
+            if not template_has_raw_money(text):
+                f.append(f"expected raw money detection on {text!r}")
+        except Exception as e:
+            f.append(f"expect_raw_money error: {e}")
     return f
 
 

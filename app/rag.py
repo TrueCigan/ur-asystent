@@ -656,14 +656,23 @@ SYSTEM = """You are a campus info assistant for Uniwersytet Radomski (UR). Be cl
 
 RULES:
 1. Answer only in {lang_name} (lang={lang}). Never Russian (ru→uk). Keep official names (UR, BOS, ordinance codes).
-2. Use ONLY FACTS + source fragments. Quote amounts/deadlines from FACTS or verbatim chunks; if missing, say so and give the ordinance link when present. Prefer facts over “contact BOS”.
-3. Structure: direct answer → conditions for THIS profile → next steps. Short paragraphs/bullets. Answer every part of multi-part questions (and ORIGINAL QUESTION(S) before FOLLOW-UP).
-4. Cite with [n] / [F1]; do not write a sources section or URLs (system appends them). Never invent fake fact markers, USOS, menu paths, or dates not in sources.
-5. Do not invent profile fields (tryb/rok/drugi_kierunek/pobyt). Never claim a second programme unless profile says yes. Quote paid fees only when sources match the user’s mode/level.
-6. If FACTS mention UKR temporary protection eligibility for social scholarship and profile has pobyt=ukr, state that clearly with threshold/documents/channel from FACTS/sources.
-7. Never echo wrappers (USER_QUESTION, ORIGINAL QUESTION, <<<>>>). LATEST REPLY after clarify is a slot fill — answer the original question.
+2. Output JSON ONLY with keys: lang, template, fact_ids, source_ids, computed_need.
+   - template: prose in {lang_name} using ONLY placeholders {{{{F:fact_id}}}} or {{{{F:fact_id.nested}}}} / {{{{C:name}}}}.
+   - NEVER write monetary digits or currency amounts in template (no "3667 zł", no "5500.5"). The server fills numbers.
+   - fact_ids: ids you referenced. source_ids: 1-based indices from SOURCES cards.
+   - computed_need: optional list from [doctoral_with_disability_po, doctoral_with_disability_przed, social_ii_plus_dorm].
+3. Structure template: direct answer → conditions for THIS profile → next steps. Answer every prior user ask before the latest follow-up.
+4. Cite with [n] only; do not write a sources section or URLs (system appends them). Never invent USOS/SIRK, menu paths, or dates not in sources.
+5. Do not invent profile fields. Never claim a second programme unless profile says yes.
+6. If FACT cards mention UKR temporary protection and profile has pobyt=ukr, state that clearly via placeholders / prose without inventing amounts.
+7. Never echo PROFILE / SOURCES / dialogue field names into template.
 8. Skip BOS tip when sources already answer and the user asked not to be redirected.
 
+{security_rules}"""
+
+# Legacy free-text path (fallback when JSON parse fails). Prefer structured SYSTEM above.
+SYSTEM_FREE_TEXT = """You are a campus info assistant for Uniwersytet Radomski (UR). Be clear and practical. Today: {today}.
+Answer only in {lang_name} (lang={lang}). Never Russian. Use FACTS amounts exactly. Never echo wrappers.
 {security_rules}"""
 
 SLOT_LABEL = {
@@ -1709,85 +1718,116 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
             return True
         return False
 
+    blob6 = _hit_blob(hits[:6])
+    fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
+
+    def _finalize(out: str, mode: str, skip_amount_scrub: bool = False):
+        if mode != "llm-structured":
+            out = _scrub_hallucinations(out, blob6, lang=lang, facts_blob=facts_for_user)
+            out = strip_llm_deadline_notes(out)
+            if not skip_amount_scrub:
+                out = _postcheck_amounts(out)
+            out = strip_internal_markers(out)
+        else:
+            out = strip_llm_deadline_notes(out)
+            out = strip_internal_markers(out)
+        out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
+        out += deadline_passed_note(out, lang)
+        state.original_question = None
+        return _attach_state(
+            dict(clarify=False, mode=mode, sources=srcs, profile=prof, topics=topics, lang=lang, answer=out),
+            state,
+        )
+
     if llm_enabled():
         import datetime
+        import json as _json
+        from render import (
+            build_computed, fact_cards, parse_model_json, render_answer,
+            template_has_raw_money,
+        )
         sys = (SYSTEM.replace("{today}", datetime.date.today().isoformat())
                      .replace("{lang}", lang)
                      .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
                      .replace("{security_rules}", SECURITY_RULES))
-        lang_guard = (
-            f"Respond ONLY in {LANG_NAME.get(lang, 'polski')} (lang={lang}). "
-            "Never use Russian. Never offer Russian.\n\n"
-        )
-        facts_section = (facts_block + "\n\n") if facts_block else ""
-        msgs = [{"role": "system", "content": lang_guard + sys}] + _safe_history(history, 8) + [{"role": "user", "content":
-                f"PROFILE: {prof_txt}\nLANG: {lang}\nTOPICS: {', '.join(topics) or '—'}\n\n"
-                + facts_section
-                + f"SOURCES:\n{fmt_sources(hits)}\n\n"
-                + wrap_untrusted("USER_QUESTION", llm_q)
-                + "\n\nAnswer per system rules."}]
+        cards = fact_cards(selected_facts, lang)
+        dialogue = {
+            "prior_user_turns": [
+                (m.get("content") or "")[:500]
+                for m in (history or []) if m.get("role") == "user"
+            ][-6:],
+            "latest": question,
+            "original_intent": getattr(state, "original_question", None),
+        }
+        user_payload = _json.dumps({
+            "lang": lang,
+            "profile": prof,
+            "topics": topics,
+            "fact_cards": cards,
+            "sources": [
+                {"id": i, "title": h.get("title"), "url": h.get("url")}
+                for i, h in enumerate(hits[:6], 1)
+            ],
+            "dialogue": dialogue,
+        }, ensure_ascii=False)
+        msgs = [
+            {"role": "system", "content": sys},
+            {"role": "user", "content": user_payload + "\n\nReturn JSON only."},
+        ]
         try:
-            blob6 = _hit_blob(hits[:6])
-            out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.3)))
-            out = _scrub_hallucinations(out, blob6, lang=lang, facts_blob=facts_for_user)
-            if not output_lang_ok(out, lang):
-                # Skip language regen if remaining budget < 20s → fallback (R5-8)
-                if _time.monotonic() + 20 > _t_deadline:
-                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
-                else:
-                    msgs[0] = {
-                        "role": "system",
-                        "content": (
-                            f"CRITICAL: Respond ONLY in {LANG_NAME.get(lang, 'polski')} (lang={lang}). "
-                            "Never use Russian. Never mix Latin and Cyrillic letters in the same word "
-                            "(no forms like Statус / diплом). Sources header language must match the body.\n\n"
-                            + sys
-                        ),
-                    }
-                    try:
-                        out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
-                        out = _scrub_hallucinations(out, blob6, lang=lang, facts_blob=facts_for_user)
-                    except Exception:
-                        out = ""
-                    if not out or not output_lang_ok(out, lang):
-                        out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
-            out = strip_llm_deadline_notes(out)
-            out = _postcheck_amounts(out)
-            # One silent regen if amounts still unknown or answer cut mid-bullet (R6-1)
-            still_bad = bool(selected_facts and (amounts_in(out) - allowed_amounts))
-            if (still_bad or _looks_truncated(out)) and _time.monotonic() + 25 < _t_deadline:
-                nudge = (
-                    "Finish the full answer. Use only FACTS amounts (no invented figures). "
-                    "Do not append notes about removed amounts."
-                )
-                try:
-                    msgs2 = list(msgs) + [{"role": "user", "content": nudge}]
-                    out2 = strip_untrusted_wrappers(redact_secrets(call_llm(msgs2, temperature=0.2)))
-                    out2 = _scrub_hallucinations(out2, blob6, lang=lang, facts_blob=facts_for_user)
-                    out2 = strip_llm_deadline_notes(out2)
-                    out2 = _postcheck_amounts(out2)
-                    if out2 and (not _looks_truncated(out2) or len(out2) > len(out)):
-                        out = out2
-                except Exception:
-                    pass
-            out = strip_internal_markers(out)
-            fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
-            out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
-            out += deadline_passed_note(out, lang)
-            state.original_question = None
-            return _attach_state(dict(clarify=False, mode="llm", sources=srcs, profile=prof, topics=topics, lang=lang, answer=out), state)
+            raw = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
+            data = parse_model_json(raw)
+            if data and template_has_raw_money(data.get("template") or ""):
+                # one repair: strip money instruction
+                repair = msgs + [{"role": "user", "content":
+                    "INVALID: template contains raw monetary digits. Rewrite JSON using only {{F:…}} / {{C:…}} placeholders."}]
+                raw = strip_untrusted_wrappers(redact_secrets(call_llm(repair, temperature=0.1)))
+                data = parse_model_json(raw)
+                if data and template_has_raw_money(data.get("template") or ""):
+                    data = None
+            if data:
+                need = list(data.get("computed_need") or [])
+                computed = build_computed(selected_facts, need, profile=prof)
+                out = render_answer(data["template"], selected_facts, computed=computed, lang=lang)
+                if out:
+                    if not output_lang_ok(out, lang) and _time.monotonic() + 20 < _t_deadline:
+                        repair = msgs + [{"role": "user", "content":
+                            f"CRITICAL: template language must be {LANG_NAME.get(lang, 'polski')} (lang={lang}). Rewrite JSON."}]
+                        raw2 = strip_untrusted_wrappers(redact_secrets(call_llm(repair, temperature=0.1)))
+                        data2 = parse_model_json(raw2)
+                        if data2 and not template_has_raw_money(data2.get("template") or ""):
+                            out = render_answer(
+                                data2["template"], selected_facts,
+                                computed=build_computed(selected_facts, data2.get("computed_need") or [], profile=prof),
+                                lang=lang,
+                            )
+                    if out and output_lang_ok(out, lang):
+                        return _finalize(out, "llm-structured", skip_amount_scrub=True)
+            # JSON failed → free-text legacy once, then fallback
+            sys_ft = (SYSTEM_FREE_TEXT.replace("{today}", datetime.date.today().isoformat())
+                                      .replace("{lang}", lang)
+                                      .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
+                                      .replace("{security_rules}", SECURITY_RULES))
+            facts_section = (facts_block + "\n\n") if facts_block else ""
+            msgs_ft = [{"role": "system", "content": sys_ft}] + _safe_history(history, 8) + [{
+                "role": "user",
+                "content": (
+                    f"PROFILE: {prof_txt}\nLANG: {lang}\nTOPICS: {', '.join(topics) or '—'}\n\n"
+                    + facts_section
+                    + f"SOURCES:\n{fmt_sources(hits)}\n\n"
+                    + wrap_untrusted("USER_QUESTION", llm_q)
+                    + "\n\nAnswer per system rules. Prefer amounts from FACTS only."
+                ),
+            }]
+            out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs_ft, temperature=0.3)))
+            if not out or not output_lang_ok(out, lang):
+                out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
+            return _finalize(out, "llm")
         except Exception:
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
     else:
         err = ""
-    blob6 = _hit_blob(hits[:6])
-    ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)))
-    ans = _scrub_hallucinations(ans, blob6, lang=lang, facts_blob=facts_for_user)
-    ans = strip_llm_deadline_notes(ans)
-    ans = _postcheck_amounts(ans)
-    ans = strip_internal_markers(ans)
-    fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
-    ans = finalize_answer_urls(ans, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
-    ans += deadline_passed_note(ans, lang)
-    state.original_question = None
-    return _attach_state(dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, topics=topics, lang=lang, answer=ans), state)
+    ans = strip_untrusted_wrappers(redact_secrets(
+        compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
+    ))
+    return _finalize(ans, "wyszukiwanie")

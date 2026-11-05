@@ -51,4 +51,20 @@ Seven live QA rounds showed that regex / string-substitution post-processors fix
 5. Golden fixtures under `origin: r7-*` / `property_check` lock the bugs until the phase that fixes them; cases may use `expect_fail_until: redesign/pN` so the harness prints **SKIP** (not PASS/FAIL) until that phase.
 
 See `CURSOR_REDESIGN_PLAN_round7.md` for phase order: P0 fixtures → P1 render → P2 delete strippers → P3 lang → P4 slots → P5 corpus → P6 CI.
+
+### Structured answer JSON (Phase 1+)
+
+Model output (JSON only):
+
+```json
+{
+  "lang": "uk",
+  "template": "Po ocenie: {{F:doctoral_stipend_amount.po_ocenie_srodokresowej}}. Z orzeczeniem: +{{F:doctoral_disability_topup_monthly}} = {{C:doctoral_with_disability_po}}.",
+  "fact_ids": ["doctoral_stipend_amount", "doctoral_disability_topup_monthly"],
+  "source_ids": [1, 2],
+  "computed_need": ["doctoral_with_disability_po"]
+}
+```
+
+Server (`app/render.py`) substitutes `{{F:…}}` / `{{C:…}}` from `data/facts.yaml` and code-derived totals. Templates with raw `3667 zł`-style money are rejected.
 )
