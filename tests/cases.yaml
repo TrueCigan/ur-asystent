@@ -184,3 +184,16 @@
   origin: r5-S4/S8/S10
   turns: ["Jak dostać stypendium socjalne?", "studiuje w weekendy, drugi stopien, pierwszy rok, polak, tylko ten kierunek"]
   unit: {profile: {status: pl, tryb: niestacjonarne, poziom: II, rok: "1", drugi_kierunek: nie}, missing: []}
+
+# ---------- round 5: original question after clarify ----------
+- id: r5-original-question-answered-after-clarify
+  origin: r5-S10
+  turns: ["Привіт! Я з України, маю тимчасовий захист. Скільки коштує гуртожиток і чи можу я отримати соціальну стипендію?", "Навчаюсь не вдень, а по вихідних, магістратура, другий рік. Другого напряму нема і диплома магістра ще не маю.", "Заочна. А ще скажіть, як поїхати за програмою Erasmus+?"]
+  per_turn_lang_not: [ru]
+  unit: {topics_include: [akademik, stypendium_socjalne]}
+  e2e: {lang_in: [uk], must_match: ["(?i)гуртож", "(?i)соціальн\\w* стипенд", "(?i)erasmus"]}
+- id: r5-intents-accumulate
+  origin: r5-S10 variant
+  turns: ["Ile kosztuje akademik i czy dostanę stypendium socjalne?", "Polak, stacjonarne, I stopień, 1 rok, jeden kierunek. A jak z Erasmusem?"]
+  unit: {topics_include: [akademik, stypendium_socjalne]}
+  e2e: {must_match: ["(?i)akademik|dom studenta", "(?i)socjaln", "(?i)erasmus"]}

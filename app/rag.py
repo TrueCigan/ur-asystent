@@ -452,7 +452,8 @@ _DWA_KIER_NEG = (
     r"nie\s+(studiuj\w*\s*)?r[oó]wnoleg|równolegle\s*nie|"
     r"nie\s+mam\s+drug|nie\s+mam\s+żadn|nie\s+posiadam\s+dyplom|"
     r"no\s+second\s+(program|degree|major)|nothing\s+else|nic\s+wi[eę]cej|"
-    r"jednokierunkow|tylko\s+jeden|один\s+напрям|тільки\s+один"
+    r"jednokierunkow|tylko\s+jeden|tylko\s+ten\s+kierun|один\s+напрям|тільки\s+один|"
+    r"друг\w*\s*напрям\w*\s*нема|нема\s*.{0,20}друг|диплом\w*\s*.{0,20}не\s*ма|не\s*маю\s*.{0,15}диплом"
 )
 
 def _drop_negated_dwa_kierunki(topics, text):
@@ -510,12 +511,24 @@ def needed(question, history_text):
             topics = [(n, s) for n, s in topics if n != "cudzoziemcy"] or list(benefit_hist)
     elif not topics and hist_topics:
         topics = [hist_topics[-1]]
+    # R5-4: keep prior topics from history when a follow-up adds a new one (Erasmus after dorm+social)
+    seen = {n for n, _ in topics}
+    for part in [p.strip() for p in re.split(r"\n+", history_text or "") if p.strip()]:
+        for n, rx, s in TOPICS:
+            if n == "cudzoziemcy" or n in seen:
+                continue
+            if re.search(rx, part, re.I):
+                if n == "dwa_kierunki" and _drop_negated_dwa_kierunki([(n, s)], part) == []:
+                    continue
+                topics.append((n, s))
+                seen.add(n)
+    # każda tura osobno (BUG-01: kotwice nie giną po sklejeniu historii)
+    prof = merge_profile_from_turns(history_text, question)
     req = []
     for _, s in topics:
         for x in s:
-            if x not in req: req.append(x)
-    # każda tura osobno (BUG-01: kotwice nie giną po sklejeniu historii)
-    prof = merge_profile_from_turns(history_text, question)
+            if x not in req:
+                req.append(x)
     if prof.get("status") == "doktorant" or prof.get("poziom") == "SD":
         req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
     missing = [x for x in req if x not in prof]
@@ -1053,20 +1066,77 @@ def _last_assistant_was_clarify(history):
             ))
     return False
 
-def _user_question_for_llm(question, history):
-    """Po clarify: ORIGINAL QUESTION + LATEST REPLY, żeby LLM nie odpowiadał na samo „daily” (BUG-R2-02)."""
-    if not history or not _last_assistant_was_clarify(history):
+def _topic_names_in(text):
+    return [n for n, rx, _ in TOPICS if n != "cudzoziemcy" and re.search(rx, text or "", re.I)]
+
+
+def _accumulate_topics(topics, *texts, prior=None):
+    """Union topic names from prior intents + current + any user texts (R5-4)."""
+    acc = []
+    for n in list(prior or []) + list(topics or []):
+        if n and n not in acc and n != "cudzoziemcy":
+            acc.append(n)
+    for text in texts:
+        for n in _topic_names_in(text or ""):
+            if n not in acc:
+                acc.append(n)
+    return acc
+
+
+def _user_question_for_llm(question, history, state=None):
+    """ORIGINAL QUESTION(S) + FOLLOW-UP so clarify/follow-ups never drop the first ask (R5-4)."""
+    substantive = []
+    if state and getattr(state, "original_question", None):
+        oq = state.original_question.strip()
+        if oq:
+            substantive.append(oq)
+    for m in history or []:
+        if m.get("role") != "user":
+            continue
+        c = (m.get("content") or "").strip()
+        if not c:
+            continue
+        if any(re.search(rx, c, re.I) for _, rx, _ in TOPICS):
+            if c not in substantive:
+                substantive.append(c)
+    q = (question or "").strip()
+    # After a clarify turn, short slot replies are not new questions — keep ORIGINAL + LATEST REPLY
+    if _last_assistant_was_clarify(history) and q and q.lower() not in [s.lower() for s in substantive]:
+        if not _topic_names_in(q) or len(q.split()) <= 12:
+            orig = substantive[-1] if substantive else (state.original_question if state else None)
+            if orig and orig.lower() != q.lower():
+                return f"ORIGINAL QUESTION: {orig}\nLATEST REPLY: {question}"
+    originals = [s for s in substantive if s.lower() != q.lower()]
+    if not originals:
         return question
-    substantive = [
-        m["content"] for m in history
-        if m.get("role") == "user" and any(re.search(rx, m.get("content") or "", re.I) for _, rx, _ in TOPICS)
-    ]
-    if not substantive:
-        return question
-    orig = substantive[-1].strip()
-    if orig.lower() == (question or "").strip().lower():
-        return question
+    # New topical follow-up (e.g. Erasmus after dorm+social): answer ALL pending items
+    if q and (_topic_names_in(q) or not _last_assistant_was_clarify(history)):
+        body = "ORIGINAL QUESTION(S):\n" + "\n".join(f"- {o}" for o in originals)
+        if q:
+            body += f"\nFOLLOW-UP: {q}"
+        body += "\n\nAnswer every item in ORIGINAL QUESTION(S) first, in order, then FOLLOW-UP."
+        return body
+    orig = originals[-1]
     return f"ORIGINAL QUESTION: {orig}\nLATEST REPLY: {question}"
+
+
+def search_topics(base_q, topics, prof, k_per=4, fac=None):
+    """Retrieve per pending topic and merge (max k_per each, stable URL dedup)."""
+    topics = [t for t in (topics or []) if t]
+    if not topics:
+        return search(base_q, k=12, prefer=prefer_sources([], fac=fac), topics=[], profile=prof)
+    merged, seen = [], set()
+    for t in topics:
+        q = (base_q or "") + " " + TOPIC_PL_QUERY.get(t, t)
+        q += " " + query_extras([t], prof)
+        prefer = prefer_sources([t], fac=fac if t == "plan" else None)
+        for h in search(q, k=k_per, prefer=prefer, topics=[t], profile=prof):
+            key = (h.get("url") or "", (h.get("text") or "")[:60])
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(h)
+    return merged[:12]
 
 def _scrub_hallucinations(text, hits_blob=""):
     """Remove system names absent from sources (USOS/SIRK/…)."""
@@ -1167,6 +1237,14 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         state.conflicts.extend(turn_conflicts)
     prof, missing = merge_state_profile(state, prof, topics, history)
     state.profile = dict(prof)
+    # Accumulate pending intents across clarify + follow-ups (R5-4)
+    topics = _accumulate_topics(
+        topics,
+        question,
+        state.original_question or "",
+        *user_turns,
+        prior=state.intents,
+    )
     state.intents = list(topics)
     prev_pending = list(state.pending_slots or [])
     if missing and prev_pending and question.strip():
@@ -1198,14 +1276,14 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         return _attach_state(dict(clarify=True, mode=mode, sources=[], profile=prof, topics=topics, lang=lang, answer=text), state)
     state.pending_slots = []
     state.pending_question = None
-    if state.original_question:
-        # keep until answered; clear after successful answer path below
-        pass
     base_q = question
     if history:
         prev = [m["content"] for m in history if m["role"] == "user" and any(re.search(rx, m["content"], re.I) for _, rx, _ in TOPICS)]
-        if prev: base_q = prev[-1] + " " + question
-    llm_q = _user_question_for_llm(question, history)
+        if prev:
+            base_q = prev[-1] + " " + question
+    if state.original_question and state.original_question not in base_q:
+        base_q = state.original_question + " " + base_q
+    llm_q = _user_question_for_llm(question, history, state=state)
     stipend_topics = {"stypendium_socjalne", "stypendium_rektora", "stypendium_niepeln", "dwa_kierunki", "doktoranckie"}
     if not (set(topics) & stipend_topics):
         q = base_q + " " + " ".join(
@@ -1217,7 +1295,6 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     q += " " + query_extras(topics, prof)
     fac = resolve_plan_faculty(prof, base_q) if "plan" in topics else None
     tp = [t for t in topics if t != "cudzoziemcy"] or topics
-    prefer = prefer_sources(tp, fac=fac)
     if tp is not topics:
         q = re.sub(r"(?i)\b(jako\s+)?cudzoziem\w*|international\s+student|foreign\s+student|інозем\w*|гадаад\s+оюутан", " ", q)
     if "plan" in topics and fac:
@@ -1226,7 +1303,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
             q += " Ekonomia Finanse i rachunkowość (wydział WEiF – wybierz konkretny kierunek na stronie)"
         elif prof.get("kierunek"):
             q += " " + prof["kierunek"]
-    hits = search(q, k=12, prefer=prefer, topics=topics, profile=prof)
+    hits = search_topics(q, tp, prof, k_per=4, fac=fac)
     hits = ensure_canonical_hits(hits, topics, prof, q)
     if "plan" in topics:
         if fac:
