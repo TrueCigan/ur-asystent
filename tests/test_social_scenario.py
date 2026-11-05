@@ -13,7 +13,9 @@ os.environ.pop("SCENARIO_SOCIAL", None)  # default off
 os.environ.pop("FACTS_INJECT_UNVERIFIED", None)
 
 from scenarios import social as S  # noqa: E402
-from facts import income_group, load_facts  # noqa: E402
+from facts import extract_income, income_group, load_facts  # noqa: E402
+
+S.reload_scenario_cache()
 
 
 def _income_fact():
@@ -127,6 +129,79 @@ def test_no_amount_duplication_in_scenario_yaml():
     assert "1400" not in raw
     assert "3560" not in raw
     assert "3667" not in raw
+
+
+def test_no_facts_jargon_on_card():
+    for lang in ("pl", "en", "uk"):
+        card = S.build_card(lang)
+        blob = str(card)
+        assert "FACTS" not in blob, lang
+        assert "{{" not in blob
+
+
+def test_periods_separated_on_card():
+    card = S.build_card("pl")
+    assert card["amounts"]["academic_year"] == "2025/2026"
+    assert card["deadlines"]["academic_year"] == "2026/2027"
+    assert card["period_map"]["amounts_year"] != card["period_map"]["deadlines_year"]
+    assert card["deadlines"].get("note")
+    # dorm rule localized (not missing for en/uk)
+    assert "§ 12" in (card["dorm_topup"]["rule"] or "")
+    en = S.build_card("en")
+    assert "Regulations" in (en["dorm_topup"]["rule"] or "") or "§ 12" in (en["dorm_topup"]["rule"] or "")
+    assert "zamieszkania w domu studenta" not in (en["dorm_topup"]["rule"] or "")
+
+
+def test_looks_like_social_ignores_sticky_topics():
+    # Follow-ups about dorm/plan must NOT be treated as social just because history had social
+    assert S.looks_like_social_question("Jak dostać stypendium socjalne?") is True
+    assert S.looks_like_social_question("Jaki jest cennik akademika?", ["stypendium_socjalne"]) is False
+    assert S.looks_like_social_question("Plan zajęć WTEiI", ["stypendium_socjalne"]) is False
+
+
+def test_extract_income_preserves_minus():
+    assert extract_income("Stypendium socjalne, dochód -10 zł na osobę") == -10.0
+    assert extract_income("dochód -0,01 zł na osobę") == -0.01
+    assert extract_income("income -5 PLN per person") == -5.0
+    r = S.estimate(-10, academic_year="2025/2026")
+    assert r["result"] == "input_error"
+
+
+def test_topup_label_when_included():
+    r = S.estimate(
+        "1100",
+        academic_year="2025/2026",
+        interested_in_dorm_topup=True,
+        dorm_conditions_met=True,
+        lang="pl",
+    )
+    assert r["ok"]
+    assert r["total_display_amount"] == "1800.00"
+    top = r["conditional_dorm_topup"]
+    assert top["included_in_total"] is True
+    assert "nie wliczone" not in (top["label"] or "").lower()
+    assert "wliczone" in (top["label"] or "").lower()
+    chat = S.format_chat_answer("pl", estimate_result=r)
+    assert "1800" in chat["answer"]
+    assert "≠ total" not in chat["answer"]
+
+
+def test_chat_followup_not_stuck(monkeypatch=None):
+    prev = os.environ.get("SCENARIO_SOCIAL")
+    os.environ["SCENARIO_SOCIAL"] = "1"
+    try:
+        import rag
+        r1 = rag.answer("Jak dostać stypendium socjalne?", [])
+        assert r1.get("mode") == "scenario-social"
+        hist = [{"role": "user", "content": "Jak dostać stypendium socjalne?"},
+                {"role": "assistant", "content": r1.get("answer") or ""}]
+        r2 = rag.answer("Jaki jest cennik akademika?", hist)
+        assert r2.get("mode") != "scenario-social", r2.get("mode")
+    finally:
+        if prev is None:
+            os.environ.pop("SCENARIO_SOCIAL", None)
+        else:
+            os.environ["SCENARIO_SOCIAL"] = prev
 
 
 if __name__ == "__main__":

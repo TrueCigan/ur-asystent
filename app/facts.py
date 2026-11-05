@@ -266,18 +266,19 @@ def income_group(income_per_person: float | Decimal | str, groups: Any) -> tuple
 
 
 _INCOME_RE = re.compile(
-    r"(?i)(\d[\d\s.,]*)\s*(?:zł|zl|pln)?\s*"
+    r"(?i)(-?\d[\d\s.,]*)\s*(?:zł|zl|pln)?\s*"
     r"(?:na\s*osob\w*|per\s*person|/os\b|на\s*особ\w*|на\s*человека|нэг\s*хүнд)",
 )
 
 
 def extract_income(text: str) -> float | None:
+    """Parse income amount from free text. Preserves a leading minus (invalid for estimate)."""
     m = _INCOME_RE.search(text or "")
     if not m:
-        # softer: "dochod ... 1500" / "income ... 1500"
+        # softer: "dochod ... 1500" / "income ... -10"
         m = re.search(
             r"(?i)(?:doch[oó]d|income|доход|дохід|орлого).{0,40}?"
-            r"(\d[\d\s.,]*)\s*(?:zł|zl|pln)?",
+            r"(-?\d[\d\s.,]*)\s*(?:zł|zl|pln)?",
             text or "",
         )
     if not m:

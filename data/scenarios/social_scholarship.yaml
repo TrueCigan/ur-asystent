@@ -34,15 +34,24 @@ i18n:
       zwykle jeden kierunek. Obywatele UA z ochroną czasową / PESEL UKR — osobne zasady (patrz fakt UA).
       Sam dochód nie wystarcza do stwierdzenia uprawnienia.
     amounts_title: Wysokość (grupy dochodowe)
+    amounts_period_label: rok tabeli kwot
     amounts_note: >-
-      Kwoty bazowe według tabeli UR. Zwiększenie z tytułu zakwaterowania (+ kwota z faktu) jest warunkowe
+      Kwoty bazowe według tabeli UR na wskazany rok tabeli. Zwiększenie z tytułu zakwaterowania jest warunkowe
       (Regulamin § 12) i nie jest doliczane automatycznie do wyniku.
     dorm_topup_title: Zwiększenie (akademik / inny obiekt)
-    deadlines_title: Terminy
+    dorm_topup_rule: >-
+      Zwiększenie przysługuje w szczególnie uzasadnionych przypadkach (Regulamin § 12 / R-32/2024):
+      koszty zamieszkania w domu studenta lub innym obiekcie, gdy codzienny dojazd z miejsca stałego
+      zamieszkania uniemożliwiałby lub znacznie utrudniał studiowanie; wymagany skan umowy o zakwaterowanie/najem.
+      Samo zamieszkanie w DS bez spełnienia tych przesłanek nie wystarcza.
+    deadlines_title: Terminy składania wniosków
+    deadlines_period_label: rok okna wniosków
+    deadlines_note: >-
+      Okno wniosków może dotyczyć innego roku akademickiego niż tabela kwot powyżej — nie mieszamy tych okresów.
     documents_title: Dokumenty
     documents_body: >-
       Wniosek elektroniczny w Wirtualnej Uczelni. Przy zwiększeniu — skan umowy o zakwaterowanie lub najem.
-      Pełna lista załączników: oficjalna strona świadczeń / regulamin. Jeśli pozycji brak w FACTS — nie uzupełniamy z pamięci.
+      Pełna lista załączników: oficjalna strona świadczeń / regulamin. Pozycji spoza potwierdzonych źródeł nie uzupełniamy.
     documents_status: partial
     links_title: Oficjalne źródła
     form_title: Szacunek wysokości (nie decyzja)
@@ -54,7 +63,9 @@ i18n:
     result_base: Kwota bazowa (szacunek)
     result_group: Grupa dochodowa
     result_topup_conditional: Zwiększenie warunkowe (nie wliczone do sumy)
+    result_topup_included: Zwiększenie (wliczone do sumy — warunki potwierdzone)
     result_total_base_only: Suma do pokazania (tylko baza)
+    result_total_with_topup: Suma (baza + zwiększenie)
     result_not_eligibility: To nie jest decyzja o prawie do stypendium.
     err_input: Nieprawidłowa kwota dochodu.
     err_over: Dochód przekracza próg tabeli na ten rok — brak kwoty w tej tabeli.
@@ -65,8 +76,9 @@ i18n:
     chat_no_reask: Uwzględniono już podany dochód z formularza / profilu.
     link_social_page: Stypendia socjalne (UR)
     link_regulamin: Regulamin świadczeń (R-32/2024)
+    verified_data_word: potwierdzonych danych
     year_banner_confirmed: "Tabela kwot potwierdzona dla roku {year}."
-    year_banner_unconfirmed: "Dla roku {year} brak potwierdzonej tabeli kwot UR w FACTS — szacunek nie jest traktowany jako aktualny."
+    year_banner_unconfirmed: "Dla roku {year} brak potwierdzonej tabeli kwot UR — szacunek nie jest traktowany jako aktualny."
   en:
     title: Social scholarship
     badge_verified: Verified scenario
@@ -80,15 +92,24 @@ i18n:
       usually one programme. UA citizens with temporary protection / PESEL UKR — special rules (see UA fact).
       Income alone does not prove entitlement.
     amounts_title: Amounts (income groups)
+    amounts_period_label: amount-table year
     amounts_note: >-
-      Base amounts from the UR table. The accommodation top-up (amount from the fact) is conditional
+      Base amounts from the UR table for the stated amount-table year. The accommodation top-up is conditional
       (Regulations § 12) and is not added automatically to the result.
     dorm_topup_title: Top-up (dorm / other housing)
-    deadlines_title: Deadlines
+    dorm_topup_rule: >-
+      The top-up applies in specially justified cases (Regulations § 12 / R-32/2024): housing costs in a
+      student dorm or other facility when daily travel from the permanent residence would prevent or
+      seriously hinder studying; a scan of the housing or rental contract is required. Living in a dorm
+      alone without meeting those conditions is not enough.
+    deadlines_title: Application window
+    deadlines_period_label: application-window year
+    deadlines_note: >-
+      The application window may belong to a different academic year than the amount table above — we do not mix those periods.
     documents_title: Documents
     documents_body: >-
       Electronic application in Wirtualna Uczelnia. For the top-up — scan of housing or rental contract.
-      Full attachment list: official benefits page / regulations. Missing FACTS entries are not invented.
+      Full attachment list: official benefits page / regulations. We do not invent items outside confirmed sources.
     documents_status: partial
     links_title: Official sources
     form_title: Amount estimate (not a decision)
@@ -100,7 +121,9 @@ i18n:
     result_base: Base amount (estimate)
     result_group: Income group
     result_topup_conditional: Conditional top-up (not included in total)
+    result_topup_included: Top-up (included in total — conditions confirmed)
     result_total_base_only: Displayed total (base only)
+    result_total_with_topup: Total (base + top-up)
     result_not_eligibility: This is not an entitlement decision.
     err_input: Invalid income amount.
     err_over: Income exceeds the table threshold for this year — no amount in this table.
@@ -111,8 +134,9 @@ i18n:
     chat_no_reask: Already using income provided via the form / profile.
     link_social_page: Social scholarships (UR)
     link_regulamin: Benefits regulations (R-32/2024)
+    verified_data_word: verified data
     year_banner_confirmed: "Amount table confirmed for {year}."
-    year_banner_unconfirmed: "No confirmed UR amount table in FACTS for {year} — estimate is not treated as current."
+    year_banner_unconfirmed: "No confirmed UR amount table for {year} — estimate is not treated as current."
   uk:
     title: Соціальна стипендія
     badge_verified: Перевірений сценарій
@@ -126,15 +150,24 @@ i18n:
       зазвичай один напрям. Громадяни UA з тимчасовим захистом / PESEL UKR — окремі правила (факт UA).
       Самого доходу недостатньо, щоб стверджувати право на виплату.
     amounts_title: Розмір (групи доходу)
+    amounts_period_label: рік таблиці сум
     amounts_note: >-
-      Базові суми з таблиці UR. Надбавка за проживання (сума з факту) умовна
+      Базові суми з таблиці UR за вказаний рік таблиці. Надбавка за проживання умовна
       (Регламент § 12) і не додається до підсумку автоматично.
     dorm_topup_title: Надбавка (гуртожиток / інше житло)
-    deadlines_title: Терміни
+    dorm_topup_rule: >-
+      Надбавка надається в особливо обґрунтованих випадках (Регламент § 12 / R-32/2024):
+      витрати на проживання в гуртожитку або іншому об'єкті, якщо щоденний проїзд із місця постійного
+      проживання унеможливлював би або суттєво ускладнював навчання; потрібен скан договору про проживання/оренду.
+      Самого проживання в гуртожитку без цих підстав недостатньо.
+    deadlines_title: Терміни подання заяв
+    deadlines_period_label: рік вікна подання
+    deadlines_note: >-
+      Вікно подання заяв може стосуватися іншого навчального року, ніж таблиця сум вище — ці періоди не змішуємо.
     documents_title: Документи
     documents_body: >-
       Електронна заява у Wirtualna Uczelnia. Для надбавки — скан договору про проживання або оренду.
-      Повний перелік додатків: офіційна сторінка виплат / регламент. Відсутнє у FACTS не вигадуємо.
+      Повний перелік додатків: офіційна сторінка виплат / регламент. Позицій поза підтвердженими джерелами не вигадуємо.
     documents_status: partial
     links_title: Офіційні джерела
     form_title: Оцінка суми (не рішення)
@@ -146,7 +179,9 @@ i18n:
     result_base: Базова сума (оцінка)
     result_group: Група доходу
     result_topup_conditional: Умовна надбавка (не в підсумку)
+    result_topup_included: Надбавка (в підсумку — умови підтверджено)
     result_total_base_only: Сума для показу (лише база)
+    result_total_with_topup: Сума (база + надбавка)
     result_not_eligibility: Це не рішення про право на стипендію.
     err_input: Некоректна сума доходу.
     err_over: Дохід перевищує поріг таблиці на цей рік — у цій таблиці немає суми.
@@ -157,5 +192,6 @@ i18n:
     chat_no_reask: Вже враховано дохід з форми / профілю.
     link_social_page: Соціальні стипендії (UR)
     link_regulamin: Регламент виплат (R-32/2024)
+    verified_data_word: підтверджених даних
     year_banner_confirmed: "Таблицю сум підтверджено для року {year}."
-    year_banner_unconfirmed: "Для року {year} у FACTS немає підтвердженої таблиці сум UR — оцінка не вважається актуальною."
+    year_banner_unconfirmed: "Для року {year} немає підтвердженої таблиці сум UR — оцінка не вважається актуальною."

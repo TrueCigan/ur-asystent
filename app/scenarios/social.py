@@ -134,9 +134,11 @@ def build_card(lang: str = "pl") -> dict:
                     "amount_display": _fmt_money(_dec(amounts[g]), lang),
                 })
         dorm_topup = _dec(income_f.value.get("zwiekszenie_akademik"))
-        dorm_rule = income_f.value.get("zwiekszenie_akademik_rule")
+        # Localized rule text lives in scenario i18n (not Polish-only fact prose)
+        dorm_rule = t.get("dorm_topup_rule")
 
     links = []
+    amount_year_confirmed = amounts_confirmed_for_year(amount_year or "", facts)
     for item in sc.get("official_links") or []:
         if item.get("fact_id"):
             fp = _fact_payload(facts.get(item["fact_id"]), lang)
@@ -170,12 +172,13 @@ def build_card(lang: str = "pl") -> dict:
             "title": t.get("amounts_title"),
             "note": t.get("amounts_note"),
             "academic_year": amount_year,
-            "verification": "confirmed" if amounts_confirmed_for_year(amount_year or "", facts) else "unconfirmed",
+            "verification": "confirmed" if amount_year_confirmed else "unconfirmed",
             "max_income": str(max_income) if max_income is not None else None,
             "max_income_display": _fmt_money(max_income, lang),
             "groups": groups,
             "fact": _fact_payload(income_f, lang),
             "year_banner": (t.get("year_banner_confirmed") or "").format(year=amount_year or ""),
+            "period_label": t.get("amounts_period_label"),
         },
         "dorm_topup": {
             "title": t.get("dorm_topup_title"),
@@ -189,9 +192,18 @@ def build_card(lang: str = "pl") -> dict:
         "caps": caps,
         "deadlines": {
             "title": t.get("deadlines_title"),
+            "note": t.get("deadlines_note"),
             "fact": _fact_payload(window_f, lang),
             "value": window_f.value if window_f else None,
             "academic_year": window_f.academic_year if window_f else None,
+            "period_label": t.get("deadlines_period_label"),
+        },
+        # Explicit year map so UI does not mix amount-table year with application window year
+        "period_map": {
+            "amounts_year": amount_year,
+            "amounts_confirmed": amount_year_confirmed,
+            "deadlines_year": window_f.academic_year if window_f else None,
+            "caps": [{"id": c["id"], "academic_year": c["academic_year"], "value": c["value"]} for c in caps],
         },
         "channel": _fact_payload(channel_f, lang),
         "documents": {
@@ -277,17 +289,19 @@ def estimate(
     topup = _dec((groups_val or {}).get("zwiekszenie_akademik")) if isinstance(groups_val, dict) else None
     topup_block = None
     if interested_in_dorm_topup and topup is not None:
+        included = dorm_conditions_met is True
         topup_block = {
             "amount": str(topup),
             "amount_display": _fmt_money(topup, lang),
-            "included_in_total": False,
+            "included_in_total": included,
             "conditions_met": dorm_conditions_met,
-            "rule": (groups_val or {}).get("zwiekszenie_akademik_rule"),
-            "label": t.get("result_topup_conditional"),
+            "rule": t.get("dorm_topup_rule"),
+            "label": (
+                t.get("result_topup_included")
+                if included
+                else t.get("result_topup_conditional")
+            ),
         }
-        # Only fold into total when conditions explicitly confirmed true
-        if dorm_conditions_met is True:
-            topup_block["included_in_total"] = True
 
     total = base_amt
     if topup_block and topup_block["included_in_total"]:
@@ -319,7 +333,11 @@ def estimate(
         "labels": {
             "group": t.get("result_group"),
             "base": t.get("result_base"),
-            "total": t.get("result_total_base_only"),
+            "total": (
+                t.get("result_total_with_topup")
+                if base.get("dorm_topup_included")
+                else t.get("result_total_base_only")
+            ),
             "not_eligibility": t.get("result_not_eligibility"),
         },
         "eligibility": "unknown",
@@ -340,8 +358,11 @@ _SOCIAL_Q = re.compile(
 
 
 def looks_like_social_question(text: str, topics: list[str] | None = None) -> bool:
-    if topics and "stypendium_socjalne" in topics:
-        return True
+    """True only if *this* user message is about social scholarship.
+
+    Do not use sticky topics from history — otherwise a follow-up about dorms/plan
+    stays trapped in the social scenario.
+    """
     return bool(_SOCIAL_Q.search(text or ""))
 
 
@@ -355,12 +376,14 @@ def format_chat_answer(
     lang = lang if lang in ("pl", "en", "uk") else "pl"
     t = _i18n(lang)
     card = build_card(lang)
+    amt_year = card["amounts"].get("academic_year")
+    dl = card.get("deadlines") or {}
     lines = [
         t.get("chat_card_header") or "",
         "",
         card.get("intro") or "",
         "",
-        f"**{card['amounts']['title']}** ({card['amounts'].get('academic_year')})",
+        f"**{card['amounts']['title']}** — {t.get('amounts_period_label') or 'amounts'}: {amt_year}",
         card["amounts"].get("year_banner") or "",
     ]
     for g in card["amounts"].get("groups") or []:
@@ -372,10 +395,15 @@ def format_chat_answer(
             f"**{dorm.get('title')}**: {dorm['amount_display']} — {t.get('result_topup_conditional') or ''}",
         ]
         if dorm.get("rule"):
-            lines.append(str(dorm["rule"])[:400])
-    dl = card.get("deadlines") or {}
+            lines.append(str(dorm["rule"])[:500])
     if dl.get("value"):
-        lines += ["", f"**{dl.get('title')}** ({dl.get('academic_year')}): {dl['value']}"]
+        lines += [
+            "",
+            f"**{dl.get('title')}** — {t.get('deadlines_period_label') or 'window'}: {dl.get('academic_year')}",
+            str(dl["value"]),
+        ]
+        if dl.get("note"):
+            lines.append(dl["note"])
     ch = card.get("channel") or {}
     if ch.get("value"):
         lines += ["", f"{ch.get('label')}: {ch['value']}"]
@@ -385,6 +413,9 @@ def format_chat_answer(
         lines += ["", "—"]
         if used_form_income:
             lines.append(t.get("chat_no_reask") or "")
+        # Show year banner from *this* estimate (may be unconfirmed for another year)
+        if estimate_result.get("year_banner"):
+            lines.append(estimate_result["year_banner"])
         if estimate_result.get("ok"):
             lines.append(
                 f"{estimate_result.get('labels', {}).get('group')}: {estimate_result.get('income_group')} → "
@@ -392,7 +423,11 @@ def format_chat_answer(
             )
             top = estimate_result.get("conditional_dorm_topup")
             if top:
-                lines.append(f"{top.get('label')}: {top.get('amount_display')} (≠ total)")
+                lines.append(f"{top.get('label')}: {top.get('amount_display')}")
+            lines.append(
+                f"{estimate_result.get('labels', {}).get('total')}: "
+                f"{estimate_result.get('total_display')}"
+            )
             lines.append(estimate_result.get("message") or t.get("result_not_eligibility"))
         else:
             lines.append(estimate_result.get("message") or "")
@@ -407,9 +442,11 @@ def format_chat_answer(
             sources.append({"n": len(sources) + 1, "title": item.get("label"), "url": url, "modified": None})
 
     text = "\n".join(x for x in lines if x is not None)
-    # Guard: never leave placeholders
-    if "{{" in text or "FACTS (" in text:
-        text = t.get("chat_card_header") or "Social scholarship"
+    # Guard: never leave placeholders or internal FACTS jargon in user text
+    if "{{" in text or "FACTS (" in text or re.search(r"\bFACTS\b", text):
+        text = re.sub(r"\bFACTS\b", t.get("verified_data_word") or "verified data", text)
+        if "{{" in text:
+            text = t.get("chat_card_header") or "Social scholarship"
     return {
         "answer": text,
         "clarify": False,

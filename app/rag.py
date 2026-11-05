@@ -1525,18 +1525,22 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             scenario_social_enabled, looks_like_social_question, format_chat_answer, estimate as social_estimate,
         )
         if scenario_social_enabled():
-            topics0, prof0, _ = needed(question, hist_user)
-            if looks_like_social_question(question, topics0):
+            # Intercept only when *this* turn is about social scholarship (ignore sticky history topics)
+            if looks_like_social_question(question):
+                topics0, prof0, _ = needed(question, hist_user)
                 est = None
                 used_form = False
-                # Prefer income already known from form/profile — do not re-ask
+                # Prefer form/profile; else parse *current* message first (keeps minus sign; avoids stale history)
                 income_hint = None
                 if isinstance(getattr(state, "profile", None), dict):
                     income_hint = state.profile.get("income_per_person")
+                    if income_hint is not None:
+                        used_form = True
                 if income_hint is None:
-                    income_hint = extract_income(f"{hist_user}\n{question}")
-                else:
-                    used_form = True
+                    income_hint = extract_income(question)
+                if income_hint is None:
+                    # Follow-up without repeating income: allow prior user turns only if still on social
+                    income_hint = extract_income(hist_user) if hist_user else None
                 if income_hint is not None:
                     year = None
                     if isinstance(getattr(state, "profile", None), dict):
@@ -1549,8 +1553,6 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                         profile=dict(prof0 or {}),
                         lang=lang,
                     )
-                    if used_form or income_hint is not None:
-                        used_form = used_form or ("income_per_person" in (state.profile or {}))
                 payload = format_chat_answer(lang, estimate_result=est, used_form_income=used_form)
                 payload["profile"] = dict(prof0 or {})
                 payload["topics"] = ["stypendium_socjalne"]
