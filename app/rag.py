@@ -152,18 +152,18 @@ SLOT_OPTS = {
  "status": [
   ("doktorant", r"doktorant|doktoranc|doctoral\s*school|phd\s*student|i'?m\s*a?\s*phd|doctoral\s*student|школ\w*\s*доктор|докторант|докторантур"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
-  ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|i(?:'?m|\s+am)\s+polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
+  ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|i(?:'?m|\s+am)\s+polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|dow[oó]d\w*\s+(mam\s+)?polsk|polsk\w*\s+dow[oó]d|polsk\w*\s+paszport|urodzi\w+\s+w\s+(polsce|radomiu)|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|\bforeigner\b|i'?m\s*a?\s*foreign|i\s*am\s*from\s+(?!poland|polsk)|from\s+(india|china|ukraine|belarus|vietnam|nigeria|turkey|georgia)|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
  ],
  "tryb": [
-  ("stacjonarne", r"(?<!nie)stacjonar|dzienn|\bdaily\b|full[-\s]?time|on[- ]campus|pe[lł]ny\s*etat|денн\w*|стаціонар\w*|дневн\w*|\bочн\w*\b|өдрийн|бүтэн\s*цаг"),
-  ("niestacjonarne", r"niestacjonar|zaoczn|weekend|part[-\s]?time|extramural|заочн\w*|вечірнь|эчнээ|цагийн\s*сургалт"),
+  ("stacjonarne", r"(?<!nie)stacjonar|\bstationary\b|\bstacionar|dzienn|\bdaily\b|full[-\s]?time|on[- ]campus|pe[lł]ny\s*etat|денн\w*|стаціонар\w*|дневн\w*|\bочн\w*\b|өдрийн|бүтэн\s*цаг"),
+  ("niestacjonarne", r"niestacjonar|zaoczn|weekend|weekends?\s*only|part[-\s]?time|extramural|заочн\w*|вечірнь|вихідн|не\s*вдень|zjazd|sobot|niedziel|эчнээ|цагийн\s*сургалт"),
  ],
  "poziom": [
   ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|phd\b|doktoranc|докторантур|докторант(?!\w)"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
-  ("II", r"\bii\s*stop|\b2\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|\bmgr\b|magisterk|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|магистр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
-  ("I", r"\bi\s*stop|\b1\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|1st\s*degree|bachelor|undergrad|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
+  ("II", r"\bii\s*stop|\b2\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|\bmgr\b|magisterk|магістратур|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|магистр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
+  ("I", r"\bi\s*stop|\b1\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|1st\s*degre|first\s*degre|bachelor|bachel?or|undergrad|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
  ],
  "rok": [
   ("1", r"(\b1\s*(rok|year|рік|курс|жил)\b|\byear\s*1\b|\b1(st)?\s*year\b|\bpierwsz\w*\s*rok|\bfirst\s*year|\bfreshman|\bперш\w*\s*рік|\b(?:na|jestem na)\s+i\s+roku|\bpierwszoroczn|^\s*1\s*$)"),
@@ -175,8 +175,8 @@ SLOT_OPTS = {
  ],
  "drugi_kierunek": [
   # „nie” najpierw – unikaj fałszywego „tak” przy „nie posiadam dyplomu” / „no second degree”
-  ("nie", r"(?i)(?:^\s*(nie|no|ні|үгүй)\.?\s*$|(?:,\s*|\s+)(nie|no|ні)\.?\s*$|^\s*(ні|nie|no)\b.{0,60}не\s*навч|jedyn\w*\s*kierun|jeden\s*kierun|jednokierunkow|\bjedno\b|tylko\s*jed|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one(?:\s*,?\s*no)?|only\s*one\s*(program|programme|major|degree|field)|just\s*one\s*(program|programme|major|degree)|single\s*(major|program|programme)|one\s*program\s*only|nothing\s*else|no\s*(?:second|other)\s*(?:degree|program|programme|major|field)|without\s*(?:a\s*)?second\s*(?:degree|program|programme)|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|nie\s*mam\s+drug|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|тільки\s*(в|на)\s*цьому|(?:^|[,;]\s*)(jeden|jedna|jeden|jedno|один|одна|one)\s*(?:$|[,;.])|нігде\s*більше\s*не\s*навч|ніде\s*більше|не\s*навча\w*\s*(більше|ніде|нігде|на\s*друг)|не\s*маю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немаю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(інш\w*\s*)?диплом|в\s*мене\s*нема|диплом\w*\s*не\s*ма(ю|є)|диплом\w*\s*цього\s*рівн|інш\w*\s*диплом\w*\s*не|друг\w*\s*напрям\w*\s*чи\s*диплом\w*\s*не\s*ма|нет\s*втор|без\s*диплом|только\s*одно|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
-  ("tak", r"(?i)(?:(?:mam|posiadam)\s+(?:ju[zż]\s+)?(?:uko[nń]czon\w*\s+)?(?:tytu[lł]|licencjat|in[zż]ynier|magister|dyplom)(?!\w)|(?:studiuj[eę]|mam)\s+drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|(?<!\bno\s)(?<!no\s)(?<!without\s)second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*uko[nń]czy|(?:навча\w*|маю)\s+друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)\w*\s*диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
+  ("nie", r"(?i)(?:^\s*(nie|no|ні|үгүй)\.?\s*$|(?:,\s*|\s+)(nie|no|ні)\.?\s*$|^\s*(ні|nie|no)\b.{0,60}не\s*навч|jedyn\w*\s*kierun|jeden\s*kierun|jednokierunkow|\bjedno\b|tylko\s*jed|tylko\s+ten\s+kierun|tylko\s*(w\s*)?(uczelni|na\s*ur|tu)\b|jedyn\w*\s*uczel|only\s*one(?:\s*,?\s*no)?|only\s*one\s*(program|programme|major|degree|field)|just\s*one\s*(program|programme|major|degree)|single\s*(major|program|programme)|one\s*program\s*only|(?:one|single)\s+(?:major|programme|program)\s+only|nothing\s*else|no\s*(?:second|other)\s*(?:degree|program|programme|major|field)|(?:do\s*not|don'?t)\s+study\s+(?:a\s+)?(?:second|another|other)|no\s+(?:previous|prior|other)\s+(?:degree|diploma)|without\s*(?:a\s*)?second\s*(?:degree|program|programme)|nie\s*studiuj\w*\s*(r[oó]wnoleg|drug)|nie\s*mam\s+drug|first\s*degree\s*only|nie\s*(?:mam|posiadam)\s*(?:żadn\w*\s*)?(?:innego|drugiego|uko|dyplom)|brak\s*dyplom|żadn\w*\s*dyplom|bez\s*dyplom|nie\s*mam\s*jeszcze\s*(żadn\w*\s*)?dyplom|один\s*(напрям|спеціальн)|лише\s*один|тільки\s*один|тільки\s*(в|на)\s*цьому|(?:^|[,;]\s*)(jeden|jedna|jeden|jedno|один|одна|one)\s*(?:$|[,;.])|нігде\s*більше\s*не\s*навч|ніде\s*більше|не\s*навча\w*\s*(більше|ніде|нігде|на\s*друг)|не\s*маю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немаю\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(жодн\w*\s*|інш\w*\s*)?диплом|немає\s*(інш\w*\s*)?диплом|нема\b|в\s*мене\s*нема|диплом\w*\s*не\s*ма(ю|є)|диплом\w*\s*цього\s*рівн|інш\w*\s*диплом\w*\s*не|друг\w*\s*напрям\w*\s*чи\s*диплом\w*\s*не\s*ма|нет\s*втор|без\s*диплом|только\s*одно|зөвхөн\s*нэг|ганц\s*мэргэжил)"),
+  ("tak", r"(?i)(?:(?:mam|posiadam)\s+(?:ju[zż]\s+)?(?:uko[nń]czon\w*\s+)?(?:tytu[lł]|licencjat|in[zż]ynier|magister|dyplom)(?!\w)|(?:studiuj[eę]|mam)\s+drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(degree|major|program|programme|field)|double\s*major|parallel\s*stud|already\s*(graduated|have\s*a\s*degree)|completed\s*(studies|a\s*degree)|ju[zż]\s*uko[nń]czy|(?:навча\w*|маю)\s+друг\w*\s*(напрям|спеціальн|спеціал)|паралельн|вже\s*(маю|закінч)\w*\s*диплом|хоёр\s*мэргэжил|зэрэгцээ|дипломтой|төгссөн)"),
  ],
  "niepelnosprawnosc": [
   ("tak", r"(mam\s*orzeczenie|z\s*niepe[lł]nosprawno|orzeczen\w*\s*o\s*(niepe|stop)|disability\s*(certificate|ruling|status)|i\s*have\s*a?\s*disability|інвалід|посвідчен\w*\s*про\s*інвал|хөгжлийн\s*бэрхшээл)"),
@@ -277,10 +277,40 @@ CLARIFY = {
         "Нэг өгүүлбэрээр хариулж болно, ж.нь. «оршин суух зөвшөөрөлтэй гадаадын оюутан, өдрийн, I зэрэг, 2-р курс, нэг мэргэжил»."),
 }
 
-def extract_profile(text):
+def _negated_before(text, start, window=28):
+    """True if a negation word sits in the few tokens before `start`."""
+    pre = (text or "")[max(0, start - window):start]
+    return bool(re.search(
+        r"(?i)\b(no|not|don'?t|do\s+not|nie|ні|не|нема|without|bez)\b",
+        pre,
+    ))
+
+
+def extract_profile(text, conflicts_out=None):
     t = text.lower()
     prof = {}
     for slot, opts in SLOT_OPTS.items():
+        if slot == "drugi_kierunek":
+            hit_nie = hit_tak = None
+            for val, rx in opts:
+                m = re.search(rx, t, re.I)
+                if not m:
+                    continue
+                if val == "tak" and _negated_before(t, m.start()):
+                    continue  # "do not study a second programme" etc.
+                if val == "nie":
+                    hit_nie = m
+                elif val == "tak":
+                    hit_tak = m
+            if hit_nie and hit_tak:
+                prof["drugi_kierunek"] = "nie"
+                if conflicts_out is not None:
+                    conflicts_out.append({"slot": "drugi_kierunek", "old": "tak", "new": "nie", "reason": "negation"})
+            elif hit_nie:
+                prof["drugi_kierunek"] = "nie"
+            elif hit_tak:
+                prof["drugi_kierunek"] = "tak"
+            continue
         for val, rx in opts:
             if re.search(rx, t, re.I):
                 prof[slot] = val
@@ -360,12 +390,12 @@ _STIPEND_TOPICS = {
     "stypendium_socjalne", "stypendium_rektora", "stypendium_niepeln", "doktoranckie",
 }
 
-def merge_profile_from_turns(history_text, question):
+def merge_profile_from_turns(history_text, question, conflicts_out=None):
     """Parsuj każdą wypowiedź osobno – kotwice ^nie$ działają na turę, nie na sklejony blob."""
     prof = {}
     for part in [p.strip() for p in re.split(r"\n+", history_text or "") if p.strip()]:
-        prof.update(extract_profile(part))
-    prof.update(extract_profile(question or ""))
+        prof.update(extract_profile(part, conflicts_out=conflicts_out))
+    prof.update(extract_profile(question or "", conflicts_out=conflicts_out))
     return prof
 
 def _benefit_topics_in_order(text):
@@ -1129,10 +1159,36 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     if is_security_probe(question) or is_security_probe(hist_user[-500:], question):
         return _attach_state(dict(clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
                     answer=refuse_message(lang)), state)
+    turn_conflicts = []
     topics, prof, missing = needed(question, hist_user)
+    # Re-parse latest turn with conflict logging (needed() already merged regex profile)
+    extract_profile(question, conflicts_out=turn_conflicts)
+    if turn_conflicts:
+        state.conflicts.extend(turn_conflicts)
     prof, missing = merge_state_profile(state, prof, topics, history)
     state.profile = dict(prof)
     state.intents = list(topics)
+    prev_pending = list(state.pending_slots or [])
+    if missing and prev_pending and question.strip():
+        # User answered a clarify but slots still missing → try LLM extractor, then one targeted Q
+        try:
+            from extract import extract_turn, apply_extraction
+            data = extract_turn(question, prof, state.pending_question, prev_pending, call_llm)
+            if data:
+                prof2, confs = apply_extraction(prof, data)
+                # Never invent disability unless the turn mentions it
+                if "niepelnosprawnosc" in prof2 and "niepelnosprawnosc" not in prof:
+                    if not re.search(r"(?i)niepe[lł]nospraw|disability|інвалід|хөгжлийн\s*бэрхшээл", question):
+                        prof2.pop("niepelnosprawnosc", None)
+                state.conflicts.extend(confs)
+                prof = prof2
+                state.profile = dict(prof)
+                _, missing = merge_state_profile(state, prof, topics, history)
+        except Exception:
+            pass
+        if missing and set(missing) & set(prev_pending):
+            # Do not re-ask the full list — one remaining slot only
+            missing = [m for m in missing if m in prev_pending][:1] or missing[:1]
     if missing:
         state.pending_slots = list(missing)
         if not state.original_question and any(re.search(rx, question, re.I) for _, rx, _ in TOPICS):
