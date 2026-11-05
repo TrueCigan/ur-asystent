@@ -52,6 +52,16 @@ Seven live QA rounds showed that regex / string-substitution post-processors fix
 
 See `CURSOR_REDESIGN_PLAN_round7.md` for phase order: P0 fixtures → P1 render → P2 delete strippers → P3 lang → P4 slots → P5 corpus → P6 CI.
 
+### PR e2e subset (`e2e_pr`)
+
+Mark a case with top-level `e2e_pr: true` when it must run on every PR that has `LLM_API_KEY` (workflow job `eval-e2e-pr`). Keep the subset small (≈10–15 cases): language, stripper/marker holes, slots, derived totals, tuition corpus.
+
+```bash
+python tests/eval_dialogues.py --repo . --layer e2e --e2e-pr --runs 1
+```
+
+Nightly / workflow_dispatch still runs the full e2e layer (`--runs 3`).
+
 ### Structured answer JSON (Phase 1+)
 
 Model output (JSON only):

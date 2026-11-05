@@ -3,6 +3,7 @@
 
 # ---------- language ----------
 - id: lang-ru-rector-stays-uk
+  e2e_pr: true
   origin: r2-S10 / r3-S8
   turns: ["Привет, я студент из Польши, учусь на бакалавре. Как получить ректорскую стипендию и сколько платят?", "3 курс, поляк, один"]
   per_turn_lang_not: [ru]
@@ -15,6 +16,7 @@
   unit: {topics_include: [doktoranckie]}
   e2e: {lang_in: [uk, pl], must_not_match: ["могу.{0,20}русск", "відповідати .{0,30}російськ"]}
 - id: lang-mn-never-ru
+  e2e_pr: true
   origin: r3-S10
   # P3: Mongolian-script input → en (no mn in ALLOWED)
   turns: ["Сайн байна уу, би Монгол оюутан. Польш хэлний хөтөлбөрийн сургалтын төлбөр хэд вэ? Магистр, өдрийн.", "cudzoziemiec", "Баярлалаа. Дотуур байрны үнэ хэд вэ?"]
@@ -80,6 +82,7 @@
   turns: ["Сайн байна уу, би Монголоос ирсэн оюутан. Тэтгэлэг авч болох уу? Дотуур байр хэд вэ?", "foreign student, residence permit, full-time, 1st degree. what about scholarship for foreigners?"]
   unit: {topics_exclude: []}   # TODO: expect a scholarship topic once multi-topic routing lands
 - id: topic-english-programme-tuition
+  e2e_pr: true
   origin: r2-S6
   turns: ["foreign student, residence permit, full-time, 1st degree", "how much for english programs? business"]
   unit: {topics_include: [oplaty]}
@@ -87,6 +90,7 @@
 
 # ---------- facts consistency ----------
 - id: fact-rector-cap-consistent-pl
+  e2e_pr: true
   origin: r2-S3 / r3-S2,S7,S8
   turns: ["Ile maksymalnie mogę dostać łącznie ze stypendium socjalnego i rektora?", "polak, I stopień, stacjonarne, 2 rok, jeden kierunek"]
   e2e: {stable_across_runs: ["(3[ .]?(?:560|667)[.,]?\\d*)"]}
@@ -220,10 +224,11 @@
   unit: {topics_include: [doktoranckie], missing: []}
   e2e: {must_match: ["\\d[\\d .]*\\s*zł"], must_not_match: ["(?i)nie są podane"]}
 - id: r5-tuition-en-programme-amount
+  e2e_pr: true
   origin: r5-S5
   turns: ["Hi, I am a foreign student from India. How much is the tuition fee for English-language study programmes at Radom University?", "I want to do a masters, the 2nd cycle, and I will study on weekends only because I also work in the city."]
   unit: {lang: en, profile: {status: cudzoziemiec, poziom: II, tryb: niestacjonarne}}
-  e2e: {lang_in: [en], must_match: ["(?i)(€|eur|euro|zł|PLN)\\s*\\d|\\d[\\d ,.]*\\s*(€|eur|euro|zł|PLN)|(?i)not (yet )?(available|verified)"]}
+  e2e: {lang_in: [en], must_match: ["(€|eur|euro|zł|PLN)\\s*\\d|\\d[\\d ,.]*\\s*(€|eur|euro|zł|PLN)|not (yet )?(available|verified)"]}
 - id: r5-tuition-pl-no-status-question
   origin: r5-S6
   turns: ["Ile wynosi czesne na studiach niestacjonarnych w języku polskim?"]
@@ -344,6 +349,7 @@
     must_match: ["2100", "2600"]
     must_not_match: ["FACTS \\(authoritative", "\\{'International Business", "quote exactly"]
 - id: r6-no-internal-markers
+  e2e_pr: true
   origin: r6-S2
   turns: ["Hej, jestem Marek, 2 rok informatyki stacjonarnie, I stopień. Interesuje mnie stypendium doktoranckie, ile wynosi?", "ups pomyłka, ja ni jestem doktorantem, tylko licencjat. Ale kumpel z doktoratu pyta, ile ma dostawać"]
   e2e:
@@ -476,6 +482,7 @@
     must_not_match: ["Стипендия", "рубл"]
     output_lang_target: uk
 - id: r7-uk-input-never-mn
+  e2e_pr: true
   origin: r7-S3
   turns: ["Привіт, я аспірантка 3 року після оцінки середньоперіодичної, маю інвалідність. Яка стипендія?"]
   per_turn_lang_not: [ru, mn]
@@ -485,6 +492,7 @@
     must_not_match: ["ө", "ү", "тэтгэлэг"]
     must_match: ["3570|5500|1071"]
 - id: r7-ru-input-stays-uk
+  e2e_pr: true
   origin: r7-S2/S6/S9
   turns: ["Здравствуйте, я студент из Украины, доход 800 злотых. Как получить социальную стипендию?"]
   per_turn_lang_not: [ru, mn]
@@ -497,6 +505,7 @@
     must_match: ["3667"]
     must_not_match: ["= miesięcznie", "FOLLOW-UP", "FACTS \\(authoritative", "in the in the"]
 - id: r7-e2e-no-stripper-sum-hole
+  e2e_pr: true
   origin: r7-S1
   turns:
     - "Cześć, jestem Ola, studia niestacjonarne II stopnia, obywatelka Polski, jeden kierunek. Chcę stypendium socjalne, dochód na osobę 1100 zł."
@@ -528,20 +537,29 @@
   property_check:
     answer_fixture: "cap is 3667 zł"
     expect_raw_money: true
+- id: r7-prop-no-bare-tuition-dict-keys
+  origin: redesign-p6
+  property_check:
+    answer_fixture: "Czesne niestacjonarne: nietechniczne 2300 zł, techniczne 3200 zł (R-8/2026)."
+    must_match: ["2300", "3200"]
+    must_not_match: ["kierunki_nietechniczne", "kierunki_techniczne_inzynierskie"]
 
 # ---------- redesign P4 slots + derived facts ----------
 - id: r7-slot-polish-student-no-reask
+  e2e_pr: true
   origin: r7-S4
   turns: ["Hi, I am a Polish student on a master's with GPA 4.9. What is the rector's scholarship and the combined social+rector cap?"]
   unit: {profile: {status: pl, poziom: II}, missing: []}
   e2e: {must_match: ["3667", "1000|1200|1400|1600"], must_not_match: ["(?i)what is your status", "(?i)Polish citizen"]}
 - id: r7-slot-disability-degree-fills
+  e2e_pr: true
   origin: r7-S6
   turns: ["Здравствуйте, у меня значительная степень инвалидности, учусь заочно в магистратуре. Какая стипендия?"]
   per_turn_lang_not: [ru, mn]
   unit: {profile: {niepelnosprawnosc: tak, tryb: niestacjonarne, poziom: II}, missing_not: [niepelnosprawnosc]}
   e2e: {lang_in: [uk], must_match: ["1400"], must_not_match: ["(?i)посвідчення|orzeczenie|certificate"]}
 - id: r7-slot-ukraine-not-pesel-ukr
+  e2e_pr: true
   origin: r7-S2
   turns: ["Здравствуйте, я студент из Украины, доход 800 злотых, учусь очно, бакалавриат."]
   unit: {profile_not: {pobyt: ukr}}
@@ -551,6 +569,7 @@
   turns: ["Hello, I am from India on Mechanical Engineering English programme. How much per semester?"]
   unit: {topics_include: [oplaty], missing: []}
 - id: r7-derived-topup-not-37pct
+  e2e_pr: true
   origin: r7-S3
   turns: ["Jestem doktorantką po ocenie śródokresowej z orzeczeniem o niepełnosprawności. Ile dostanę?"]
   unit: {profile: {status: doktorant, niepelnosprawnosc: tak}, missing: []}
@@ -567,6 +586,7 @@
 
 # ---------- redesign P5 corpus + tuition facts-first ----------
 - id: r7-tuition-pl-part-time-amounts
+  e2e_pr: true
   origin: r7-S8
   turns: ["Studiuję zaocznie po polsku, II stopień, jestem Polką. Ile płacę czesnego za semestr?"]
   unit:
@@ -577,6 +597,7 @@
     must_match: ["2300|3200"]
     must_not_match: ["oplaty-za-uslugi-edukacyjne-2018", "2019-2020", "R-38-2020", "nie są przytoczone"]
 - id: r7-tuition-en-no-legacy-pdf
+  e2e_pr: true
   origin: r7-S7
   turns: ["Hello, I am from India on Mechanical Engineering English programme. How much per semester?"]
   unit:
