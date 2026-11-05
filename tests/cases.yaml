@@ -422,3 +422,24 @@
     lang_in: [uk]
     must_not_match: ["(?i)На якому ви році", "(?i)громадянин Польщі"]
     must_match: ["(?i)сесі|розклад|plan"]
+
+# ---------- round 6: corpus / citations ----------
+- id: r6-retrieval-no-2014-dorm
+  origin: r6-S7
+  turns: ["Ile kosztuje akademik i do kiedy trzeba składać wniosek o miejsce?"]
+  unit:
+    topics_include: [akademik]
+    retrieval:
+      must_not_match_urls: ["2014", "akademik_instrukcja_2014"]
+- id: r6-retrieval-no-2018-fees
+  origin: r6-S5
+  turns: ["Hello, I am Ahmed, a foreigner studying in an English-language programme. How much is the tuition fee per semester?", "im on a full time bachelors, first yr"]
+  unit:
+    retrieval:
+      must_not_match_urls: ["2018", "2019-2020", "2019-20"]
+- id: r6-citations-subset
+  origin: r6-S3/S10
+  turns: ["Jestem Kasia, doktorantka Szkoły Doktorskiej, 1 rok. Czy mogę dostać stypendium rektora?"]
+  e2e:
+    citations_subset_of_sources: true
+    must_not_match: ["\\[Fn\\d*\\]", "джерело 6"]

@@ -12,6 +12,8 @@ deny_url_substrings:
   - /konferencje/
   - OSWIADCZENIE-GREEN-TRAVEL
   - squarespace.com
+  - akademik_instrukcja_2014
+  - internet-w-akademikach
 
 deny_title_substrings:
   - konferenc
@@ -29,6 +31,19 @@ deny_url_substrings_for_topic:
     - "2015"
     - "2016"
     - "2017"
+  akademik:
+    - "2014"
+    - "2015"
+    - "2016"
+    - "2017"
+    - instrukcja_2014
+  stypendium_niepeln:
+    - transport
+    - wskazowki
+    - prowadzacych
+    - niepelnosprawnoscia-mowy
+  stypendium_socjalne:
+    - Stypendium-Rektora-2024
 typo_map:
   scholarsip: scholarship
   incom: income

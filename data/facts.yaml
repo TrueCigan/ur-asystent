@@ -284,6 +284,69 @@
     en: Doctoral stipend amount
     uk: Сума докторської стипендії
     mn: Докторантын тэтгэлгийн дүн
+- id: doctoral_disability_topup_monthly
+  topic:
+  - doktoranckie
+  - stypendium_niepeln
+  value: 1071.15
+  unit: PLN/month
+  academic_year: 2026/2027
+  applies_to:
+    status:
+    - doktorant
+  candidates_seen: []
+  source:
+    url: https://www.gov.pl/web/nauka/stypendium-doktoranckie
+    ordinance: art. 209 PSWN — zwiększenie stypendium doktoranckiego przy orzeczeniu o niepełnosprawności
+    document_date: '2026-04-14'
+    checked: '2026-11-05'
+  status: verified
+  i18n_label:
+    pl: Zwiększenie stypendium doktoranckiego (niepełnosprawność)
+    en: Doctoral stipend disability top-up
+    uk: Надбавка до докторської стипендії (інвалідність)
+    mn: Докторантын тэтгэлгийн нэмэгдэл (хөгжлийн бэрхшээл)
+- id: professor_salary_monthly
+  topic:
+  - stypendium_rektora
+  - stypendium_socjalne
+  - doktoranckie
+  value: 9650
+  unit: PLN/month
+  academic_year: 2026/2027
+  applies_to: {}
+  candidates_seen: []
+  source:
+    url: https://www.gov.pl/web/nauka/stypendium-doktoranckie
+    ordinance: rozp. MNiSW z 14.04.2026 (Dz.U. 2026 poz. 525) — wynagrodzenie profesora od 01.01.2026 (baza ustawowa, nie świadczenie studenckie)
+    document_date: '2026-04-14'
+    checked: '2026-11-05'
+  status: verified
+  i18n_label:
+    pl: Wynagrodzenie profesora (baza ustawowa)
+    en: Professor salary (statutory base)
+    uk: Зарплата професора (законодавча база)
+    mn: Профессорын цалин (хуулийн суурь)
+- id: rector_social_cap_percent_of_professor
+  topic:
+  - stypendium_rektora
+  - stypendium_socjalne
+  value: 38
+  unit: "%"
+  academic_year: 2026/2027
+  applies_to: {}
+  candidates_seen: []
+  source:
+    url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
+    ordinance: Strona 'Świadczenia dla studentów' — łączny limit socjalne+rektora = 38% wynagrodzenia profesora (→ 3667 zł)
+    document_date: '2026-09-08'
+    checked: '2026-11-05'
+  status: verified
+  i18n_label:
+    pl: Limit socjalne+rektora jako % wynagrodzenia profesora
+    en: Combined social+rector cap as % of professor salary
+    uk: Ліміт соц.+ректор як % зарплати професора
+    mn: Нийгмийн+ректорын дээд хязгаар (% профессорын цалин)
 - id: doctoral_rector_eligible
   topic:
   - doktoranckie

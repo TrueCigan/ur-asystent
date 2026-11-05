@@ -53,15 +53,24 @@ def char_vec(counts, voc, idf):
     return {k: v / n for k, v in r.items()}
 
 def build():
+    from topic_policy import is_denied_chunk
     fp = os.path.join(D, "docs.jsonl")
     f = open(fp, encoding="utf-8") if os.path.exists(fp) else gzip.open(fp + ".gz", "rt", encoding="utf-8")
     chunks = []
+    skipped = 0
     for l in f:
         d = json.loads(l)
         for i, c in enumerate(chunk(d["text"])):
-            chunks.append(dict(url=d["url"], title=d["title"], modified=d["modified"], source=d["source"],
-                               kind=d["kind"], scanned=d.get("scanned", False), text=c, i=i))
+            row = dict(url=d["url"], title=d["title"], modified=d["modified"], source=d["source"],
+                       kind=d["kind"], scanned=d.get("scanned", False), text=c, i=i)
+            # Global deny lists only (topics=None); per-topic denies stay query-time (R6-6)
+            if is_denied_chunk(row, topics=None):
+                skipped += 1
+                continue
+            chunks.append(row)
     N = len(chunks)
+    if skipped:
+        print(f"skipped_denied_chunks={skipped}")
     # --- BM25 (Okapi, jak rank_bm25) jako macierz wag dokument x termin ---
     toks = [collections.Counter(tokens(c["title"] + " " + c["text"])) for c in chunks]
     df = collections.Counter(t for c in toks for t in c)
