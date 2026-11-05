@@ -564,3 +564,22 @@
     derived_equals:
       - {name: rector_social_cap, expect: 3667, equals_fact: rector_social_cap_monthly}
       - {name: doctoral_disability_topup, expect: 1071.15, equals_fact: doctoral_disability_topup_monthly}
+
+# ---------- redesign P5 corpus + tuition facts-first ----------
+- id: r7-tuition-pl-part-time-amounts
+  origin: r7-S8
+  turns: ["Studiuję zaocznie po polsku, II stopień, jestem Polką. Ile płacę czesnego za semestr?"]
+  unit:
+    topics_include: [oplaty]
+    profile: {status: pl, tryb: niestacjonarne, poziom: II}
+    retrieval: {must_not_match_urls: ["oplaty-za-uslugi-edukacyjne-2018", "2019-2020", "R-38-2020"]}
+  e2e:
+    must_match: ["2300|3200"]
+    must_not_match: ["oplaty-za-uslugi-edukacyjne-2018", "2019-2020", "R-38-2020", "nie są przytoczone"]
+- id: r7-tuition-en-no-legacy-pdf
+  origin: r7-S7
+  turns: ["Hello, I am from India on Mechanical Engineering English programme. How much per semester?"]
+  unit:
+    topics_include: [oplaty]
+    retrieval: {must_not_match_urls: ["oplaty-za-uslugi-edukacyjne-2018", "2019-2020", "R-38-2020"]}
+  e2e: {must_match: ["2600"], must_not_match: ["oplaty-za-uslugi-edukacyjne-2018", "university system system"]}

@@ -14,19 +14,23 @@ deny_url_substrings:
   - squarespace.com
   - akademik_instrukcja_2014
   - internet-w-akademikach
+  # Legacy fee PDFs — global so they never enter the index (P5 / r7-S7/S8)
+  - oplaty-za-uslugi-edukacyjne-2018
+  - Wysokosc-oplat-za-uslugi-edukacyjne-2019-2020
+  - "2019-2020"
+  - "2019/2020"
+  - "2019-20"
+  - R-38-2020
+  - Akty-prawne-oplaty-R-38
 
 deny_title_substrings:
   - konferenc
   - monograf
   - Staff Mobility
   - Green Travel
-# Old fee ordinances that confuse current tuition answers
+# Per-topic extras (query-time). Fee-year PDFs are global above.
 deny_url_substrings_for_topic:
   oplaty:
-    - "2018"
-    - "2019-20"
-    - "2019/20"
-    - R-38-2020
     - "2014"
     - "2015"
     - "2016"

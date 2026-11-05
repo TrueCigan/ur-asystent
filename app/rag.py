@@ -714,6 +714,7 @@ RULES:
 6. If FACT cards mention UKR temporary protection and profile has pobyt=ukr, state that clearly via placeholders / prose without inventing amounts.
 7. Never echo PROFILE / SOURCES / dialogue field names into template.
 8. Skip BOS tip when sources already answer and the user asked not to be redirected.
+9. For oplaty/tuition: ALWAYS use {{F:tuition_english_programmes…}} / {{F:tuition_polish_part_time_I…}} from FACT cards. Never say amounts are missing when those cards are present. Never cite 2018/2019 fee PDFs.
 
 {security_rules}"""
 
@@ -1643,7 +1644,21 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                  outdated=outdated(h["modified"], h.get("url") or ""), snippet=h["text"][:400])
             for i, h in enumerate(hits, 1)]
     prof_txt = format_profile_txt(prof, lang)
-    selected_facts = select_facts(load_facts(), topics, prof)
+    selected_facts = select_facts(load_facts(), topics, prof, question=question)
+    # Prefer ordinance / fact URLs among retrieval hits for oplaty (P5)
+    if "oplaty" in topics:
+        fact_url_set = {
+            (f.source or {}).get("url")
+            for f in selected_facts
+            if (f.source or {}).get("url")
+        }
+        if fact_url_set:
+            preferred = [h for h in hits if (h.get("url") or "") in fact_url_set]
+            rest = [h for h in hits if (h.get("url") or "") not in fact_url_set]
+            hits = (preferred + rest)[: max(len(hits), 6)]
+            srcs = [dict(n=i, title=h["title"], url=h["url"], modified=h["modified"],
+                         outdated=outdated(h["modified"], h.get("url") or ""), snippet=h["text"][:400])
+                    for i, h in enumerate(hits, 1)]
     computed_lines = []
     income_val = extract_income(f"{hist_user}\n{question}")
     if income_val is not None and "stypendium_socjalne" in topics:
@@ -1726,9 +1741,20 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                 if data and template_has_raw_money(data.get("template") or ""):
                     data = None
             if data:
+                # Facts-first: force tuition fact_ids into structured answers (P5)
+                fids = list(data.get("fact_ids") or [])
+                if "oplaty" in topics:
+                    for fid in ("tuition_english_programmes", "tuition_polish_part_time_I"):
+                        if any(getattr(f, "id", None) == fid for f in selected_facts) and fid not in fids:
+                            fids.append(fid)
+                    data["fact_ids"] = fids
                 need = list(data.get("computed_need") or [])
                 computed = build_computed(selected_facts, need, profile=prof)
                 out = render_answer(data["template"], selected_facts, computed=computed, lang=lang)
+                # Drop out-of-range citations (never show [4] when only 2 sources)
+                from render import validate_citations
+                for bad in validate_citations(out, len(srcs)):
+                    out = out.replace(bad, "")
                 if out:
                     if not output_lang_ok(out, lang) and _time.monotonic() + 20 < _t_deadline:
                         repair = msgs + [{"role": "user", "content":
