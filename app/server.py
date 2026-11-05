@@ -25,6 +25,8 @@ class Q(BaseModel):
     session_lang: str | None = Field(default=None, max_length=8)
     state: str | None = Field(default=None, max_length=8000)
     conv_id: str | None = Field(default=None, max_length=64)
+    # Optional form context for verified social scenario (no PII beyond income estimate inputs)
+    scenario_context: dict | None = None
 
 def _public_ip(s: str):
     s = (s or "").strip()
@@ -128,7 +130,13 @@ def chat(q: Q, r: Request):
         raise HTTPException(503, busy_msg)
     t0 = time.time()
     try:
-        return rag.answer(question, hist, session_lang=q.session_lang, state_token=q.state, conv_id=q.conv_id)
+        return rag.answer(
+            question, hist,
+            session_lang=q.session_lang,
+            state_token=q.state,
+            conv_id=q.conv_id,
+            scenario_context=q.scenario_context,
+        )
     except HTTPException:
         raise
     except Exception:
@@ -156,6 +164,7 @@ def healthz():
 def status():
     if rag.IDX is None:
         rag.load()
+    from scenarios.social import scenario_social_enabled
     prov = (os.getenv("LLM_PROVIDER") or "").lower()
     if not rag.llm_enabled():
         provider = "off"
@@ -167,7 +176,46 @@ def status():
         "chunks": len(rag.IDX["chunks"]),
         "llm": rag.llm_enabled(),
         "provider": provider,
+        "scenario_social": scenario_social_enabled(),
     }
+
+
+class SocialEstimateIn(BaseModel):
+    income: str | float | int = Field(...)
+    academic_year: str | None = Field(default=None, max_length=16)
+    interested_in_dorm_topup: bool = False
+    dorm_conditions_met: bool | None = None
+    lang: str | None = Field(default="pl", max_length=8)
+    profile: dict | None = None
+
+
+@app.get("/api/scenarios/social-scholarship")
+def social_scholarship_card(lang: str = "pl"):
+    """Verified social-scholarship card — no LLM."""
+    from scenarios.social import build_card
+    from lang import map_policy
+    lang = map_policy((lang or "pl").lower())
+    if lang not in ("pl", "en", "uk"):
+        lang = "pl"
+    return build_card(lang)
+
+
+@app.post("/api/scenarios/social-scholarship/estimate")
+def social_scholarship_estimate(body: SocialEstimateIn):
+    """Code-only income → group/amount estimate (not an entitlement decision)."""
+    from scenarios.social import estimate
+    from lang import map_policy
+    lang = map_policy((body.lang or "pl").lower())
+    if lang not in ("pl", "en", "uk"):
+        lang = "pl"
+    return estimate(
+        body.income,
+        academic_year=body.academic_year,
+        interested_in_dorm_topup=body.interested_in_dorm_topup,
+        dorm_conditions_met=body.dorm_conditions_met,
+        profile=body.profile or {},
+        lang=lang,
+    )
 
 @app.exception_handler(Exception)
 async def _unhandled(_, exc):

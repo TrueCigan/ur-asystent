@@ -1,0 +1,161 @@
+# Verified scenario: social scholarship (stypendium socjalne).
+# Amounts/dates come ONLY from data/facts.yaml via fact_id refs — do not duplicate figures here.
+id: social_scholarship
+# Product switch: SCENARIO_SOCIAL=1 enables UI + no-LLM chat answers for this scenario.
+feature_env: SCENARIO_SOCIAL
+# Estimator uses this year unless the client passes another. Only years with confirmed amount facts are calculable.
+default_estimate_year: "2025/2026"
+fact_refs:
+  income_and_amounts: social_income_threshold
+  caps:
+    - rector_social_cap_monthly_2025_2026
+    - rector_social_cap_monthly
+  application_window: social_rector_deadline
+  submission_channel: submission_channel
+  ua_temporary_protection: ukr_special_act
+official_links:
+  - fact_id: social_income_threshold
+  - fact_id: social_rector_deadline
+  - url: https://student.uniwersytetradom.pl/stypendia-socjalne/
+    label_key: link_social_page
+  - url: https://bip.uniwersytetradom.pl/attachments/4338/download
+    label_key: link_regulamin
+i18n:
+  pl:
+    title: Stypendium socjalne
+    badge_verified: Scenariusz sprawdzony
+    badge_other: Inne tematy — wyszukiwanie w korpusie (niesprawdzone automatycznie)
+    intro: >-
+      Poniższe kwoty grup dochodowych pochodzą z oficjalnego aneksu UR na wskazany rok.
+      Kalkulator podaje tylko szacunek wysokości przy danym dochodzie — nie decyzję o prawie do świadczenia.
+    conditions_title: Warunki (skrót)
+    conditions_body: >-
+      Trudna sytuacja materialna (dochód na osobę w rodzinie w limicie na dany rok), status studenta UR,
+      zwykle jeden kierunek. Obywatele UA z ochroną czasową / PESEL UKR — osobne zasady (patrz fakt UA).
+      Sam dochód nie wystarcza do stwierdzenia uprawnienia.
+    amounts_title: Wysokość (grupy dochodowe)
+    amounts_note: >-
+      Kwoty bazowe według tabeli UR. Zwiększenie z tytułu zakwaterowania (+ kwota z faktu) jest warunkowe
+      (Regulamin § 12) i nie jest doliczane automatycznie do wyniku.
+    dorm_topup_title: Zwiększenie (akademik / inny obiekt)
+    deadlines_title: Terminy
+    documents_title: Dokumenty
+    documents_body: >-
+      Wniosek elektroniczny w Wirtualnej Uczelni. Przy zwiększeniu — skan umowy o zakwaterowanie lub najem.
+      Pełna lista załączników: oficjalna strona świadczeń / regulamin. Jeśli pozycji brak w FACTS — nie uzupełniamy z pamięci.
+    documents_status: partial
+    links_title: Oficjalne źródła
+    form_title: Szacunek wysokości (nie decyzja)
+    form_income: Dochód na osobę w rodzinie (zł)
+    form_year: Rok akademicki tabeli kwot
+    form_dorm: Interesuje mnie zwiększenie z tytułu zakwaterowania
+    form_submit: Oblicz szacunek
+    form_hint: 0 zł jest dozwolone. Wynik to grupa i kwota bazowa; zwiększenie pokazujemy osobno, jeśli warunki nie są potwierdzone.
+    result_base: Kwota bazowa (szacunek)
+    result_group: Grupa dochodowa
+    result_topup_conditional: Zwiększenie warunkowe (nie wliczone do sumy)
+    result_total_base_only: Suma do pokazania (tylko baza)
+    result_not_eligibility: To nie jest decyzja o prawie do stypendium.
+    err_input: Nieprawidłowa kwota dochodu.
+    err_over: Dochód przekracza próg tabeli na ten rok — brak kwoty w tej tabeli.
+    err_year: Brak potwierdzonej tabeli kwot UR dla wybranego roku — nie podajemy aktualnego wyliczenia.
+    err_eligibility: Brakuje danych o prawie do świadczenia (status studenta, kierunek itd.) — kwotę bazową można oszacować osobno, prawa nie stwierdzamy.
+    chat_card_header: Stypendium socjalne — scenariusz sprawdzony (bez modelu językowego)
+    chat_see_form: Użyj formularza szacunku na stronie, aby policzyć grupę z dochodu.
+    chat_no_reask: Uwzględniono już podany dochód z formularza / profilu.
+    link_social_page: Stypendia socjalne (UR)
+    link_regulamin: Regulamin świadczeń (R-32/2024)
+    year_banner_confirmed: "Tabela kwot potwierdzona dla roku {year}."
+    year_banner_unconfirmed: "Dla roku {year} brak potwierdzonej tabeli kwot UR w FACTS — szacunek nie jest traktowany jako aktualny."
+  en:
+    title: Social scholarship
+    badge_verified: Verified scenario
+    badge_other: Other topics — corpus search (not auto-verified)
+    intro: >-
+      Income-group amounts come from the official UR annex for the stated year.
+      The calculator only estimates the amount for a given income — it does not decide entitlement.
+    conditions_title: Conditions (summary)
+    conditions_body: >-
+      Difficult financial situation (income per family member within the year limit), UR student status,
+      usually one programme. UA citizens with temporary protection / PESEL UKR — special rules (see UA fact).
+      Income alone does not prove entitlement.
+    amounts_title: Amounts (income groups)
+    amounts_note: >-
+      Base amounts from the UR table. The accommodation top-up (amount from the fact) is conditional
+      (Regulations § 12) and is not added automatically to the result.
+    dorm_topup_title: Top-up (dorm / other housing)
+    deadlines_title: Deadlines
+    documents_title: Documents
+    documents_body: >-
+      Electronic application in Wirtualna Uczelnia. For the top-up — scan of housing or rental contract.
+      Full attachment list: official benefits page / regulations. Missing FACTS entries are not invented.
+    documents_status: partial
+    links_title: Official sources
+    form_title: Amount estimate (not a decision)
+    form_income: Income per family member (PLN)
+    form_year: Academic year of the amount table
+    form_dorm: I am interested in the accommodation top-up
+    form_submit: Calculate estimate
+    form_hint: 0 PLN is allowed. Result is the group and base amount; the top-up is shown separately unless conditions are confirmed.
+    result_base: Base amount (estimate)
+    result_group: Income group
+    result_topup_conditional: Conditional top-up (not included in total)
+    result_total_base_only: Displayed total (base only)
+    result_not_eligibility: This is not an entitlement decision.
+    err_input: Invalid income amount.
+    err_over: Income exceeds the table threshold for this year — no amount in this table.
+    err_year: No confirmed UR amount table for the selected year — calculation is not treated as current.
+    err_eligibility: Entitlement data is incomplete (student status, programme, etc.) — base amount may be estimated separately; we do not confirm entitlement.
+    chat_card_header: Social scholarship — verified scenario (no language model)
+    chat_see_form: Use the estimate form on the page to map income to a group.
+    chat_no_reask: Already using income provided via the form / profile.
+    link_social_page: Social scholarships (UR)
+    link_regulamin: Benefits regulations (R-32/2024)
+    year_banner_confirmed: "Amount table confirmed for {year}."
+    year_banner_unconfirmed: "No confirmed UR amount table in FACTS for {year} — estimate is not treated as current."
+  uk:
+    title: Соціальна стипендія
+    badge_verified: Перевірений сценарій
+    badge_other: Інші теми — пошук у корпусі (не підтверджено автоматично)
+    intro: >-
+      Суми груп доходу взято з офіційного анексу UR за вказаний рік.
+      Калькулятор лише оцінює розмір за доходом — це не рішення про право на виплату.
+    conditions_title: Умови (скорочено)
+    conditions_body: >-
+      Складне матеріальне становище (дохід на особу в родині в межах ліміту на рік), статус студента UR,
+      зазвичай один напрям. Громадяни UA з тимчасовим захистом / PESEL UKR — окремі правила (факт UA).
+      Самого доходу недостатньо, щоб стверджувати право на виплату.
+    amounts_title: Розмір (групи доходу)
+    amounts_note: >-
+      Базові суми з таблиці UR. Надбавка за проживання (сума з факту) умовна
+      (Регламент § 12) і не додається до підсумку автоматично.
+    dorm_topup_title: Надбавка (гуртожиток / інше житло)
+    deadlines_title: Терміни
+    documents_title: Документи
+    documents_body: >-
+      Електронна заява у Wirtualna Uczelnia. Для надбавки — скан договору про проживання або оренду.
+      Повний перелік додатків: офіційна сторінка виплат / регламент. Відсутнє у FACTS не вигадуємо.
+    documents_status: partial
+    links_title: Офіційні джерела
+    form_title: Оцінка суми (не рішення)
+    form_income: Дохід на особу в родині (злоті)
+    form_year: Навчальний рік таблиці сум
+    form_dorm: Цікавить надбавка за проживання
+    form_submit: Порахувати оцінку
+    form_hint: 0 злотих дозволено. Результат — група і базова сума; надбавку показуємо окремо, якщо умови не підтверджені.
+    result_base: Базова сума (оцінка)
+    result_group: Група доходу
+    result_topup_conditional: Умовна надбавка (не в підсумку)
+    result_total_base_only: Сума для показу (лише база)
+    result_not_eligibility: Це не рішення про право на стипендію.
+    err_input: Некоректна сума доходу.
+    err_over: Дохід перевищує поріг таблиці на цей рік — у цій таблиці немає суми.
+    err_year: Немає підтвердженої таблиці сум UR на вибраний рік — розрахунок не вважається актуальним.
+    err_eligibility: Бракує даних про право на виплату (статус студента, напрям тощо) — базову суму можна оцінити окремо; право не підтверджуємо.
+    chat_card_header: Соціальна стипендія — перевірений сценарій (без мовної моделі)
+    chat_see_form: Скористайтеся формою оцінки на сторінці, щоб визначити групу за доходом.
+    chat_no_reask: Вже враховано дохід з форми / профілю.
+    link_social_page: Соціальні стипендії (UR)
+    link_regulamin: Регламент виплат (R-32/2024)
+    year_banner_confirmed: "Таблицю сум підтверджено для року {year}."
+    year_banner_unconfirmed: "Для року {year} у FACTS немає підтвердженої таблиці сум UR — оцінка не вважається актуальною."

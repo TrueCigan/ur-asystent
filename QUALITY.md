@@ -38,6 +38,15 @@ Asserts: `expect_url` / `expect_host`, `forbid_url_family`, `forbid_bos_only`, `
 2. Doprecyzuj `TOPIC_POLICY` (boost / force / penalize) – nie „podkręcaj” promptu LLM jako pierwszego kroku.
 3. Uruchom ponownie `sim_student.py` do PASS.
 
+## Verified scenario: social scholarship
+
+Product switch: `SCENARIO_SOCIAL=1` (default **off**).
+
+- Card + estimate: `GET/POST /api/scenarios/social-scholarship` — **no LLM**, figures from `data/facts.yaml` via `data/scenarios/social_scholarship.yaml` refs.
+- Amounts are year-scoped (`social_income_threshold` = 2025/2026). Cap 3560,60 (2025/2026) and 3667 (2026/2027) are separate facts, not auto-merged.
+- Dorm +400 is conditional (Regulamin § 12); not added to the estimate total unless `dorm_conditions_met=true`.
+- Chat under the flag answers this topic with localized copy only (no generative wrapper).
+
 ## Redesign freeze (round 7+)
 
 Seven live QA rounds showed that regex / string-substitution post-processors fix one symptom and break a neighbour (amount stripper holes, channel garble, FOLLOW-UP leaks, Mongolian replies).

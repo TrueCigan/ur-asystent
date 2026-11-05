@@ -1488,7 +1488,7 @@ def _attach_state(result, state):
         pass
     return result
 
-def answer(question, history, session_lang=None, state_token=None, conv_id=None):
+def answer(question, history, session_lang=None, state_token=None, conv_id=None, scenario_context=None):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang, state)"""
     import time as _time
     _t_deadline = _time.monotonic() + REQUEST_BUDGET_SEC
@@ -1500,6 +1500,13 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         if isinstance(m, dict) and m.get("role") in ("user", "assistant")
     ]
     state = resolve_state(state_token, history, conv_id=conv_id)
+    # Merge verified-scenario form context into profile (income estimate inputs only)
+    if isinstance(scenario_context, dict) and scenario_context:
+        prof0 = dict(getattr(state, "profile", None) or {})
+        for k in ("income_per_person", "estimate_year", "interested_in_dorm_topup", "dorm_conditions_met"):
+            if k in scenario_context and scenario_context[k] is not None:
+                prof0[k] = scenario_context[k]
+        state.profile = prof0
     hist_user = "\n".join(m["content"] for m in history if m["role"] == "user")
     user_turns = [m["content"] for m in history if m["role"] == "user"]
     seed_lang = session_lang or state.lang
@@ -1512,6 +1519,44 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     if is_security_probe(question) or is_security_probe(hist_user[-500:], question):
         return _attach_state(dict(clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
                     answer=refuse_message(lang)), state)
+    # Verified social-scholarship scenario (no LLM) — reversible via SCENARIO_SOCIAL
+    try:
+        from scenarios.social import (
+            scenario_social_enabled, looks_like_social_question, format_chat_answer, estimate as social_estimate,
+        )
+        if scenario_social_enabled():
+            topics0, prof0, _ = needed(question, hist_user)
+            if looks_like_social_question(question, topics0):
+                est = None
+                used_form = False
+                # Prefer income already known from form/profile — do not re-ask
+                income_hint = None
+                if isinstance(getattr(state, "profile", None), dict):
+                    income_hint = state.profile.get("income_per_person")
+                if income_hint is None:
+                    income_hint = extract_income(f"{hist_user}\n{question}")
+                else:
+                    used_form = True
+                if income_hint is not None:
+                    year = None
+                    if isinstance(getattr(state, "profile", None), dict):
+                        year = state.profile.get("estimate_year")
+                    est = social_estimate(
+                        income_hint,
+                        academic_year=year,
+                        interested_in_dorm_topup=bool((state.profile or {}).get("interested_in_dorm_topup")),
+                        dorm_conditions_met=(state.profile or {}).get("dorm_conditions_met"),
+                        profile=dict(prof0 or {}),
+                        lang=lang,
+                    )
+                    if used_form or income_hint is not None:
+                        used_form = used_form or ("income_per_person" in (state.profile or {}))
+                payload = format_chat_answer(lang, estimate_result=est, used_form_income=used_form)
+                payload["profile"] = dict(prof0 or {})
+                payload["topics"] = ["stypendium_socjalne"]
+                return _attach_state(payload, state)
+    except Exception:
+        pass  # fall through to legacy path if scenario module fails
     turn_conflicts = []
     topics, prof, missing = needed(question, hist_user)
     # Re-parse latest turn with conflict logging (needed() already merged regex profile)

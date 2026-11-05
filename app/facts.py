@@ -184,6 +184,11 @@ def _ensure_tuition_facts(
 
 
 def _parse_pl_num(s: str) -> float | None:
+    d = _parse_pl_decimal(s)
+    return float(d) if d is not None else None
+
+
+def _parse_pl_decimal(s: str) -> Decimal | None:
     raw = (s or "").strip().replace(" ", "").replace("\u00a0", "")
     if not raw:
         return None
@@ -192,13 +197,13 @@ def _parse_pl_num(s: str) -> float | None:
     elif "," in raw:
         raw = raw.replace(",", ".")
     try:
-        return float(raw)
-    except ValueError:
+        return Decimal(raw)
+    except (InvalidOperation, ValueError):
         return None
 
 
 def _groups_table(groups: Any) -> list[dict]:
-    """Normalize groups to list of {group, min, max, amount?}."""
+    """Normalize groups to list of {group, min, max, amount?} with Decimal bounds."""
     if not groups:
         return []
     if isinstance(groups, list):
@@ -206,10 +211,15 @@ def _groups_table(groups: Any) -> list[dict]:
         for row in groups:
             if not isinstance(row, dict):
                 continue
+            try:
+                lo = Decimal(str(row.get("min", 0)))
+                hi = Decimal(str(row.get("max", 0)))
+            except (InvalidOperation, ValueError):
+                continue
             out.append({
                 "group": str(row.get("group") or row.get("id") or ""),
-                "min": float(row.get("min", 0)),
-                "max": float(row.get("max", 0)),
+                "min": lo,
+                "max": hi,
                 "amount": row.get("amount"),
             })
         return out
@@ -223,7 +233,7 @@ def _groups_table(groups: Any) -> list[dict]:
                 if not isinstance(span, str) or "-" not in span:
                     continue
                 a, b = span.split("-", 1)
-                lo, hi = _parse_pl_num(a), _parse_pl_num(b)
+                lo, hi = _parse_pl_decimal(a), _parse_pl_decimal(b)
                 if lo is None or hi is None:
                     continue
                 out.append({"group": str(g), "min": lo, "max": hi, "amount": amounts.get(g)})
@@ -231,11 +241,14 @@ def _groups_table(groups: Any) -> list[dict]:
     return []
 
 
-def income_group(income_per_person: float, groups: Any) -> tuple[str | None, float | None]:
-    """Deterministic income → (group, amount). Upper bound inclusive."""
+def income_group(income_per_person: float | Decimal | str, groups: Any) -> tuple[str | None, float | None]:
+    """Deterministic income → (group, amount). Bounds inclusive; Decimal comparisons."""
     try:
-        income = float(income_per_person)
-    except (TypeError, ValueError):
+        if isinstance(income_per_person, Decimal):
+            income = income_per_person
+        else:
+            income = Decimal(str(income_per_person))
+    except (InvalidOperation, ValueError, TypeError):
         return None, None
     table = _groups_table(groups)
     if not table:
@@ -243,7 +256,12 @@ def income_group(income_per_person: float, groups: Any) -> tuple[str | None, flo
     for row in sorted(table, key=lambda r: r["min"]):
         if row["min"] <= income <= row["max"]:
             amt = row.get("amount")
-            return row["group"], (float(amt) if amt is not None else None)
+            if amt is None:
+                return row["group"], None
+            try:
+                return row["group"], float(Decimal(str(amt)))
+            except (InvalidOperation, ValueError):
+                return row["group"], None
     return None, None
 
 
