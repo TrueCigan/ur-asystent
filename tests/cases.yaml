@@ -528,3 +528,39 @@
   property_check:
     answer_fixture: "cap is 3667 zł"
     expect_raw_money: true
+
+# ---------- redesign P4 slots + derived facts ----------
+- id: r7-slot-polish-student-no-reask
+  origin: r7-S4
+  turns: ["Hi, I am a Polish student on a master's with GPA 4.9. What is the rector's scholarship and the combined social+rector cap?"]
+  unit: {profile: {status: pl, poziom: II}, missing: []}
+  e2e: {must_match: ["3667", "1000|1200|1400|1600"], must_not_match: ["(?i)what is your status", "(?i)Polish citizen"]}
+- id: r7-slot-disability-degree-fills
+  origin: r7-S6
+  turns: ["Здравствуйте, у меня значительная степень инвалидности, учусь заочно в магистратуре. Какая стипендия?"]
+  per_turn_lang_not: [ru, mn]
+  unit: {profile: {niepelnosprawnosc: tak, tryb: niestacjonarne, poziom: II}, missing_not: [niepelnosprawnosc]}
+  e2e: {lang_in: [uk], must_match: ["1400"], must_not_match: ["(?i)посвідчення|orzeczenie|certificate"]}
+- id: r7-slot-ukraine-not-pesel-ukr
+  origin: r7-S2
+  turns: ["Здравствуйте, я студент из Украины, доход 800 злотых, учусь очно, бакалавриат."]
+  unit: {profile_not: {pobyt: ukr}}
+  e2e: {must_not_match: ["PESEL UKR", "тимчасового захисту", "ochrony czasowej"]}
+- id: r7-slot-english-tuition-no-status-ask
+  origin: r7-S7
+  turns: ["Hello, I am from India on Mechanical Engineering English programme. How much per semester?"]
+  unit: {topics_include: [oplaty], missing: []}
+- id: r7-derived-topup-not-37pct
+  origin: r7-S3
+  turns: ["Jestem doktorantką po ocenie śródokresowej z orzeczeniem o niepełnosprawności. Ile dostanę?"]
+  unit: {profile: {status: doktorant, niepelnosprawnosc: tak}, missing: []}
+  e2e:
+    must_match: ["5500", "1071", "6571|6[ .]?571"]
+    must_not_match: ["37%.*profesor", "37%.*професор"]
+- id: r7-derived-cap-matches-facts
+  origin: redesign-p4
+  turns: ["limit socjalne rektor"]
+  unit:
+    derived_equals:
+      - {name: rector_social_cap, expect: 3667, equals_fact: rector_social_cap_monthly}
+      - {name: doctoral_disability_topup, expect: 1071.15, equals_fact: doctoral_disability_topup_monthly}

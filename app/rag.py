@@ -187,7 +187,7 @@ SLOT_OPTS = {
   # Self-ID only — bare "doktorant/doktoranckie" as a topic must NOT set status (R6-5)
   ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?:я\s+)докторант(?:к\w*)?|докторантур)"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
-  ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|i(?:'?m|\s+am)\s+polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|dow[oó]d\w*\s+(mam\s+)?polsk|polsk\w*\s+dow[oó]d|polsk\w*\s+paszport|urodzi\w+\s+w\s+(polsce|radomiu)|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
+  ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|polish\s*student|i(?:'?m|\s+am)\s+(?:a\s+)?polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|obywatelk\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|dow[oó]d\w*\s+(mam\s+)?polsk|polsk\w*\s+dow[oó]d|polsk\w*\s+paszport|urodzi\w+\s+w\s+(polsce|radomiu)|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|\bforeigner\b|i'?m\s*a?\s*foreign|i\s*am\s*from\s+(?!poland|polsk)|from\s+(india|china|ukraine|belarus|vietnam|nigeria|turkey|georgia)|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
  ],
  "tryb": [
@@ -368,10 +368,11 @@ def extract_profile(text, conflicts_out=None):
             if re.search(rx, t, re.I):
                 prof[slot] = val
                 break
-    # Podstawa pobytu — karta pobytu NIE jest automatycznie „ochrona UKR” (BUG-R2-06)
+    # Podstawa pobytu — karta pobytu / "из Украины" NIE jest PESEL UKR (R7-S2 / P4)
     has_ukr_protection = bool(re.search(
-        r"pesel\s*ukr|\bukr\b|ochron\w*\s*czasow|temporary\s*protection|"
-        r"specjaln\w*\s*ustaw\w*\s*ukrain|тимчасов\w*\s*захист|временн\w*\s*защит",
+        r"pesel\s*ukr|ochron\w*\s*czasow|temporary\s*protection|"
+        r"specjaln\w*\s*ustaw\w*\s*ukrain|тимчасов\w*\s*захист|временн\w*\s*защит|"
+        r"охорона\s*тимчасов",
         t, re.I,
     ))
     has_karta_pobytu = bool(re.search(
@@ -379,7 +380,7 @@ def extract_profile(text, conflicts_out=None):
         r"карт\w*\s*побут\w*|карт\w*\s*побыт\w*|residence\s*permit|оршин\s*суух",
         t, re.I,
     ))
-    if has_ukr_protection and not has_karta_pobytu:
+    if has_ukr_protection:
         prof["pobyt"] = "ukr"
         prof.setdefault("status", "cudzoziemiec")
     elif re.search(r"kart\w*\s*polaka|pole'?s?\s*card|карта\s*поляка", t, re.I):
@@ -391,9 +392,25 @@ def extract_profile(text, conflicts_out=None):
     elif has_karta_pobytu:
         prof["pobyt"] = "pobyt_czasowy"
         prof.setdefault("status", "cudzoziemiec")
-    elif re.search(r"громадян\w*\s*украї|з\s*україн|гражданин\w*\s*украин|from\s*ukraine", t, re.I):
-        # obywatelstwo UA bez PESEL UKR / ochrony → cudzoziemiec, bez wymuszania „ochrona czasowa”
+    elif re.search(
+        r"(?i)громадян\w*\s*украї|з\s*україн|гражданин\w*\s*украин|из\s*украин|"
+        r"from\s*ukraine|студент\s+из\s+украин",
+        t,
+    ):
+        # Citizenship UA alone → foreigner, never invent pobyt=ukr / PESEL UKR
         prof.setdefault("status", "cudzoziemiec")
+        if prof.get("pobyt") == "ukr" and not has_ukr_protection:
+            del prof["pobyt"]
+    # Disability degree stated → fill niepelnosprawnosc (do not re-ask for certificate) (P4)
+    if re.search(
+        r"(?i)(?:znacz\w*|umiarkowan\w*|lekki\w*)\s*stopie[nń]|"
+        r"значительн\w*\s*степен|інвалідн|инвалидност|"
+        r"considerable\s*(?:degree\s+of\s+)?disab|severe\s*disab|"
+        r"orzeczen\w*\s*o\s*(?:niepe|stop)|disability\s*(?:certificate|ruling|status)|"
+        r"маю\s+інвалід|у\s+меня\s+.{0,20}инвалид",
+        t,
+    ):
+        prof["niepelnosprawnosc"] = "tak"
     # krótkie tak/nie jako uzupełnienie ostatniego slotu (drugi_kierunek / niepełnosprawność)
     if re.match(r"^\s*(tak|yes|так|тийм)\s*\.?\s*$", t, re.I):
         prof.setdefault("drugi_kierunek", "tak")
@@ -555,6 +572,48 @@ def _recent_benefit_from_history(history_text):
     many = _recent_benefits_from_history(history_text)
     return many[-1] if many else None
 
+def _gate_required_slots(req, topic_names, prof, question, history_text=""):
+    """Drop slots that facts/profile already make unnecessary (P4 — no clarify loops)."""
+    req = list(req or [])
+    topic_names = list(topic_names or [])
+    prof = prof or {}
+    blob = f"{question or ''}\n{history_text or ''}"
+    if prof.get("status") == "doktorant" or prof.get("poziom") == "SD":
+        req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
+    # PL-language tuition without foreigner markers → do not demand status (R5-5)
+    if (
+        "oplaty" in topic_names
+        and "status" in req
+        and re.search(r"(?i)języku\s*polsk|polish[- ]language|czesne.*(?:polsk|niestacjon)|niestacjonarn\w*.*czesn", question or "")
+        and not re.search(r"(?i)cudzoziem|foreign|international|інозем|гадаад|english\s*program", blob)
+    ):
+        req = [x for x in req if x != "status"]
+    # Fixed English-programme fees — no status/tryb/poziom clarify (P4)
+    if "oplaty" in topic_names and re.search(
+        r"(?i)english[- ]?(?:language\s+)?program|angielsk|mechanical\s*eng|"
+        r"international\s*business|IB\s*&?\s*F",
+        blob,
+    ):
+        req = [x for x in req if x not in ("status", "tryb", "poziom")]
+    # Amount / cap / limit questions for stipends do not need eligibility slots
+    if any(t in topic_names for t in ("stypendium_rektora", "stypendium_socjalne", "doktoranckie", "stypendium_niepeln")):
+        if re.search(
+            r"(?i)\b(cap|limit|łączn\w*\s*kwot|combined|ile\s*(dostan|wynosi|dostaj)|"
+            r"what\s+is\s+the|wysoko[sś][cć]|how\s+much|яка\s+стипенд|какая\s+стипенд|"
+            r"скільки|сколько)",
+            question or "",
+        ) and not re.search(
+            r"(?i)czy\s+mog[eę]|can\s+i\s+(get|apply|receive)|how\s+to\s+apply|"
+            r"jak\s+z[lł]o[zż]|jak\s+otrzyma[cć]|eligibility|warunk",
+            question or "",
+        ):
+            req = [x for x in req if x not in ("drugi_kierunek", "tryb", "rok")]
+    # Disability degree already fills the slot — never re-ask niepelnosprawnosc
+    if prof.get("niepelnosprawnosc") == "tak":
+        req = [x for x in req if x != "niepelnosprawnosc"]
+    return list(dict.fromkeys(req))
+
+
 def needed(question, history_text):
     from topic_policy import normalize_query
     question = normalize_query(question or "")
@@ -609,20 +668,10 @@ def needed(question, history_text):
         for x in s:
             if x not in req:
                 req.append(x)
-    if prof.get("status") == "doktorant" or prof.get("poziom") == "SD":
-        req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
-    # PL-language tuition question without foreigner markers → do not demand status (R5-5)
     topic_names = [n for n, _ in topics]
-    blob = f"{question or ''}\n{history_text or ''}"
-    if (
-        "oplaty" in topic_names
-        and "status" in req
-        and re.search(r"(?i)języku\s*polsk|polish[- ]language|czesne.*(?:polsk|niestacjon)|niestacjonarn\w*.*czesn", question or "")
-        and not re.search(r"(?i)cudzoziem|foreign|international|інозем|гадаад|english\s*program", blob)
-    ):
-        req = [x for x in req if x != "status"]
+    req = _gate_required_slots(req, topic_names, prof, question, history_text)
     missing = [x for x in req if x not in prof]
-    return [n for n, _ in topics], prof, missing
+    return topic_names, prof, missing
 
 def clarify_text(lang, missing, prof=None):
     head, tip = CLARIFY.get(lang, CLARIFY["pl"])
@@ -1412,8 +1461,21 @@ def merge_state_profile(state, prof, topics, history):
                 for x in slots:
                     if x not in req:
                         req.append(x)
-    if merged.get("status") == "doktorant" or merged.get("poziom") == "SD":
-        req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
+    # Use latest user text for amount/cap gating (same rules as needed)
+    latest_q = ""
+    for m in reversed(hist):
+        if isinstance(m, dict) and m.get("role") == "user":
+            latest_q = m.get("content") or ""
+            break
+        if isinstance(m, str):
+            latest_q = m
+            break
+    hist_user = "\n".join(
+        (m.get("content") if isinstance(m, dict) else str(m)) or ""
+        for m in hist
+        if (isinstance(m, dict) and m.get("role") == "user") or isinstance(m, str)
+    )
+    req = _gate_required_slots(req, topics, merged, latest_q, hist_user)
     missing = [x for x in req if x not in merged]
     return merged, missing
 
@@ -1482,6 +1544,9 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
             from extract import extract_turn, apply_extraction
             data = extract_turn(
                 question, prof, state.pending_question, prev_pending or missing, call_llm,
+                original_question=state.original_question,
+                intents=list(state.intents or []),
+                user_turns=user_turns + [question],
             )
             if data:
                 prof2, confs = apply_extraction(prof, data)

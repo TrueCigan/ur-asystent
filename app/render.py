@@ -104,13 +104,20 @@ def build_computed(selected_facts: list, need: list[str] | None = None, profile:
     if doctoral and isinstance(doctoral.value, dict):
         przed = _dec(doctoral.value.get("przed_ocena_srodokresowa"))
         po = _dec(doctoral.value.get("po_ocenie_srodokresowej"))
+        # Disability top-up = disability_topup_percent_of_przed% of pre-evaluation (default 30%), NOT 37%
+        pct_top = doctoral.value.get("disability_topup_percent_of_przed")
+        if przed is not None and pct_top is not None:
+            derived_topup = (przed * _dec(pct_top) / Decimal("100")).quantize(Decimal("0.01"))
+            if topup is None:
+                topup = derived_topup
+            out["doctoral_disability_topup"] = derived_topup
         if topup is None:
             topup = _dec(doctoral.value.get("zwiekszenie_niepelnosprawnosc"))
         if przed is not None and topup is not None:
             out["doctoral_with_disability_przed"] = przed + topup
         if po is not None and topup is not None:
             out["doctoral_with_disability_po"] = po + topup
-        if topup is not None:
+        if topup is not None and "doctoral_disability_topup" not in out:
             out["doctoral_disability_topup"] = topup
 
     social = by_id.get("social_income_threshold")
@@ -124,11 +131,22 @@ def build_computed(selected_facts: list, need: list[str] | None = None, profile:
             out[f"social_{g}_plus_dorm"] = a + bonus
             if g == "II":
                 out["social_ii_plus_dorm"] = a + bonus
+            out[f"social_group_{g}"] = a
         out["social_plus_dorm_bonus"] = bonus
+        if "social_ii_plus_dorm" in out:
+            out["social_plus_dorm"] = out["social_ii_plus_dorm"]
+
+    # Combined social+rector cap = percent_of_professor * professor_salary (must match fact 3667)
+    salary_f = by_id.get("professor_salary_monthly")
+    pct_f = by_id.get("rector_social_cap_percent_of_professor")
+    if salary_f is not None and pct_f is not None:
+        sal = _dec(salary_f.value)
+        pct = _dec(pct_f.value)
+        if sal is not None and pct is not None:
+            out["rector_social_cap"] = (sal * pct / Decimal("100")).quantize(Decimal("1"))
 
     # If caller asked for specific keys not yet filled, leave them absent (render will keep placeholder)
     if need:
-        # ensure we at least attempt known aliases
         pass
     return out
 
