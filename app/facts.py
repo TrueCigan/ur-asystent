@@ -100,12 +100,19 @@ def _profile_matches(fact: Fact, profile: dict) -> bool:
     return True
 
 
+_TUITION_FACT_IDS = (
+    "tuition_english_programmes",
+    "tuition_polish_part_time_I",
+)
+
+
 def select_facts(
     facts: list[Fact],
     topics: list[str],
     profile: dict | None = None,
     include_unverified: bool | None = None,
     today: date | None = None,
+    question: str | None = None,
 ) -> list[Fact]:
     """Prefer current academic year per fact id; else latest. Never mix two years of the same id."""
     if include_unverified is None:
@@ -131,6 +138,48 @@ def select_facts(
         # no year / latest
         rows_sorted = sorted(rows, key=lambda r: _year_key(r.academic_year), reverse=True)
         selected.append(rows_sorted[0])
+    # Facts-first tuition (P5): always attach matching tuition cards for oplaty
+    if "oplaty" in tset:
+        selected = _ensure_tuition_facts(selected, facts, profile, question or "", include_unverified)
+    return selected
+
+
+def _ensure_tuition_facts(
+    selected: list[Fact],
+    facts: list[Fact],
+    profile: dict,
+    question: str,
+    include_unverified: bool,
+) -> list[Fact]:
+    have = {f.id for f in selected}
+    q = question or ""
+    want_en = bool(re.search(
+        r"(?i)english|angielsk|mechanical\s*eng|international\s*business|IB\s*&?\s*F",
+        q,
+    )) or profile.get("status") == "cudzoziemiec"
+    want_pl = bool(re.search(
+        r"(?i)języku\s*polsk|polish[- ]language|niestacjonarn|zaoczn|part[-\s]?time|czesne",
+        q,
+    )) or profile.get("status") == "pl"
+    for fid in _TUITION_FACT_IDS:
+        if fid in have:
+            continue
+        if fid == "tuition_english_programmes" and not want_en:
+            continue
+        if fid == "tuition_polish_part_time_I" and not want_pl:
+            continue
+        cand = [f for f in facts if f.id == fid]
+        for f in cand:
+            verified = f.status == "verified" and f.value is not None
+            if not (verified or (include_unverified and f.value is not None)):
+                continue
+            # Soft match: ignore poziom mismatch so II questions still get I-cycle table + note
+            soft_prof = dict(profile)
+            soft_prof.pop("poziom", None)
+            if _profile_matches(f, soft_prof) or not f.applies_to:
+                selected.append(f)
+                have.add(fid)
+                break
     return selected
 
 

@@ -233,7 +233,7 @@
   value:
     kierunki_nietechniczne: 2300
     kierunki_techniczne_inzynierskie: 3200
-    note: czesne za semestr, niestacjonarne I st. (PL), rozpoczynający 2026/2027; stawka zależy od kierunku (np. Administracja 2300, Informatyka 3200). English-programme fees are in tuition_english_programmes.
+    note: 'czesne za semestr, niestacjonarne (PL), R-8/2026 §1, rozpoczynający 2026/2027; nietechniczne 2300 / techniczne 3200. Kwoty zweryfikowane dla I st.; osobnej tabeli II st. brak w FACTS — cytuj te stawki + link R-8/2026, nigdy PDF 2018/2019. English programmes → tuition_english_programmes.'
   unit: PLN/semester
   academic_year: 2026/2027
   applies_to:
@@ -241,8 +241,10 @@
     - pl
     tryb:
     - niestacjonarne
+    # I-cycle amounts verified in R-8/2026 §1; surface for II questions with honesty note (no separate II fact yet)
     poziom:
     - I
+    - II
   candidates_seen:
   - note: 1600–2100 zł from 2020–2021 table — outdated; needs current ordinance
   source:
@@ -252,10 +254,10 @@
     checked: '2026-11-05'
   status: verified
   i18n_label:
-    pl: Czesne niestacjonarne I stopień (PL)
-    en: Part-time first-cycle tuition (Polish citizens)
-    uk: Вартість заочної форми І ступеня (громадяни PL)
-    mn: I зэрэг эчнээ төлбөр (Польш иргэн)
+    pl: Czesne niestacjonarne (PL) — tabela R-8/2026
+    en: Part-time tuition (Polish citizens) — R-8/2026 table
+    uk: Вартість заочної форми (громадяни PL) — таблиця R-8/2026
+    mn: Эчнээ төлбөр (Польш иргэн) — R-8/2026
 - id: doctoral_stipend_amount
   topic:
   - doktoranckie
