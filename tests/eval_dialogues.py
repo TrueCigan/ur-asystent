@@ -53,7 +53,7 @@ class Ctx:
 KNOWN_CASE_KEYS = {
     "id", "origin", "turns", "unit", "per_turn_lang_not", "e2e", "deadline_note",
     "output_lang_check", "income_group_table", "scrub_check", "amount_strip_check",
-    "prompt_budget", "fault",
+    "property_check", "render_check", "expect_fail_until", "prompt_budget", "fault",
 }
 
 
@@ -196,6 +196,67 @@ def run_output_lang_check(ctx, case):
     return []
 
 
+def run_property_check(ctx, case):
+    """Pure fixture guards: forbidden patterns / numbers ⊆ facts (no LLM)."""
+    from decimal import Decimal
+    pc = case["property_check"]
+    text = pc.get("answer_fixture") or ""
+    f = []
+    for rx in pc.get("must_match", []) or []:
+        if not re.search(rx, text):
+            f.append(f"property missing /{rx}/ in {text!r}")
+    for rx in pc.get("must_not_match", []) or []:
+        if re.search(rx, text):
+            f.append(f"property forbidden /{rx}/ in {text!r}")
+    if pc.get("numbers_subset_of_facts"):
+        try:
+            from facts import amounts_in, fact_amounts, load_facts
+            facts = load_facts()
+            ids = pc.get("fact_ids") or []
+            allowed = fact_amounts([x for x in facts if x.id in ids] if ids else facts)
+            bad = amounts_in(text) - allowed
+            if bad:
+                f.append(f"property amounts not in facts: {sorted(bad, key=str)}")
+        except Exception as e:
+            f.append(f"property numbers_subset_of_facts error: {e}")
+    if pc.get("output_lang_target"):
+        from lang import output_lang_ok
+        if not output_lang_ok(text, pc["output_lang_target"]):
+            f.append(f"property output_lang_ok failed for target={pc['output_lang_target']}")
+    return f
+
+
+def run_render_check(ctx, case):
+    """Server-side template renderer (Phase 1+). Skip cleanly if render.py not ready."""
+    try:
+        from render import render_answer, build_computed
+    except ImportError:
+        return ["render_check: app/render.py not available (Phase 1)"]
+    rc = case["render_check"]
+    try:
+        from facts import load_facts
+        facts = load_facts()
+        want_ids = set(rc.get("fact_ids") or [])
+        selected = [f for f in facts if not want_ids or f.id in want_ids]
+        computed = build_computed(selected, rc.get("computed_need") or [])
+        out = render_answer(
+            rc["template"],
+            selected,
+            computed=computed,
+            lang=rc.get("lang", "pl"),
+        )
+    except Exception as e:
+        return [f"render_check error: {e}"]
+    f = []
+    for rx in rc.get("must_match", []) or []:
+        if not re.search(rx, out):
+            f.append(f"render missing /{rx}/ in {out!r}")
+    for rx in rc.get("must_not_match", []) or []:
+        if re.search(rx, out):
+            f.append(f"render forbidden /{rx}/ in {out!r}")
+    return f
+
+
 def run_prompt_budget(ctx, case):
     b = case["prompt_budget"]
     sys = getattr(ctx.rag, "SYSTEM", "") or ""
@@ -305,13 +366,17 @@ def main():
     ctx = Ctx(os.path.abspath(a.repo))
     failed = 0
     total = 0
+    skipped = 0
     for c in cases:
         if a.only and not re.search(a.only, c["id"]):
             continue
-        unknown = set(c) - KNOWN_CASE_KEYS - {"unit"}
         # allow nested unit keys freely; flag unknown top-level only
         unknown = {k for k in c if k not in KNOWN_CASE_KEYS}
         total += 1
+        if c.get("expect_fail_until"):
+            skipped += 1
+            print(f"SKIP {c['id']:<34} until {c['expect_fail_until']} {c.get('origin', '')}")
+            continue
         f = []
         if unknown:
             f.append(f"unknown case keys: {sorted(unknown)} (harness must implement or reject)")
@@ -321,6 +386,10 @@ def main():
             f += run_output_lang_check(ctx, c)
         elif "prompt_budget" in c:
             f += run_prompt_budget(ctx, c)
+        elif "property_check" in c:
+            f += run_property_check(ctx, c)
+        elif "render_check" in c:
+            f += run_render_check(ctx, c)
         elif "scrub_check" in c:
             sc = c["scrub_check"]
             out = ctx.rag._scrub_hallucinations(
@@ -374,7 +443,7 @@ def main():
                 f += run_e2e(ctx, c, a.url, a.runs)
         print(("FAIL " if f else "PASS ") + f"{c['id']:<34} {c.get('origin','')}" + ("".join(f"\n     - {x}" for x in f)))
         failed += bool(f)
-    print(f"\n{total} cases, {failed} failed")
+    print(f"\n{total} cases, {failed} failed, {skipped} skipped")
     sys.exit(min(failed, 100))
 
 

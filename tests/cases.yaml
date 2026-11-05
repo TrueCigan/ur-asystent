@@ -443,3 +443,66 @@
   e2e:
     citations_subset_of_sources: true
     must_not_match: ["\\[Fn\\d*\\]", "джерело 6"]
+
+# ---------- redesign round 7 property guards ----------
+# Bad live quotes locked as fixtures. expect_fail_until → SKIP until the fixing phase
+# (harness must not PASS them while the bug still exists in the fixture text).
+- id: r7-prop-no-sum-hole
+  origin: r7-S1
+  expect_fail_until: redesign/p2
+  property_check:
+    answer_fixture: "**Razem otrzymasz: 1400 zł + 400 zł = miesięcznie**"
+    must_not_match: ["= miesięcznie", "= ---", "=\\s*$"]
+- id: r7-prop-no-uk-followup-markers
+  origin: r7-S2
+  expect_fail_until: redesign/p2
+  property_check:
+    answer_fixture: "## ОРИГІНАЛЬНЕ ПИТАННЯ:\n## FOLLOW-UP:"
+    must_not_match: ["ОРИГІНАЛЬНЕ ПИТАННЯ", "FOLLOW-UP", "PYTANIE ORYGINALNE", "ORIGINAL QUESTION"]
+- id: r7-prop-no-channel-garble
+  origin: r7-S7/S8/S9
+  expect_fail_until: redesign/p2
+  property_check:
+    answer_fixture: "provided in the **in the university system system** after enrollment. dostep do w systemie uczelni. Заявку подавайте електронно в Wirtualna Uczelnia (не )."
+    must_not_match: ["in the in the", "system system", "do w systemie", "\\(не \\)"]
+- id: r7-prop-no-raw-fact-keys
+  origin: r7-S3
+  expect_fail_until: redesign/p2
+  property_check:
+    answer_fixture: "przed_ocena_srodokresowa: 3570.5\nzwiekszenie_niepelnosprawnosc: 1071.15\n(ustawowe MINIMUM brutto…)"
+    must_not_match: ["przed_ocena_srodokresowa", "zwiekszenie_niepelnosprawnosc", "ustawowe MINIMUM", "FACTS \\(authoritative"]
+- id: r7-prop-no-russian-cyrillic-output
+  origin: policy
+  expect_fail_until: redesign/p3
+  property_check:
+    answer_fixture: "Стипендия ректора составляет 1600 рублей"
+    must_not_match: ["ы", "Стипендия", "рубл"]
+    output_lang_target: uk
+# Harness smoke: a clean fixture must already PASS (proves property_check runs)
+- id: r7-prop-harness-smoke-clean
+  origin: redesign-p0
+  property_check:
+    answer_fixture: "Maksymalna łączna kwota stypendium socjalnego i rektora wynosi 3667 zł/miesiąc."
+    must_match: ["3667"]
+    must_not_match: ["= miesięcznie", "FOLLOW-UP", "FACTS \\(authoritative", "in the in the"]
+# render_check cases land with P1; skip until then
+- id: r7-render-doctoral-total
+  origin: r7-S3
+  expect_fail_until: redesign/p1
+  render_check:
+    template: "Razem: {{F:doctoral_stipend_amount.po_ocenie_srodokresowej}} + {{F:doctoral_disability_topup_monthly}} = {{C:doctoral_with_disability_po}}."
+    lang: uk
+    fact_ids: [doctoral_stipend_amount, doctoral_disability_topup_monthly]
+    computed_need: [doctoral_with_disability_po]
+    must_match: ["5500", "1071", "6571"]
+    must_not_match: ["= ---", "przed_ocena_srodokresowa"]
+- id: r7-render-social-dorm-total
+  origin: r7-S1
+  expect_fail_until: redesign/p1
+  render_check:
+    template: "Razem otrzymasz: {{F:social_income_threshold.amounts.II}} + {{F:social_income_threshold.zwiekszenie_akademik}} = {{C:social_ii_plus_dorm}}."
+    lang: pl
+    fact_ids: [social_income_threshold]
+    computed_need: [social_ii_plus_dorm]
+    must_match: ["1400", "400", "1800"]
+    must_not_match: ["= miesięcznie"]
