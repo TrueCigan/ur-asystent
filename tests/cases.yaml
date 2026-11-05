@@ -225,3 +225,16 @@
   origin: r5-S6
   turns: ["Ile wynosi czesne na studiach niestacjonarnych w języku polskim?"]
   unit: {missing_not: [status]}
+
+# ---------- round 5: citations ----------
+- id: r5-citations-match-sources
+  origin: r5-S1/S4/S7/S10
+  turns: ["Ile kosztuje miejsce w akademiku i do kiedy trzeba składać podania o akademik?"]
+  e2e: {citations_subset_of_sources: true, max_count: {"Źródła:": 1}, must_not_match: ["\\[Fn\\d*\\]"]}
+- id: r5-no-blank-system-name
+  origin: r5-S1/S5/S9
+  turns: ["How do I pay tuition as an international student? full-time, master's, foreigner"]
+  e2e: {must_not_match: ["\\(\\s*\\)", "\\*{3,}", "system \\(\\)", "\\(WU\\)"]}
+- id: r5-scrub-leaves-no-artifacts
+  origin: r5-S5 (pure function)
+  scrub_check: {text: "Use your bank account number in the e-Dziekanat system (USOS) after enrollment.", hits_blob: "e-Dziekanat", must_not_match: ["\\(\\s*\\)"]}

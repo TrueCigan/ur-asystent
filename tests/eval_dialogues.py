@@ -203,6 +203,18 @@ def check_answer(r, exp):
         bad = [u for u in URL.findall(ans) if u.rstrip(".,;") not in src]
         if bad:
             f.append(f"urls not in sources: {bad[:3]}")
+    if exp.get("citations_subset_of_sources"):
+        # Body [n] must be ≤ listed sources under Źródła/Sources/Джерела
+        body, _, src_block = ans.partition("Źródła:")
+        if "Sources:" in ans and "Źródła:" not in ans:
+            body, _, src_block = ans.partition("Sources:")
+        if "Джерела:" in ans:
+            body, _, src_block = ans.partition("Джерела:")
+        n_src = len(re.findall(r"(?m)^\s*\[\d+\]\s*https?://", src_block or ""))
+        cites = [int(x) for x in re.findall(r"\[(\d+)\]", body)]
+        bad = [c for c in cites if c < 1 or (n_src and c > n_src)]
+        if bad:
+            f.append(f"citations not in sources list: {bad[:5]} (n_src={n_src})")
     return f
 
 
@@ -258,7 +270,7 @@ def main():
             f += run_prompt_budget(ctx, c)
         elif "scrub_check" in c:
             sc = c["scrub_check"]
-            out = ctx.rag._scrub_hallucinations(sc["text"], sc.get("hits_blob", ""))
+            out = ctx.rag._scrub_hallucinations(sc["text"], sc.get("hits_blob", ""), lang=sc.get("lang", "en"))
             for rx in sc.get("must_not_match", []):
                 if re.search(rx, out):
                     f.append(f"scrub left forbidden /{rx}/ in {out!r}")
