@@ -30,7 +30,9 @@ _DEADLINE_CTX = re.compile(
 
 _EXCLUDE_CTX = re.compile(
     r"(?i)(?:z\s+dnia|dated|uchwał|zarządzen|regulation|aktualizac|updated|"
-    r"egzamin|exam|екзамен|о\s+\d{1,2}:\d{2}|zaktualizowana)",
+    r"egzamin|exam|екзамен|о\s+\d{1,2}:\d{2}|zaktualizowana|"
+    r"uchwała\s*nr|zarządzenie\s*nr|\bBIP\b|resolution|postanowien|"
+    r"enter\s+into\s+force|wchodzi\s+w\s+życie|strona\s+zaktualizowana)",
 )
 
 
@@ -171,6 +173,35 @@ def parse_deadlines(text: str, today: date | None = None) -> list[Deadline]:
         covered.append((m.start(), m.end()))
         found.append(Deadline(start=start, end=end, label_key="range_month"))
 
+    # Multi-month move-in windows: 29–30 września i 1 października 2026
+    for m in re.finditer(
+        r"(?i)(\d{1,2})(?:\s*[–—−\-]\s*(\d{1,2}))?\s+([A-Za-zÀ-žа-яА-ЯіІїЇєЄґҐ]+)\s+i\s+"
+        r"(\d{1,2})\s+([A-Za-zÀ-žа-яА-ЯіІїЇєЄґҐ]+)\s+(\d{4})",
+        text,
+    ):
+        if overlaps(m.start(), m.end()):
+            continue
+        cue = text[max(0, m.start() - 60):m.end() + 30]
+        if not re.search(r"(?i)kwaterowanie|zakwaterowanie|move-?in|заселен|wprowadz", cue):
+            continue
+        mon_a = _month_num(m.group(3))
+        mon_b = _month_num(m.group(5))
+        if not mon_a or not mon_b:
+            continue
+        y = int(m.group(6))
+        d_start = int(m.group(1))
+        d_mid = int(m.group(2)) if m.group(2) else d_start
+        d_end = int(m.group(4))
+        start = _safe_date(y, mon_a, d_start)
+        mid = _safe_date(y, mon_a, d_mid)
+        end = _safe_date(y, mon_b, d_end)
+        if not start or not end:
+            continue
+        if mid and mid > end:
+            end = mid
+        covered.append((m.start(), m.end()))
+        found.append(Deadline(start=start, end=end, label_key="window"))
+
     # Prefixed single: until/by/do + date (always contextual)
     for m in re.finditer(
         r"(?:after|until|by|po\s+dniu|po|do|до|не\s*пізніше(?:\s*ніж)?|"
@@ -297,18 +328,29 @@ def render_deadline_notes(
 
 
 def strip_llm_deadline_notes(text: str) -> str:
-    """Remove LLM-written passed-deadline lines so code owns the warning."""
+    """Remove LLM-written passed-deadline lines/phrases so code owns the warning (R6-4)."""
     if not text:
         return text
     lines = []
     for line in text.splitlines():
+        # Drop whole lines that are only a ⚠️ / “termin minął” warning
+        if re.search(r"(?i)^\s*⚠️", line) and re.search(
+            r"(?i)minął|passed|минув|өнгөрсөн", line
+        ):
+            continue
         if re.search(
-            r"(?i)⚠️.*(minął|passed|минув|өнгөрсөн)|termin już minął|deadline.{0,40}already\s+passed|"
-            r"термін.{0,40}минув",
+            r"(?i)^\s*(termin\s+(już\s+)?minął|deadline.{0,40}already\s+passed|"
+            r"термін.{0,40}минув)\s*$",
             line,
         ):
             continue
-        lines.append(line)
+        # Strip inline phrases; keep the date / content
+        line = re.sub(r"(?i)\s*[–—−\-:]?\s*termin\s+(już\s+)?minął\b", "", line)
+        line = re.sub(r"(?i)\s*[–—−\-:]?\s*deadline\s+has\s+already\s+passed\b", "", line)
+        line = re.sub(r"(?i)\s*[–—−\-:]?\s*термін\s+(уже\s+)?минув\b", "", line)
+        line = re.sub(r"[ \t]{2,}", " ", line).rstrip()
+        if line.strip():
+            lines.append(line)
     return "\n".join(lines).rstrip()
 
 

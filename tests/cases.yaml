@@ -360,3 +360,36 @@
   e2e:
     must_not_match: ["uczelni/w systemie", "w systemie uczelni/w systemie"]
     must_match: ["(?i)Wirtualn\\w+\\s+Uczeln"]
+
+# ---------- round 6: deadlines ----------
+- id: r6-deadline-no-inline-double
+  origin: r6-S7
+  deadline_note:
+    text: "Wniosek do 15.05.2026 – termin minął [F2]. Zadatek 94 zł: wpłacić do 31.08.2026 [F2]."
+    lang: pl
+    today: "2026-11-05"
+    expect_count: 2
+    body_must_not_match: ["termin minął"]
+    must_match: ["15\\.05\\.2026", "31\\.08\\.2026"]
+- id: r6-deadline-movein-window
+  origin: r6-S7
+  deadline_note:
+    text: "Kwaterowanie: 29–30 września i 1 października 2026, godz. 8–15"
+    lang: pl
+    today: "2026-11-05"
+    expect_count: 1
+    must_match: ["29\\.09\\.2026|01\\.10\\.2026"]
+- id: r6-deadline-bip-not-flagged
+  origin: r6-S2
+  deadline_note:
+    text: "Uchwała nr 000-9/2/2026 z dnia 09.02.2026. Strona zaktualizowana 08.02.2026."
+    lang: pl
+    today: "2026-11-05"
+    expect_count: 0
+- id: r6-deadline-1-pazdziernika
+  origin: r6-S6
+  deadline_note:
+    text: "Semestr zimowy: do 1 października (lub do 15 października, jeśli jesteś na 1. roku)"
+    lang: pl
+    today: "2026-11-05"
+    expect_count: 2
