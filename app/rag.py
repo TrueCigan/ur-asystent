@@ -46,6 +46,9 @@ def _char(q):
 # ---------- wyszukiwanie hybrydowe (BM25 + wektory, fuzja RRF) ----------
 def search(q, k=8, prefer=None, topics=None, profile=None):
     if IDX is None: load()
+    from topic_policy import normalize_query, is_denied_chunk
+    from url_norm import normalize_url
+    q = normalize_query(q or "")
     ch = IDX["chunks"]; n = len(ch)
     bm = _bm25(q)
     vec = _char(q)
@@ -80,15 +83,43 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
             elif fac and c.get("source") in PLAN_SOURCES and c.get("source") != fac:
                 sc[i] *= 0.15
     out, per_url = [], {}
+    tset = set(topics or [])
     for i in np.argsort(-sc):
-        c = ch[i]
-        if per_url.get(c["url"], 0) >= 2:
+        if sc[i] <= 0:
             continue
-        per_url[c["url"]] = per_url.get(c["url"], 0) + 1
-        out.append(dict(c, score=float(sc[i])))
+        c = ch[i]
+        if is_denied_chunk(c, tset):
+            continue
+        u = normalize_url(c.get("url") or "")
+        if per_url.get(u, 0) >= 2:
+            continue
+        per_url[u] = per_url.get(u, 0) + 1
+        hit = dict(c, score=float(sc[i]), url=u)
+        out.append(hit)
         if len(out) >= k:
             break
     return out
+
+
+def build_query(question, history, topics, prof):
+    """Same query shaping as answer() — for retrieval unit tests (R5-9)."""
+    hist_user = ""
+    if isinstance(history, list):
+        hist_user = "\n".join(
+            (m.get("content") if isinstance(m, dict) else str(m)) for m in history
+        )
+    elif history:
+        hist_user = str(history)
+    base_q = question or ""
+    if hist_user:
+        prev = [p for p in re.split(r"\n+", hist_user) if p.strip() and any(re.search(rx, p, re.I) for _, rx, _ in TOPICS)]
+        if prev:
+            base_q = prev[-1] + " " + (question or "")
+    q = base_q
+    q += " " + " ".join(TOPIC_PL_QUERY[t] for t in (topics or []) if t in TOPIC_PL_QUERY and t != "cudzoziemcy")
+    q += " " + query_extras(topics or [], prof or {})
+    from topic_policy import normalize_query
+    return normalize_query(q)
 
 # ---------- język (PL / EN / UK / MN) — sticky sesja; RU → UK (polityka) ----------
 # LANG_NAME imported from lang.py
@@ -483,6 +514,9 @@ def _recent_benefit_from_history(history_text):
     return many[-1] if many else None
 
 def needed(question, history_text):
+    from topic_policy import normalize_query
+    question = normalize_query(question or "")
+    history_text = normalize_query(history_text or "")
     q = question.lower()
     topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, q, re.I)]
     # Negacja drugiego kierunku ≠ pytanie o dwa kierunki (BUG-R2-04)
@@ -892,9 +926,10 @@ _SYSTEM_NAME_RE = re.compile(r"(?i)\b(USOS|SIRK|Wirtualn\w+\s+\w+)\b")
 
 def render_sources(hits, lang="pl", max_n=5, fact_entries=None):
     """Code-owned sources list in the session language. Numbers match body citations."""
+    from url_norm import normalize_url
     lines = []
     for h in dedupe_hits_by_url(hits)[:max_n]:
-        u = (h.get("url") or "").strip()
+        u = normalize_url((h.get("url") or "").strip())
         warn = ""
         if outdated(h.get("modified"), u):
             warn = f" ⚠️ {OUTDATED.get(lang, OUTDATED['pl'])}"

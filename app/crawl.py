@@ -54,6 +54,12 @@ def file_text(url):
 
 def add(url, title, text, modified, source, kind, scanned=False):
     if url in seen or not text: return
+    try:
+        from url_norm import normalize_url
+        url = normalize_url(url)
+    except Exception:
+        pass
+    if url in seen or not text: return
     seen.add(url)
     d = dict(url=url, title=title.strip(), text=text, modified=modified, source=source, kind=kind, scanned=scanned)
     docs.append(d)

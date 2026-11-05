@@ -273,3 +273,27 @@
   turns: ["Dzień dobry, jestem Polakiem, mieszkam pod Radomiem, pracuję na etacie od trzech lat w firmie logistycznej, więc wybieram tryb zaoczny, bo w tygodniu nie dam rady chodzić na zajęcia. Interesuje mnie licencjat z zarządzania, pierwszy rok, nic wcześniej nie kończyłem, nie mam innego dyplomu. Ile wynosi czesne na studiach niestacjonarnych w języku polskim i do kiedy trzeba płacić?"]
   unit: {profile: {status: pl, tryb: niestacjonarne, poziom: I, rok: "1", drugi_kierunek: nie}, missing: []}
   e2e: {lang_in: [pl], max_seconds: 60}
+
+# ---------- round 5: retrieval ----------
+- id: r5-no-double-encoded-urls
+  origin: r5-S2
+  turns: ["Jestem doktorantem w Szkole Doktorskiej UR. Jakie są stypendia doktoranckie i ile wynoszą kwoty?"]
+  unit: {retrieval: {must_not_match_urls: ["%25"]}}
+  e2e: {must_not_match: ["%25"]}
+- id: r5-income-limit-typos-relevant-sources
+  origin: r5-S9
+  turns: ["hello, i am foreigner, whats the incom limit for social scholarsip, jedno person in family"]
+  unit: {lang: en, topics_include: [stypendium_socjalne], retrieval: {must_not_match_urls: ["Wspolczesne-wyzwania", "Badania-i-perspektywy", "Regulamin-domu-19-2019"], top5_must_match_url: ["stypendi"]}}
+  e2e: {lang_in: [en], must_not_match: ["(?i)conference papers"]}
+- id: r5-disability-no-transport-docs
+  origin: r5-S4
+  turns: ["Mam orzeczenie o umiarkowanym stopniu niepełnosprawności. Jak uzyskać stypendium dla osób niepełnosprawnych i ile wynosi?"]
+  unit: {retrieval: {must_not_match_urls: ["transport", "wskazowki", "prowadzacych"], top5_must_match_url: ["niepelnosprawn"]}}
+- id: r5-social-uk-no-staff-mobility
+  origin: r5-S8
+  turns: ["Привіт, як отримати соціальну стипендію? Я з Білорусі, карта побиту"]
+  unit: {lang: uk, retrieval: {must_not_match_urls: ["Staff-Mobility", "GREEN-TRAVEL"]}}
+- id: r5-tuition-no-2018-ordinances
+  origin: r5-S5/S6
+  turns: ["Ile wynosi czesne na studiach niestacjonarnych w języku polskim? Polak, licencjat, zarządzanie, 1 rok"]
+  unit: {retrieval: {must_not_match_urls: ["2018", "2019-20", "R-38-2020"]}}

@@ -120,6 +120,35 @@ def run_unit(ctx, case):
                 fails.append(f"income_group={g} want {ig.get('expect_group')}")
         except Exception as e:
             fails.append(f"income_group error: {e}")
+    if "retrieval" in exp:
+        try:
+            q = case["turns"][-1]
+            hu = "\n".join(case["turns"][:-1])
+            topics = topics or []
+            if not topics:
+                topics, prof, _ = rag.needed(q, hu)
+            else:
+                _, prof, _ = rag.needed(q, hu)
+            query = rag.build_query(q, case["turns"][:-1], topics, prof)
+            # BM25-only: temporarily disable embeddings if present
+            emb = None
+            if getattr(rag, "IDX", None) and rag.IDX.get("emb") is not None:
+                emb = rag.IDX["emb"]
+                rag.IDX["emb"] = None
+            try:
+                hits = rag.search(query, k=5, topics=topics, profile=prof)
+            finally:
+                if emb is not None and rag.IDX is not None:
+                    rag.IDX["emb"] = emb
+            urls = " ".join((h.get("url") or "") for h in hits)
+            for sub in (exp["retrieval"].get("must_not_match_urls") or []):
+                if sub in urls:
+                    fails.append(f"retrieval url contains forbidden {sub!r}")
+            for sub in (exp["retrieval"].get("top5_must_match_url") or []):
+                if sub.lower() not in urls.lower():
+                    fails.append(f"top5 missing url substring {sub!r} in {urls[:200]!r}")
+        except Exception as e:
+            fails.append(f"retrieval error: {e}")
     return fails
 
 
