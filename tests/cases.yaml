@@ -344,3 +344,19 @@
   turns: ["Hej, jestem Marek, 2 rok informatyki stacjonarnie, I stopień. Interesuje mnie stypendium doktoranckie, ile wynosi?", "ups pomyłka, ja ni jestem doktorantem, tylko licencjat. Ale kumpel z doktoratu pyta, ile ma dostawać"]
   e2e:
     must_not_match: ["PYTANIE ORYGINALNE", "ORIGINAL QUESTION", "FOLLOW-UP:", "LATEST REPLY"]
+
+# ---------- round 6: channel scrub ----------
+- id: r6-scrub-no-double-channel
+  origin: r6-S1/S4/S7 (pure)
+  scrub_check:
+    text: "Złóż wniosek w Wirtualna Uczelnia (elektronicznie); nie USOS/SIRK."
+    hits_blob: "stypendium socjalne"
+    lang: pl
+    must_match: ["(?i)Wirtualn\\w+\\s+Uczeln"]
+    must_not_match: ["uczelni/w systemie", "w w systemie", "przez w systemie"]
+- id: r6-scrub-keeps-wirtualna-from-facts
+  origin: r6-S7
+  turns: ["Ile kosztuje akademik i do kiedy trzeba składać wniosek o miejsce? Kiedy się wprowadzam?"]
+  e2e:
+    must_not_match: ["uczelni/w systemie", "w systemie uczelni/w systemie"]
+    must_match: ["(?i)Wirtualn\\w+\\s+Uczeln"]

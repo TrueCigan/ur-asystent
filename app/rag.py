@@ -1344,23 +1344,61 @@ _NEUTRAL_SYSTEM = {
     "uk": "в системі університету",
     "mn": "их сургуулийн системд",
 }
+_CANONICAL_CHANNEL_RE = re.compile(r"(?i)^Wirtualn\w+\s+(?:Uczelnia|Dziekanat)$")
+_NEG_BEFORE_SYSTEM_RE = re.compile(
+    r"(?i)(?:nie\s+(?:w|przez)|not\s+(?:in|via|through)|не\s+(?:через|в))\s*$"
+)
 
 
-def _scrub_hallucinations(text, hits_blob="", lang="pl"):
-    """Replace unknown system names with a neutral phrase; clean empty () / **** (R5-6)."""
+def _collapse_channel_phrases(text: str) -> str:
+    """Collapse doubled neutral-channel phrases after scrub (R6-3)."""
     if not text:
         return text
-    blob = hits_blob or ""
+    t = text
+    t = re.sub(r"(?i)(w systemie uczelni)([/ ]+\1)+", r"\1", t)
+    t = re.sub(r"(?i)(в системі університету)([/ ]+\1)+", r"\1", t)
+    t = re.sub(r"(?i)(in the university system)([/ ]+\1)+", r"\1", t)
+    t = re.sub(r"(?i)w\s+w systemie", "w systemie", t)
+    t = re.sub(r"(?i)nie\s+przez\s+w systemie", "nie przez system uczelni", t)
+    t = re.sub(r"(?i)nie\s+w\s+w systemie", "nie w systemie", t)
+    t = re.sub(r"(?i);\s*nie\s*/\s*", "; ", t)
+    t = re.sub(r"(?i)\bnie\s*/\s*", "nie ", t)
+    t = re.sub(r"(?i)/\s*(?=[.;,]|$)", "", t)
+    t = re.sub(r"(?i);\s*nie\s*[.]?\s*(?=[.]|$)", ".", t)
+    t = re.sub(r"(?i);\s*nie\s*$", "", t)
+    t = re.sub(r"\s{2,}", " ", t)
+    t = re.sub(r"\s+([.;,])", r"\1", t)
+    return t
+
+
+def _scrub_hallucinations(text, hits_blob="", lang="pl", facts_blob=""):
+    """Replace unknown system names with a neutral phrase; clean empty () / **** (R5-6/R6-3)."""
+    if not text:
+        return text
+    # FACTS channel text is an allow-blob (never scrub Wirtualna Uczelnia from submission_channel)
+    blob = f"{hits_blob or ''}\n{facts_blob or ''}\nWirtualna Uczelnia\nWirtualny Dziekanat"
     neutral = _NEUTRAL_SYSTEM.get(lang, _NEUTRAL_SYSTEM["pl"])
+    # Drop negated campus-system lists in one go: "nie USOS/SIRK" → "nie "
+    text = re.sub(
+        r"(?i)\b((?:nie|not|не)\s+)(?:w\s+|in\s+|через\s+|в\s+)?(?:USOS|SIRK)(?:\s*/\s*(?:USOS|SIRK))*",
+        r"\1",
+        text,
+    )
 
     def _repl(m):
         name = m.group(1)
+        if _CANONICAL_CHANNEL_RE.match(name.strip()):
+            return m.group(0)
         key = name.split()[0]
         if re.search(re.escape(key), blob, re.I):
             return m.group(0)
+        left = text[max(0, m.start() - 40):m.start()]
+        if _NEG_BEFORE_SYSTEM_RE.search(left) or re.search(r"(?i)(?:nie|not|не)\s+(?:[\w/]+\s*)*$", left):
+            return ""
         return neutral
 
     text = _SYSTEM_NAME_RE.sub(_repl, text)
+    text = _collapse_channel_phrases(text)
     text = cleanup_answer_artifacts(text)
     return re.sub(r"[ \t]{2,}", " ", text)
 
@@ -1641,7 +1679,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         try:
             blob6 = _hit_blob(hits[:6])
             out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.3)))
-            out = _scrub_hallucinations(out, blob6, lang=lang)
+            out = _scrub_hallucinations(out, blob6, lang=lang, facts_blob=facts_for_user)
             if not output_lang_ok(out, lang):
                 # Skip language regen if remaining budget < 20s → fallback (R5-8)
                 if _time.monotonic() + 20 > _t_deadline:
@@ -1658,7 +1696,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                     }
                     try:
                         out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
-                        out = _scrub_hallucinations(out, blob6, lang=lang)
+                        out = _scrub_hallucinations(out, blob6, lang=lang, facts_blob=facts_for_user)
                     except Exception:
                         out = ""
                     if not out or not output_lang_ok(out, lang):
@@ -1675,7 +1713,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                 try:
                     msgs2 = list(msgs) + [{"role": "user", "content": nudge}]
                     out2 = strip_untrusted_wrappers(redact_secrets(call_llm(msgs2, temperature=0.2)))
-                    out2 = _scrub_hallucinations(out2, blob6, lang=lang)
+                    out2 = _scrub_hallucinations(out2, blob6, lang=lang, facts_blob=facts_for_user)
                     out2 = strip_llm_deadline_notes(out2)
                     out2 = _postcheck_amounts(out2)
                     if out2 and (not _looks_truncated(out2) or len(out2) > len(out)):
@@ -1694,7 +1732,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         err = ""
     blob6 = _hit_blob(hits[:6])
     ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)))
-    ans = _scrub_hallucinations(ans, blob6, lang=lang)
+    ans = _scrub_hallucinations(ans, blob6, lang=lang, facts_blob=facts_for_user)
     ans = strip_llm_deadline_notes(ans)
     ans = _postcheck_amounts(ans)
     ans = strip_internal_markers(ans)

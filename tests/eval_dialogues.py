@@ -318,7 +318,15 @@ def main():
             f += run_prompt_budget(ctx, c)
         elif "scrub_check" in c:
             sc = c["scrub_check"]
-            out = ctx.rag._scrub_hallucinations(sc["text"], sc.get("hits_blob", ""), lang=sc.get("lang", "en"))
+            out = ctx.rag._scrub_hallucinations(
+                sc["text"],
+                sc.get("hits_blob", ""),
+                lang=sc.get("lang", "en"),
+                facts_blob=sc.get("facts_blob", ""),
+            )
+            for rx in sc.get("must_match", []):
+                if not re.search(rx, out):
+                    f.append(f"scrub missing /{rx}/ in {out!r}")
             for rx in sc.get("must_not_match", []):
                 if re.search(rx, out):
                     f.append(f"scrub left forbidden /{rx}/ in {out!r}")
