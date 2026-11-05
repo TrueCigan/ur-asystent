@@ -254,10 +254,42 @@ def render_facts_block(facts: list[Fact], lang: str = "pl", computed_lines: list
     return "\n".join(lines)
 
 
+# EN thousands (3,667 / 1,000.50), EU thousands (3.667 / 3 667,50), plain decimals, 3–5 digit ints
 _AMOUNT_RE = re.compile(
-    r"(?<!\d)(\d{1,3}(?:[ .]\d{3})*(?:[.,]\d{1,2})?|\d+[.,]\d{2}|\d{3,5})\s*(?:zł|zl|PLN|EUR|euro|€)",
+    r"(?<![\d.,])("
+    r"\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?"
+    r"|\d{1,3}(?:[ .\u00a0]\d{3})+(?:,\d{1,2})?"
+    r"|\d+[.,]\d{2}"
+    r"|\d{3,5}"
+    r")\s*(?:zł|zl|PLN|EUR|euro|€)",
     re.I,
 )
+
+
+def parse_amount_token(raw: str) -> Decimal | None:
+    """Parse a numeric amount token; EN commas are thousands, PL ``,dd`` is decimal."""
+    s = (raw or "").replace("\u00a0", "").replace(" ", "").strip()
+    if not s:
+        return None
+    if re.fullmatch(r"\d{1,3}(,\d{3})+(\.\d{1,2})?", s):
+        s = s.replace(",", "")
+    elif re.fullmatch(r"\d{1,3}(\.\d{3})+(,\d{1,2})?", s):
+        s = s.replace(".", "").replace(",", ".")
+    elif "," in s and "." in s:
+        if s.rfind(",") > s.rfind("."):
+            s = s.replace(".", "").replace(",", ".")
+        else:
+            s = s.replace(",", "")
+    elif "," in s:
+        left, _, right = s.partition(",")
+        if len(right) == 3 and left.isdigit() and len(left) <= 3 and right.isdigit():
+            s = left + right  # EN thousands fallback e.g. 3,667
+        else:
+            s = s.replace(",", ".")
+    try:
+        return Decimal(s)
+    except InvalidOperation:
+        return None
 
 
 def amounts_in(text: str) -> set[Decimal]:
@@ -265,15 +297,9 @@ def amounts_in(text: str) -> set[Decimal]:
     if not text:
         return out
     for m in _AMOUNT_RE.finditer(text):
-        raw = m.group(1).replace(" ", "").replace("\u00a0", "")
-        if "," in raw and "." in raw:
-            raw = raw.replace(".", "").replace(",", ".")
-        elif "," in raw:
-            raw = raw.replace(",", ".")
-        try:
-            out.add(Decimal(raw))
-        except InvalidOperation:
-            continue
+        val = parse_amount_token(m.group(1))
+        if val is not None:
+            out.add(val)
     return out
 
 
@@ -297,3 +323,30 @@ def fact_amounts(facts: list[Fact]) -> set[Decimal]:
     for f in facts:
         _collect_nums(f.value, out)
     return out
+
+
+def strip_unknown_amounts(text: str, allowed: set[Decimal]) -> tuple[str, bool]:
+    """Silently remove currency amounts not in ``allowed``. Never leaves a dangling ``3,`` / ``1,``."""
+    if not text or not allowed:
+        return text or "", False
+    unknown = amounts_in(text) - allowed
+    if not unknown:
+        return text, False
+
+    def _repl(m: re.Match) -> str:
+        raw = m.group(0)
+        # Refuse partial strip: digit/comma immediately before the match belongs to a larger token
+        start = m.start()
+        if start > 0 and text[start - 1] in "0123456789.,":
+            return raw
+        got = amounts_in(raw)
+        if got and got <= unknown:
+            return ""
+        return raw
+
+    cleaned = _AMOUNT_RE.sub(_repl, text)
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).rstrip()
+    # Collapse artefacts like "3,/month" if a bad match somehow slipped through
+    cleaned = re.sub(r"(?<!\d)\d{1,3},(?=\s*/|\s*$)", "", cleaned)
+    return cleaned, cleaned != text
