@@ -52,7 +52,8 @@ class Ctx:
 
 KNOWN_CASE_KEYS = {
     "id", "origin", "turns", "unit", "per_turn_lang_not", "e2e", "deadline_note",
-    "output_lang_check", "income_group_table", "scrub_check", "prompt_budget", "fault",
+    "output_lang_check", "income_group_table", "scrub_check", "amount_strip_check",
+    "prompt_budget", "fault",
 }
 
 
@@ -321,6 +322,18 @@ def main():
             for rx in sc.get("must_not_match", []):
                 if re.search(rx, out):
                     f.append(f"scrub left forbidden /{rx}/ in {out!r}")
+        elif "amount_strip_check" in c:
+            from decimal import Decimal
+            from facts import strip_unknown_amounts
+            ac = c["amount_strip_check"]
+            allowed = {Decimal(str(x)) for x in (ac.get("allowed") or [])}
+            out, _ = strip_unknown_amounts(ac["text"], allowed)
+            for rx in ac.get("must_match", []):
+                if not re.search(rx, out):
+                    f.append(f"amount_strip missing /{rx}/ in {out!r}")
+            for rx in ac.get("must_not_match", []):
+                if re.search(rx, out):
+                    f.append(f"amount_strip left forbidden /{rx}/ in {out!r}")
         elif "income_group_table" in c:
             try:
                 from facts import income_group, load_facts

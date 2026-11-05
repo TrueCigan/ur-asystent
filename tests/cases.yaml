@@ -306,3 +306,27 @@
   turns: ["Czy doktorant może dostać stypendium rektora?", "Jestem na drugim roku doktoratu, mam dwie publikacje i średnią 4,8. Czyli rektorskie mi się nie należy, tak?"]
   unit: {profile: {status: doktorant}, missing: []}
   e2e: {must_match: ["(?i)^\\W*(nie|tak)\\b|(?i)\\b(nie przysługuje|nie należy|przysługuje)\\b"], must_not_match: ["81\\s*[–-]\\s*100\\s*pkt"]}
+
+# ---------- round 6: amounts ----------
+- id: r6-strip-en-thousands-keeps-3667
+  origin: r6-S9 (pure)
+  amount_strip_check:
+    text: "The cap is 3,667 PLN/month for 2026/2027. Rector's scholarship amounts range from 1,000–1,600 PLN/month."
+    allowed: [3667, 1000, 1600]
+    must_match: ["3,667|3667", "1,000|1000", "1,600|1600"]
+    must_not_match: ["3,/month", "1,/month", "Amounts not in FACTS"]
+- id: r6-no-visible-strip-note
+  origin: r6-S1/S9
+  turns: ["helo, im a foreigner studyng jedno kierunek. whats the max incom cap for social and rektor scholarhip togethr?", "bachelors i guess, stacjonarne, 2nd yr"]
+  e2e:
+    lang_in: [en]
+    must_match: ["3667|3[,.]?667"]
+    must_not_match: ["3,/month", "1,/month", "Amounts not in FACTS", "Kwoty spoza FACTS", "Суми поза FACTS"]
+- id: r6-no-stale-2099-threshold
+  origin: r6-S10
+  turns: ["Привіт, я Оксана з України, маю карту побуту. Скільки коштує гуртожиток і чи можу я отримати соціальну стипендію?", "Стаціонар, бакалаврат, перший курс, другого напряму нема і диплому теж."]
+  per_turn_lang_not: [ru]
+  e2e:
+    lang_in: [uk]
+    must_not_match: ["2099"]
+    must_match: ["1908"]

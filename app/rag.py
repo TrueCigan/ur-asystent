@@ -17,7 +17,7 @@ from deadlines import deadline_passed_note, strip_llm_deadline_notes
 from decimal import Decimal
 from facts import (
     load_facts, select_facts, render_facts_block, amounts_in, fact_amounts,
-    extract_income, computed_income_line, income_group,
+    extract_income, computed_income_line, income_group, strip_unknown_amounts,
 )
 
 IDX = None
@@ -822,7 +822,7 @@ def call_llm(messages, temperature=0.25):
                     headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
                     json={
                         "model": model or "claude-sonnet-4-5",
-                        "max_tokens": 900,
+                        "max_tokens": 1400,
                         "system": messages[0]["content"],
                         "messages": messages[1:],
                         "temperature": temperature,
@@ -1568,7 +1568,8 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         if line:
             computed_lines.append(line)
     facts_block = render_facts_block(selected_facts, lang, computed_lines=computed_lines)
-    allowed_amounts = fact_amounts(selected_facts) | amounts_in(_hit_blob(hits[:8]))
+    # FACTS-only allow-list (do not union hit-blob amounts — stale chunk figures like 2099,70)
+    allowed_amounts = fact_amounts(selected_facts)
     if income_val is not None:
         allowed_amounts.add(Decimal(str(income_val)))
         _g, amt = income_group(
@@ -1581,29 +1582,19 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     def _postcheck_amounts(text):
         if not selected_facts or not text:
             return text
-        unknown = amounts_in(text) - allowed_amounts
-        if not unknown:
-            return text
-        # Strip unknown zł/EUR amounts (keep structure); annotate once
-        def _strip_amt(m):
-            raw = m.group(0)
-            got = amounts_in(raw)
-            return "" if got and got <= unknown else raw
-        cleaned = re.sub(
-            r"(?<!\d)(\d{1,3}(?:[ .]\d{3})*(?:[.,]\d{1,2})?|\d+[.,]\d{2}|\d{3,5})\s*(?:zł|zl|PLN|EUR|euro|€)",
-            _strip_amt,
-            text,
-            flags=re.I,
-        )
-        cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
-        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).rstrip()
-        note = {
-            "pl": "\n(Kwoty spoza FACTS/ŹRÓDEŁ usunięto — sprawdź oficjalne zarządzenie.)",
-            "en": "\n(Amounts not in FACTS/sources were removed — check the official ordinance.)",
-            "uk": "\n(Суми поза FACTS/джерелами прибрано — перевірте офіційне розпорядження.)",
-            "mn": "\n(FACTS/эх сурвалжид байхгүй дүнг хаслаа.)",
-        }.get(lang, "")
-        return cleaned + note
+        cleaned, _ = strip_unknown_amounts(text, allowed_amounts)
+        return cleaned
+
+    def _looks_truncated(text: str) -> bool:
+        t = (text or "").rstrip()
+        if len(t) < 40:
+            return False
+        if re.search(r"(?i)\b(podaj|подай|submit|zł[oó]ż|apply)\s*$", t):
+            return True
+        # Mid-bullet: "1. Гуртожиток: Подай" / ends with "label: word" and no terminal punct
+        if re.search(r"\d+\.\s+[^\n:]{2,40}:\s+\S{1,20}$", t) and not re.search(r"[.!?…]\s*$", t):
+            return True
+        return False
 
     if llm_enabled():
         import datetime
@@ -1649,6 +1640,23 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                         out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
             out = strip_llm_deadline_notes(out)
             out = _postcheck_amounts(out)
+            # One silent regen if amounts still unknown or answer cut mid-bullet (R6-1)
+            still_bad = bool(selected_facts and (amounts_in(out) - allowed_amounts))
+            if (still_bad or _looks_truncated(out)) and _time.monotonic() + 25 < _t_deadline:
+                nudge = (
+                    "Finish the full answer. Use only FACTS amounts (no invented figures). "
+                    "Do not append notes about removed amounts."
+                )
+                try:
+                    msgs2 = list(msgs) + [{"role": "user", "content": nudge}]
+                    out2 = strip_untrusted_wrappers(redact_secrets(call_llm(msgs2, temperature=0.2)))
+                    out2 = _scrub_hallucinations(out2, blob6, lang=lang)
+                    out2 = strip_llm_deadline_notes(out2)
+                    out2 = _postcheck_amounts(out2)
+                    if out2 and (not _looks_truncated(out2) or len(out2) > len(out)):
+                        out = out2
+                except Exception:
+                    pass
             fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
             out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
             out += deadline_passed_note(out, lang)
@@ -1662,6 +1670,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_block)))
     ans = _scrub_hallucinations(ans, blob6, lang=lang)
     ans = strip_llm_deadline_notes(ans)
+    ans = _postcheck_amounts(ans)
     fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
     ans = finalize_answer_urls(ans, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
     ans += deadline_passed_note(ans, lang)
