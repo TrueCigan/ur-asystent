@@ -14,7 +14,11 @@ from lang import (
     sticky_lang_from_user_turns,
 )
 from deadlines import deadline_passed_note, strip_llm_deadline_notes
-from facts import load_facts, select_facts, render_facts_block, amounts_in, fact_amounts
+from decimal import Decimal
+from facts import (
+    load_facts, select_facts, render_facts_block, amounts_in, fact_amounts,
+    extract_income, computed_income_line, income_group,
+)
 
 IDX = None
 def load():
@@ -531,6 +535,16 @@ def needed(question, history_text):
                 req.append(x)
     if prof.get("status") == "doktorant" or prof.get("poziom") == "SD":
         req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
+    # PL-language tuition question without foreigner markers → do not demand status (R5-5)
+    topic_names = [n for n, _ in topics]
+    blob = f"{question or ''}\n{history_text or ''}"
+    if (
+        "oplaty" in topic_names
+        and "status" in req
+        and re.search(r"(?i)języku\s*polsk|polish[- ]language|czesne.*(?:polsk|niestacjon)|niestacjonarn\w*.*czesn", question or "")
+        and not re.search(r"(?i)cudzoziem|foreign|international|інозем|гадаад|english\s*program", blob)
+    ):
+        req = [x for x in req if x != "status"]
     missing = [x for x in req if x not in prof]
     return [n for n, _ in topics], prof, missing
 
@@ -1348,24 +1362,61 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
             for i, h in enumerate(hits, 1)]
     prof_txt = format_profile_txt(prof, lang)
     selected_facts = select_facts(load_facts(), topics, prof)
-    facts_block = render_facts_block(selected_facts, lang)
+    computed_lines = []
+    income_val = extract_income(f"{hist_user}\n{question}")
+    if income_val is not None and "stypendium_socjalne" in topics:
+        social = next((f for f in selected_facts if f.id == "social_income_threshold"), None)
+        groups_src = social.value if social else None
+        if groups_src is None:
+            for f in load_facts():
+                if f.id in ("social_income_threshold", "social_amount_groups") and f.value:
+                    groups_src = f.value
+                    social = f
+                    break
+        line = computed_income_line(
+            income_val, groups_src,
+            getattr(social, "academic_year", None) if social else None,
+            lang,
+        )
+        if line:
+            computed_lines.append(line)
+    facts_block = render_facts_block(selected_facts, lang, computed_lines=computed_lines)
     allowed_amounts = fact_amounts(selected_facts) | amounts_in(_hit_blob(hits[:8]))
+    if income_val is not None:
+        allowed_amounts.add(Decimal(str(income_val)))
+        _g, amt = income_group(
+            income_val,
+            next((f.value for f in selected_facts if f.id == "social_income_threshold"), None),
+        )
+        if amt is not None:
+            allowed_amounts.add(Decimal(str(amt)))
 
     def _postcheck_amounts(text):
         if not selected_facts or not text:
             return text
-        # Only enforce when we have authoritative fact amounts; strip invented extras lightly
         unknown = amounts_in(text) - allowed_amounts
         if not unknown:
             return text
+        # Strip unknown zł/EUR amounts (keep structure); annotate once
+        def _strip_amt(m):
+            raw = m.group(0)
+            got = amounts_in(raw)
+            return "" if got and got <= unknown else raw
+        cleaned = re.sub(
+            r"(?<!\d)(\d{1,3}(?:[ .]\d{3})*(?:[.,]\d{1,2})?|\d+[.,]\d{2}|\d{3,5})\s*(?:zł|zl|PLN|EUR|euro|€)",
+            _strip_amt,
+            text,
+            flags=re.I,
+        )
+        cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).rstrip()
         note = {
             "pl": "\n(Kwoty spoza FACTS/ŹRÓDEŁ usunięto — sprawdź oficjalne zarządzenie.)",
             "en": "\n(Amounts not in FACTS/sources were removed — check the official ordinance.)",
             "uk": "\n(Суми поза FACTS/джерелами прибрано — перевірте офіційне розпорядження.)",
             "mn": "\n(FACTS/эх сурвалжид байхгүй дүнг хаслаа.)",
         }.get(lang, "")
-        # regenerate path handled by caller; here only annotate once
-        return text + note
+        return cleaned + note
 
     if llm_enabled():
         import datetime

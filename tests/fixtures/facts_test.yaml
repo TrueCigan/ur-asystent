@@ -1,0 +1,20 @@
+# Fixture for unit income_group boundaries (independent of live facts.yaml numbers).
+- id: social_amount_groups
+  topic: [stypendium_socjalne]
+  value:
+    groups:
+      I: 0,01-850,00
+      II: 850,01-1200,00
+      III: 1200,01-1550,00
+      IV: 1550,01-1908,90
+    amounts:
+      I: 1600.0
+      II: 1400.0
+      III: 1200.0
+      IV: 1000.0
+  unit: PLN/person
+  academic_year: 2025/2026
+  applies_to: {}
+  source: {url: https://example.test/fixture}
+  status: verified
+  i18n_label: {pl: Grupy dochodowe (fixture)}

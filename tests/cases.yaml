@@ -197,3 +197,31 @@
   turns: ["Ile kosztuje akademik i czy dostanę stypendium socjalne?", "Polak, stacjonarne, I stopień, 1 rok, jeden kierunek. A jak z Erasmusem?"]
   unit: {topics_include: [akademik, stypendium_socjalne]}
   e2e: {must_match: ["(?i)akademik|dom studenta", "(?i)socjaln", "(?i)erasmus"]}
+
+# ---------- round 5: facts ----------
+- id: r5-income-1500-group-III
+  origin: r5-S1
+  turns: ["Cześć, jestem na pierwszym roku, chciałabym się dowiedzieć jak wygląda stypendium socjalne - kto może je dostać i ile wynosi?", "polka, stacjonarne, 1 stopien licencjat, jeden kierunek, dochod w rodzinie cos kolo 1500 na osobe"]
+  unit: {profile: {status: pl, tryb: stacjonarne, poziom: I, drugi_kierunek: nie}, missing: [], income_group: {income: 1500, expect_group: III}}
+  e2e: {must_match: ["(?i)III\\s*grup|grup\\w*\\s*III"], must_not_match: ["(?i)IV\\s*grup|grup\\w*\\s*IV"]}
+- id: r5-income-group-boundaries
+  origin: r5-S1 (pure function)
+  income_group_table: {cases: [{income: 1200.00, expect: II}, {income: 1200.01, expect: III}, {income: 1550.00, expect: III}, {income: 1550.01, expect: IV}]}
+- id: r5-single-cap-value
+  origin: r5-S1/S4/S9
+  turns: ["Mam orzeczenie o umiarkowanym stopniu niepełnosprawności. Jak uzyskać stypendium dla osób niepełnosprawnych i ile wynosi?", "obywatel Polski, zaocznie, 3 rok licencjatu, jeden kierunek"]
+  e2e: {stable_across_runs: ["(\\d[\\d .]*[.,]\\d{2})\\s*zł\\s*(?:miesięcznie)?.{0,40}(?:łączn|przekrocz)"], must_not_match: ["2025/2026[\\s\\S]*2026/2027|2026/2027[\\s\\S]*2025/2026"]}
+- id: r5-doctoral-amounts-present
+  origin: r5-S2
+  turns: ["Jestem doktorantem w Szkole Doktorskiej UR. Jakie są stypendia doktoranckie i ile wynoszą kwoty?"]
+  unit: {topics_include: [doktoranckie], missing: []}
+  e2e: {must_match: ["\\d[\\d .]*\\s*zł"], must_not_match: ["(?i)nie są podane"]}
+- id: r5-tuition-en-programme-amount
+  origin: r5-S5
+  turns: ["Hi, I am a foreign student from India. How much is the tuition fee for English-language study programmes at Radom University?", "I want to do a masters, the 2nd cycle, and I will study on weekends only because I also work in the city."]
+  unit: {lang: en, profile: {status: cudzoziemiec, poziom: II, tryb: niestacjonarne}}
+  e2e: {lang_in: [en], must_match: ["(?i)(€|eur|euro|zł|PLN)\\s*\\d|\\d[\\d ,.]*\\s*(€|eur|euro|zł|PLN)|(?i)not (yet )?(available|verified)"]}
+- id: r5-tuition-pl-no-status-question
+  origin: r5-S6
+  turns: ["Ile wynosi czesne na studiach niestacjonarnych w języku polskim?"]
+  unit: {missing_not: [status]}
