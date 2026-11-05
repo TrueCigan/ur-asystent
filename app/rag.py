@@ -1013,6 +1013,53 @@ def _scrub_hallucinations(text, hits_blob=""):
     text = _SYSTEM_NAME_RE.sub(_repl, text)
     return re.sub(r"[ \t]{2,}", " ", text)
 
+_GENERAL_PROFILE_SLOTS = {"status", "poziom", "rok", "tryb", "kierunek", "drugi_kierunek"}
+_SENSITIVE_PROFILE_SLOTS = {"niepelnosprawnosc", "pobyt"}
+
+def merge_state_profile(state, prof, topics, history):
+    """Carry only conversation-scoped slots; never reuse sensitive slots on empty history (R5-1)."""
+    prof = dict(prof or {})
+    topics = list(topics or [])
+    hist = history or []
+    if not hist:
+        # Empty visible history → ignore state.profile entirely (privacy)
+        carried = {}
+    else:
+        carried = {}
+        prev = dict(getattr(state, "profile", None) or {})
+        tset = set(topics)
+        for k, v in prev.items():
+            if k in _SENSITIVE_PROFILE_SLOTS:
+                # Disability only when the current topic is disability scholarship
+                if k == "niepelnosprawnosc" and "stypendium_niepeln" not in tset:
+                    continue
+                # pobyt only for topics that need residence basis
+                if k == "pobyt" and not (tset & {
+                    "stypendium_socjalne", "stypendium_rektora", "stypendium_niepeln",
+                    "oplaty", "cudzoziemcy", "doktoranckie", "dwa_kierunki",
+                }):
+                    continue
+            if k in _GENERAL_PROFILE_SLOTS or k in _SENSITIVE_PROFILE_SLOTS:
+                carried[k] = v
+            elif k in prev:
+                carried[k] = v
+        # Topic family switch: drop disability unless disability topic
+        if "stypendium_niepeln" not in tset:
+            carried.pop("niepelnosprawnosc", None)
+    merged = dict(carried)
+    merged.update(prof)  # this turn wins
+    req = []
+    for name in topics:
+        for n, _rx, slots in TOPICS:
+            if n == name:
+                for x in slots:
+                    if x not in req:
+                        req.append(x)
+    if merged.get("status") == "doktorant" or merged.get("poziom") == "SD":
+        req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
+    missing = [x for x in req if x not in merged]
+    return merged, missing
+
 def _attach_state(result, state):
     try:
         from session import encode
@@ -1021,16 +1068,16 @@ def _attach_state(result, state):
         pass
     return result
 
-def answer(question, history, session_lang=None, state_token=None):
+def answer(question, history, session_lang=None, state_token=None, conv_id=None):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang, state)"""
-    from session import decode, fresh
-    state = decode(state_token) or fresh()
+    from session import resolve_state
     question = redact_secrets((question or "").strip())
     history = [
         {"role": m.get("role"), "content": redact_secrets(str(m.get("content", ""))[:3000])}
         for m in (history or [])
         if isinstance(m, dict) and m.get("role") in ("user", "assistant")
     ]
+    state = resolve_state(state_token, history, conv_id=conv_id)
     hist_user = "\n".join(m["content"] for m in history if m["role"] == "user")
     user_turns = [m["content"] for m in history if m["role"] == "user"]
     seed_lang = session_lang or state.lang
@@ -1044,21 +1091,7 @@ def answer(question, history, session_lang=None, state_token=None):
         return _attach_state(dict(clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
                     answer=refuse_message(lang)), state)
     topics, prof, missing = needed(question, hist_user)
-    # Merge session profile (client-carried) with regex parse — this turn wins on conflicts
-    if state.profile:
-        merged = dict(state.profile)
-        merged.update(prof)
-        prof = merged
-        req = []
-        for name in topics:
-            for n, _rx, slots in TOPICS:
-                if n == name:
-                    for x in slots:
-                        if x not in req:
-                            req.append(x)
-        if prof.get("status") == "doktorant" or prof.get("poziom") == "SD":
-            req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
-        missing = [x for x in req if x not in prof]
+    prof, missing = merge_state_profile(state, prof, topics, history)
     state.profile = dict(prof)
     state.intents = list(topics)
     if missing:

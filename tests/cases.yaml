@@ -115,3 +115,19 @@
 - id: deadline-month-name-yearless
   origin: r3-S2 ("do 15 maja"), r3-S10
   deadline_note: {text: "Wnioski o akademik składa się do 15 maja", lang: pl, expect_count: 1}
+
+# ---------- round 5: session ----------
+- id: r5-stale-state-ignored-on-empty-history
+  origin: r5-pretest / r4
+  turns: ["Jak dostać stypendium socjalne?"]
+  unit: {state_profile: {status: cudzoziemiec, pobyt: pobyt_czasowy, niepelnosprawnosc: tak}, missing: [status, drugi_kierunek, tryb, poziom], profile_not: {niepelnosprawnosc: tak}}
+  e2e: {must_not_match: ["(?i)cudzoziem", "(?i)orzeczeni\\w* o niepełnosprawno", "(?i)pobyt\\w* czasow"]}
+- id: r5-no-invented-family-size
+  origin: r5-pretest
+  turns: ["Jak dostać stypendium socjalne?", "studentka II roku, stacjonarne, trójka rodzeństwa"]
+  e2e: {must_not_match: ["=\\s*5\\s*os", "(?i)orzeczeni\\w* o niepełnosprawno"]}
+- id: r5-disability-not-carried-to-dorm
+  origin: r4 / r5-pretest
+  turns: ["Mam orzeczenie o niepełnosprawności, jak dostać stypendium dla niepełnosprawnych?", "Polka, stacjonarne, I stopień, 2 rok, jeden kierunek", "A ile kosztuje akademik?"]
+  unit: {topics_include: [akademik]}
+  e2e: {must_not_match: ["(?i)orzeczeni\\w* o niepełnosprawno"]}

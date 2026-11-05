@@ -1,4 +1,4 @@
-"""Client-carried HMAC-signed session state (Task 4). No server DB on Render free."""
+"""Client-carried HMAC-signed session state. No server DB on Render free."""
 from __future__ import annotations
 
 import base64
@@ -6,7 +6,11 @@ import hashlib
 import hmac
 import json
 import os
+import time
+import uuid
 from dataclasses import asdict, dataclass, field
+
+STATE_TTL_SEC = 30 * 60  # 30 min
 
 
 @dataclass
@@ -19,6 +23,8 @@ class SessionState:
     pending_question: str | None = None
     original_question: str | None = None
     conflicts: list[dict] = field(default_factory=list)
+    conv_id: str | None = None
+    updated_at: int = 0
 
 
 def _secret() -> bytes:
@@ -26,6 +32,7 @@ def _secret() -> bytes:
 
 
 def encode(state: SessionState, secret: bytes | None = None) -> str:
+    state.updated_at = int(time.time())
     payload = json.dumps(asdict(state), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     body = base64.urlsafe_b64encode(payload).decode("ascii")
     sig = hmac.new(secret or _secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
@@ -54,8 +61,33 @@ def decode(token: str | None, secret: bytes | None = None) -> SessionState | Non
         pending_question=raw.get("pending_question"),
         original_question=raw.get("original_question"),
         conflicts=list(raw.get("conflicts") or []),
+        conv_id=raw.get("conv_id"),
+        updated_at=int(raw.get("updated_at") or 0),
     )
 
 
-def fresh() -> SessionState:
-    return SessionState()
+def fresh(conv_id: str | None = None) -> SessionState:
+    return SessionState(conv_id=conv_id or str(uuid.uuid4()), updated_at=int(time.time()))
+
+
+def resolve_state(token: str | None, history: list | None, conv_id: str | None = None) -> SessionState:
+    """Drop stale / orphaned state. Empty history ⇒ fresh profile (privacy)."""
+    state = decode(token)
+    now = int(time.time())
+    hist = history or []
+    if state is None:
+        return fresh(conv_id)
+    if not hist:
+        # Visible history empty → do not reuse profile (reload / new tab with leftover token)
+        keep_lang = state.lang
+        s = fresh(conv_id or state.conv_id)
+        # Lang only if client still sends session_lang separately; do not keep profile
+        s.lang = None
+        return s
+    if state.updated_at and now - state.updated_at > STATE_TTL_SEC:
+        return fresh(conv_id or state.conv_id)
+    if conv_id and state.conv_id and state.conv_id != conv_id:
+        return fresh(conv_id)
+    if conv_id and not state.conv_id:
+        state.conv_id = conv_id
+    return state

@@ -50,17 +50,41 @@ class Ctx:
         self.rag = importlib.import_module("rag")
 
 
+KNOWN_CASE_KEYS = {
+    "id", "origin", "turns", "unit", "per_turn_lang_not", "e2e", "deadline_note",
+    "output_lang_check", "income_group_table", "scrub_check", "prompt_budget", "fault",
+}
+
+
 def run_unit(ctx, case):
     fails, rag, hist = [], ctx.rag, []
     exp = case.get("unit") or {}
     lang = topics = prof = missing = None
-    for i, q in enumerate(case["turns"]):
-        hu = "\n".join(hist)
-        lang = rag.detect_lang(q, hu, latest=q)
-        if lang in case.get("per_turn_lang_not", []):
-            fails.append(f"turn{i+1}: detect_lang={lang}")
-        topics, prof, missing = rag.needed(q, hu)
-        hist.append(q)
+
+    # R5-1: pre-seeded state with empty history
+    if "state_profile" in exp:
+        import time
+        from session import SessionState, encode
+        st = SessionState(profile=dict(exp["state_profile"]), updated_at=int(time.time()))
+        token = encode(st)
+        q0 = case["turns"][0]
+        r = rag.answer(q0, [], state_token=token)
+        topics = r.get("topics") or []
+        prof = r.get("profile") or {}
+        # Recompute missing via merge with empty history
+        topics_n, prof_n, _ = rag.needed(q0, "")
+        prof, missing = rag.merge_state_profile(st, prof_n, topics_n, [])
+        lang = r.get("lang")
+        if not r.get("clarify") and "status" in (exp.get("missing") or []):
+            fails.append("expected clarify with empty history + stale state")
+    else:
+        for i, q in enumerate(case["turns"]):
+            hu = "\n".join(hist)
+            lang = rag.detect_lang(q, hu, latest=q)
+            if lang in case.get("per_turn_lang_not", []):
+                fails.append(f"turn{i+1}: detect_lang={lang}")
+            topics, prof, missing = rag.needed(q, hu)
+            hist.append(q)
     if not exp:
         return fails
     if "lang" in exp and lang != exp["lang"]:
@@ -74,6 +98,9 @@ def run_unit(ctx, case):
     for k, v in (exp.get("profile") or {}).items():
         if prof.get(k) != v:
             fails.append(f"profile.{k}={prof.get(k)} want {v}")
+    for k, v in (exp.get("profile_not") or {}).items():
+        if prof.get(k) == v:
+            fails.append(f"profile.{k} unexpectedly {v}")
     if "missing" in exp and missing != exp["missing"]:
         fails.append(f"missing={missing} want {exp['missing']}")
     for m in exp.get("missing_not", []):
@@ -84,12 +111,51 @@ def run_unit(ctx, case):
 
 def run_deadline(ctx, case):
     d = case["deadline_note"]
-    out = ctx.rag.deadline_passed_note(d["text"], d.get("lang", "pl"))
+    today = None
+    if d.get("today"):
+        from datetime import date
+        today = date.fromisoformat(d["today"])
+    # Prefer parse+render with today when available
+    if today is not None and hasattr(ctx.rag, "deadlines"):
+        from deadlines import parse_deadlines, render_deadline_notes
+        out = render_deadline_notes(parse_deadlines(d["text"], today), d.get("lang", "pl"), today)
+    elif today is not None:
+        try:
+            from deadlines import parse_deadlines, render_deadline_notes
+            out = render_deadline_notes(parse_deadlines(d["text"], today), d.get("lang", "pl"), today)
+        except Exception:
+            out = ctx.rag.deadline_passed_note(d["text"], d.get("lang", "pl"))
+    else:
+        out = ctx.rag.deadline_passed_note(d["text"], d.get("lang", "pl"))
     n = out.count("⚠️")
     f = [] if n == d["expect_count"] else [f"deadline notes={n} want {d['expect_count']}: {out!r}"]
     for rx in d.get("must_not_match", []):
         if re.search(rx, out):
             f.append(f"note matches forbidden {rx}")
+    for rx in d.get("must_match", []):
+        if not re.search(rx, out):
+            f.append(f"note missing /{rx}/")
+    return f
+
+
+def run_output_lang_check(ctx, case):
+    from lang import output_lang_ok
+    c = case["output_lang_check"]
+    ok = output_lang_ok(c["text"], c["target"])
+    if bool(ok) != bool(c["expect_ok"]):
+        return [f"output_lang_ok={ok} want {c['expect_ok']}"]
+    return []
+
+
+def run_prompt_budget(ctx, case):
+    b = case["prompt_budget"]
+    sys = getattr(ctx.rag, "SYSTEM", "") or ""
+    f = []
+    if len(sys) > b.get("max_chars", 10**9):
+        f.append(f"SYSTEM len={len(sys)} > {b['max_chars']}")
+    for rx in b.get("must_not_match", []):
+        if re.search(rx, sys):
+            f.append(f"SYSTEM matches forbidden /{rx}/")
     return f
 
 
@@ -163,13 +229,43 @@ def main():
     for c in cases:
         if a.only and not re.search(a.only, c["id"]):
             continue
+        unknown = set(c) - KNOWN_CASE_KEYS - {"unit"}
+        # allow nested unit keys freely; flag unknown top-level only
+        unknown = {k for k in c if k not in KNOWN_CASE_KEYS}
         total += 1
         f = []
+        if unknown:
+            f.append(f"unknown case keys: {sorted(unknown)} (harness must implement or reject)")
         if "deadline_note" in c:
             f += run_deadline(ctx, c)
+        elif "output_lang_check" in c:
+            f += run_output_lang_check(ctx, c)
+        elif "prompt_budget" in c:
+            f += run_prompt_budget(ctx, c)
+        elif "scrub_check" in c:
+            sc = c["scrub_check"]
+            out = ctx.rag._scrub_hallucinations(sc["text"], sc.get("hits_blob", ""))
+            for rx in sc.get("must_not_match", []):
+                if re.search(rx, out):
+                    f.append(f"scrub left forbidden /{rx}/ in {out!r}")
+        elif "income_group_table" in c:
+            try:
+                from facts import income_group, load_facts
+                groups = None
+                for fact in load_facts():
+                    if fact.id == "social_amount_groups" and fact.value:
+                        groups = fact.value
+                        break
+                for row in (c["income_group_table"].get("cases") or []):
+                    g, _amt = income_group(row["income"], groups)
+                    if g != row["expect"]:
+                        f.append(f"income {row['income']} → {g} want {row['expect']}")
+            except Exception as e:
+                f.append(f"income_group_table error: {e}")
         else:
-            if a.layer in ("unit", "all"):
-                f += run_unit(ctx, c)
+            if a.layer in ("unit", "all") and ("unit" in c or "per_turn_lang_not" in c or "turns" in c):
+                if "unit" in c or "per_turn_lang_not" in c:
+                    f += run_unit(ctx, c)
             if a.layer in ("e2e", "all"):
                 f += run_e2e(ctx, c, a.url, a.runs)
         print(("FAIL " if f else "PASS ") + f"{c['id']:<34} {c.get('origin','')}" + ("".join(f"\n     - {x}" for x in f)))

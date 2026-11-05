@@ -136,13 +136,30 @@
     flex: none;
   }
   #panel header img { width: 52px; height: auto; display: block; flex: 0 0 auto; }
-  #panel header .titles, #panel #close { opacity: 0; }
   #panel.ready header { border-bottom-color: var(--line); }
-  #panel.ready header .titles, #panel.ready #close { opacity: 1; transition: opacity .3s ease; }
+  #panel.ready header .titles, #panel.ready #hdr-actions { opacity: 1; transition: opacity .3s ease; }
   #panel header strong { display: block; font-size: 14px; color: var(--blue-deep); }
   #panel header .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
-  #close {
+  #panel header .titles, #panel #hdr-actions { opacity: 0; }
+  #hdr-actions {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #new-chat {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--blue-deep);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  #new-chat:hover { background: #eef4fa; }
+  #close {
     width: 36px;
     height: 36px;
     border: 0;
@@ -294,10 +311,13 @@
         <strong>Asystent studenta</strong>
         <span class="sub">Uniwersytet Radomski</span>
       </div>
-      <button id="close" type="button" aria-label="Zamknij">×</button>
+      <div id="hdr-actions">
+        <button id="new-chat" type="button" aria-label="Nowa rozmowa">Nowa rozmowa</button>
+        <button id="close" type="button" aria-label="Zamknij">×</button>
+      </div>
     </header>
     <div id="chat" class="fold">
-      <div class="m a">Dzień dobry. Pomogę znaleźć informacje o stypendiach, opłatach, akademikach, Erasmus+, regulaminach i planach zajęć. Możesz pisać po polsku, angielsku, ukraińsku, rosyjsku lub mongolsku — odpowiadam po polsku, angielsku, ukraińsku lub mongolsku (na wiadomość po rosyjsku odpowiadam po ukraińsku). Jeśli zasady zależą od sytuacji, najpierw dopytam.</div>
+      <div class="m a" id="welcome">Dzień dobry. Pomogę znaleźć informacje o stypendiach, opłatach, akademikach, Erasmus+, regulaminach i planach zajęć. Możesz pisać po polsku, angielsku, ukraińsku, rosyjsku lub mongolsku — odpowiadam po polsku, angielsku, ukraińsku lub mongolsku (na wiadomość po rosyjsku odpowiadam po ukraińsku). Jeśli zasady zależą od sytuacji, najpierw dopytam.</div>
     </div>
     <div class="chips fold">
       <button type="button">Jak dostać stypendium socjalne?</button>
@@ -315,8 +335,14 @@
 
 <script>
 const H = [];
-let sessionLang = sessionStorage.getItem('ur_session_lang') || null;
-let sessionState = sessionStorage.getItem('ur_session_state') || null;
+// State is only valid with the history it was built from. On load H is empty → drop state.
+try { sessionStorage.removeItem('ur_session_state'); } catch (_) {}
+let sessionLang = null;
+let sessionState = null;
+let convId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+const WELCOME_HTML = document.getElementById('welcome')
+  ? document.getElementById('welcome').outerHTML
+  : '';
 const chat = document.getElementById('chat');
 const panel = document.getElementById('panel');
 const launcher = document.getElementById('launcher');
@@ -324,6 +350,25 @@ const chips = document.querySelector('.chips');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let busy = false;
 let chatBusy = false;
+
+function resetConversation() {
+  H.length = 0;
+  sessionLang = null;
+  sessionState = null;
+  convId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+  try {
+    sessionStorage.removeItem('ur_session_state');
+    sessionStorage.removeItem('ur_session_lang');
+  } catch (_) {}
+  chat.innerHTML = WELCOME_HTML || '<div class="m a" id="welcome">Dzień dobry. W czym mogę pomóc?</div>';
+  chips.querySelectorAll('button').forEach(b => {
+    b.classList.remove('used');
+    b.disabled = false;
+    b.style.display = '';
+  });
+  const q = document.getElementById('q');
+  if (q) { q.value = ''; q.focus(); }
+}
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({
@@ -523,7 +568,7 @@ function closePanel() {
 
 async function askApi(q) {
   try {
-    const payload = {question: q, history: H};
+    const payload = {question: q, history: H, conv_id: convId};
     if (sessionLang) payload.session_lang = sessionLang;
     if (sessionState) payload.state = sessionState;
     const r = await fetch('/api/chat', {
@@ -591,6 +636,10 @@ chips.querySelectorAll('button').forEach(b => b.onclick = () => {
 });
 launcher.onclick = () => openPanel(true);
 document.getElementById('close').onclick = closePanel;
+document.getElementById('new-chat').onclick = () => {
+  if (chatBusy) return;
+  resetConversation();
+};
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !chatBusy) closePanel(); });
 
 fetch('/api/status').then(r => r.json()).then(j => {
