@@ -1437,11 +1437,22 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     )
     state.intents = list(topics)
     prev_pending = list(state.pending_slots or [])
-    if missing and prev_pending and question.strip():
-        # User answered a clarify but slots still missing → try LLM extractor, then one targeted Q
+    # R5-3: LLM slot extractor (default ON when LLM configured; EXTRACTOR_LLM=0 to disable)
+    _want_extract = bool(
+        missing
+        and question.strip()
+        and (
+            prev_pending
+            or _last_assistant_was_clarify(history)
+            or len(re.findall(r"\w+", question, re.U)) >= 6
+        )
+    )
+    if _want_extract:
         try:
             from extract import extract_turn, apply_extraction
-            data = extract_turn(question, prof, state.pending_question, prev_pending, call_llm)
+            data = extract_turn(
+                question, prof, state.pending_question, prev_pending or missing, call_llm,
+            )
             if data:
                 prof2, confs = apply_extraction(prof, data)
                 # Never invent disability unless the turn mentions it
@@ -1454,7 +1465,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                 _, missing = merge_state_profile(state, prof, topics, history)
         except Exception:
             pass
-        if missing and set(missing) & set(prev_pending):
+        if missing and prev_pending and set(missing) & set(prev_pending):
             # Do not re-ask the full list — one remaining slot only
             missing = [m for m in missing if m in prev_pending][:1] or missing[:1]
     if missing:
