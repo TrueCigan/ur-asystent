@@ -261,3 +261,15 @@
 - id: r5-update-date-not-deadline
   origin: r5-S2
   deadline_note: {text: "Strona zaktualizowana 24.08.2026. Uchwała nr 000-9/2/2026 z dnia 12.03.2026.", lang: pl, expect_count: 0, today: "2026-11-04"}
+
+# ---------- round 5: robustness ----------
+- id: r5-llm-timeout-gives-fallback
+  origin: r5-S6/S9
+  turns: ["Jestem Polakiem, mieszkam pod Radomiem, pracuję na etacie więc wybieram tryb zaoczny, licencjat, zarządzanie, pierwszy rok, nic wcześniej nie kończyłem. Ile wynosi czesne na studiach niestacjonarnych w języku polskim?"]
+  fault: {llm: timeout}
+  e2e: {lang_in: [pl], must_not_match: ["Brak połączenia", "Wewnętrzny błąd"], max_seconds: 60}
+- id: r5-long-message-ok
+  origin: r5-S6
+  turns: ["Dzień dobry, jestem Polakiem, mieszkam pod Radomiem, pracuję na etacie od trzech lat w firmie logistycznej, więc wybieram tryb zaoczny, bo w tygodniu nie dam rady chodzić na zajęcia. Interesuje mnie licencjat z zarządzania, pierwszy rok, nic wcześniej nie kończyłem, nie mam innego dyplomu. Ile wynosi czesne na studiach niestacjonarnych w języku polskim i do kiedy trzeba płacić?"]
+  unit: {profile: {status: pl, tryb: niestacjonarne, poziom: I, rok: "1", drugi_kierunek: nie}, missing: []}
+  e2e: {lang_in: [pl], max_seconds: 60}

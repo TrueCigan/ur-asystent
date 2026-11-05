@@ -118,8 +118,15 @@ def chat(q: Q, r: Request):
             raise HTTPException(429, glob_msg)
         d.append(now)
         glob.append(now)
-    if not sem.acquire(timeout=60):
-        raise HTTPException(503, "Serwer zajęty, spróbuj za chwilę.")
+    busy_msg = {
+        "pl": "Serwer zajęty, spróbuj za chwilę.",
+        "en": "Server busy, please try again shortly.",
+        "uk": "Сервер зайнятий, спробуйте за мить.",
+        "mn": "Сервер завгүй байна, түр хүлээгээд дахин оролдоно уу.",
+    }.get(lang, "Serwer zajęty, spróbuj za chwilę.")
+    if not sem.acquire(timeout=10):
+        raise HTTPException(503, busy_msg)
+    t0 = time.time()
     try:
         return rag.answer(question, hist, session_lang=q.session_lang, state_token=q.state, conv_id=q.conv_id)
     except HTTPException:
@@ -128,21 +135,38 @@ def chat(q: Q, r: Request):
         raise HTTPException(500, "Wewnętrzny błąd serwera. Spróbuj ponownie.")
     finally:
         sem.release()
+        # timing breakdown without secrets
+        try:
+            import logging
+            logging.getLogger("ur.api").info("chat done in %.2fs ip=%s", time.time() - t0, k)
+        except Exception:
+            pass
 
 @app.get("/healthz")
 def healthz():
-    return {"ok": True}
+    # Warm index on health checks so Render cold starts finish before traffic
+    if rag.IDX is None:
+        try:
+            rag.load()
+        except Exception:
+            return JSONResponse({"ok": False}, status_code=503)
+    return {"ok": True, "chunks": len(rag.IDX["chunks"]) if rag.IDX else 0}
 
 @app.get("/api/status")
 def status():
     if rag.IDX is None:
         rag.load()
+    prov = (os.getenv("LLM_PROVIDER") or "").lower()
+    if not rag.llm_enabled():
+        provider = "off"
+    elif prov in ("anthropic", "gemini", "openai", "xai", "ollama"):
+        provider = prov
+    else:
+        provider = "on"
     return {
         "chunks": len(rag.IDX["chunks"]),
         "llm": rag.llm_enabled(),
-        "provider": "gemini" if os.getenv("LLM_PROVIDER", "").lower() == "gemini" else (
-            "on" if rag.llm_enabled() else "off"
-        ),
+        "provider": provider,
     }
 
 @app.exception_handler(Exception)

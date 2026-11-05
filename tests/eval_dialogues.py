@@ -185,7 +185,7 @@ def ask(ctx, url, q, hist):
     return ctx.rag.answer(q, hist)
 
 
-def check_answer(r, exp):
+def check_answer(r, exp, elapsed=None):
     f, ans = [], r.get("answer") or ""
     if exp.get("lang_in") and guess_lang(ans) not in exp["lang_in"]:
         f.append(f"answer lang={guess_lang(ans)} not in {exp['lang_in']}")
@@ -198,6 +198,8 @@ def check_answer(r, exp):
     for s, mx in (exp.get("max_count") or {}).items():
         if ans.count(s) > mx:
             f.append(f"'{s}' x{ans.count(s)} > {mx}")
+    if exp.get("max_seconds") is not None and elapsed is not None and elapsed > exp["max_seconds"]:
+        f.append(f"took {elapsed:.1f}s > {exp['max_seconds']}s")
     if exp.get("urls_subset_of_sources"):
         src = json.dumps(r.get("sources") or [], ensure_ascii=False)
         bad = [u for u in URL.findall(ans) if u.rstrip(".,;") not in src]
@@ -219,23 +221,39 @@ def check_answer(r, exp):
 
 
 def run_e2e(ctx, case, url, runs):
+    import time
     exp = case.get("e2e") or {}
-    if not exp:
+    fault = case.get("fault") or {}
+    if not exp and not fault:
         return []
+    # R5-8: monkeypatch LLM timeout
+    orig_llm = None
+    if fault.get("llm") == "timeout" and not url:
+        import httpx
+        orig_llm = ctx.rag.call_llm
+        def _boom(*_a, **_k):
+            raise httpx.ReadTimeout("simulated")
+        ctx.rag.call_llm = _boom
     fails, captures = [], []
-    for _ in range(runs):
-        hist = []
-        r = {}
-        for i, q in enumerate(case["turns"]):
-            r = ask(ctx, url, q, hist)
-            if exp.get("every_turn") or i == len(case["turns"]) - 1:
-                fails += [f"turn{i+1}: {x}" for x in check_answer(r, exp)]
-            hist += [{"role": "user", "content": q}, {"role": "assistant", "content": r.get("answer", "")}]
-        for rx in exp.get("stable_across_runs", []):
-            m = re.search(rx, r.get("answer", ""), re.I | re.S)
-            captures.append(m.group(1) if m else None)
-    if exp.get("stable_across_runs") and len(set(captures)) > 1:
-        fails.append(f"unstable across runs: {captures}")
+    try:
+        for _ in range(runs):
+            hist = []
+            r = {}
+            for i, q in enumerate(case["turns"]):
+                t0 = time.monotonic()
+                r = ask(ctx, url, q, hist)
+                elapsed = time.monotonic() - t0
+                if exp.get("every_turn") or i == len(case["turns"]) - 1:
+                    fails += [f"turn{i+1}: {x}" for x in check_answer(r, exp or {}, elapsed=elapsed)]
+                hist += [{"role": "user", "content": q}, {"role": "assistant", "content": r.get("answer", "")}]
+            for rx in (exp or {}).get("stable_across_runs", []):
+                m = re.search(rx, r.get("answer", ""), re.I | re.S)
+                captures.append(m.group(1) if m else None)
+        if (exp or {}).get("stable_across_runs") and len(set(captures)) > 1:
+            fails.append(f"unstable across runs: {captures}")
+    finally:
+        if orig_llm is not None:
+            ctx.rag.call_llm = orig_llm
     return sorted(set(fails))
 
 
@@ -294,7 +312,10 @@ def main():
             if a.layer in ("unit", "all") and ("unit" in c or "per_turn_lang_not" in c or "turns" in c):
                 if "unit" in c or "per_turn_lang_not" in c:
                     f += run_unit(ctx, c)
-            if a.layer in ("e2e", "all"):
+            # fault cases exercise answer() even on unit layer (deterministic mock)
+            if c.get("fault") and a.layer in ("unit", "e2e", "all"):
+                f += run_e2e(ctx, c, a.url if a.layer != "unit" else None, a.runs if a.layer != "unit" else 1)
+            elif a.layer in ("e2e", "all"):
                 f += run_e2e(ctx, c, a.url, a.runs)
         print(("FAIL " if f else "PASS ") + f"{c['id']:<34} {c.get('origin','')}" + ("".join(f"\n     - {x}" for x in f)))
         failed += bool(f)

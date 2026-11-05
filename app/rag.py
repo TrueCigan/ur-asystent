@@ -753,6 +753,10 @@ def ensure_canonical_hits(hits, topics, profile, q):
             hits = merge_forced_hits(more, forced)
     return hits[:12]
 
+_ANTHROPIC_TIMEOUT = httpx.Timeout(connect=5.0, read=45.0, write=10.0, pool=5.0)
+REQUEST_BUDGET_SEC = 55.0
+
+
 def call_llm(messages, temperature=0.25):
     prov = os.getenv("LLM_PROVIDER", "").lower(); key = os.getenv("LLM_API_KEY", "")
     model = os.getenv("LLM_MODEL", "")
@@ -779,12 +783,40 @@ def call_llm(messages, temperature=0.25):
                 break  # 404/400 / wyczerpane retry -> następny model
         raise RuntimeError(f"Gemini niedostępny ({last})")
     if prov == "anthropic":
-        r = httpx.post("https://api.anthropic.com/v1/messages", timeout=120,
-            headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
-            json={"model": model or "claude-sonnet-4-5", "max_tokens": 1400, "system": messages[0]["content"], "messages": messages[1:], "temperature": temperature})
-        if r.status_code >= 400:
+        import time, random, logging
+        log = logging.getLogger("ur.llm")
+        last = None
+        for att in range(2):
+            t0 = time.monotonic()
+            try:
+                r = httpx.post(
+                    "https://api.anthropic.com/v1/messages",
+                    timeout=_ANTHROPIC_TIMEOUT,
+                    headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
+                    json={
+                        "model": model or "claude-sonnet-4-5",
+                        "max_tokens": 900,
+                        "system": messages[0]["content"],
+                        "messages": messages[1:],
+                        "temperature": temperature,
+                    },
+                )
+            except httpx.TimeoutException as e:
+                last = e
+                if att == 0:
+                    time.sleep(1.0 + random.random())
+                    continue
+                raise RuntimeError("Anthropic timeout") from e
+            rid = r.headers.get("request-id") or r.headers.get("x-request-id") or ""
+            log.info("anthropic status=%s latency=%.2fs request-id=%s", r.status_code, time.monotonic() - t0, rid)
+            if r.status_code == 200:
+                return r.json()["content"][0]["text"]
+            last = f"HTTP {r.status_code}"
+            if r.status_code in (429, 500, 529) and att == 0:
+                time.sleep(1.0 + random.random())
+                continue
             raise RuntimeError(f"Anthropic niedostępny (HTTP {r.status_code})")
-        return r.json()["content"][0]["text"]
+        raise RuntimeError(f"Anthropic niedostępny ({last})")
     base = {"openai": "https://api.openai.com/v1", "xai": "https://api.x.ai/v1", "ollama": "http://localhost:11434/v1"}.get(prov) or os.getenv("LLM_BASE_URL")
     base = os.getenv("LLM_BASE_URL", base)
     # block clearly non-http(s) bases to reduce SSRF risk if env is mis-set
@@ -1337,6 +1369,8 @@ def _attach_state(result, state):
 
 def answer(question, history, session_lang=None, state_token=None, conv_id=None):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang, state)"""
+    import time as _time
+    _t_deadline = _time.monotonic() + REQUEST_BUDGET_SEC
     from session import resolve_state
     question = redact_secrets((question or "").strip())
     history = [
@@ -1557,22 +1591,26 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
             out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.3)))
             out = _scrub_hallucinations(out, blob6, lang=lang)
             if not output_lang_ok(out, lang):
-                msgs[0] = {
-                    "role": "system",
-                    "content": (
-                        f"CRITICAL: Respond ONLY in {LANG_NAME.get(lang, 'polski')} (lang={lang}). "
-                        "Never use Russian. Never mix Latin and Cyrillic letters in the same word "
-                        "(no forms like Statус / diплом). Sources header language must match the body.\n\n"
-                        + sys
-                    ),
-                }
-                try:
-                    out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
-                    out = _scrub_hallucinations(out, blob6, lang=lang)
-                except Exception:
-                    out = ""
-                if not out or not output_lang_ok(out, lang):
+                # Skip language regen if remaining budget < 20s → fallback (R5-8)
+                if _time.monotonic() + 20 > _t_deadline:
                     out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
+                else:
+                    msgs[0] = {
+                        "role": "system",
+                        "content": (
+                            f"CRITICAL: Respond ONLY in {LANG_NAME.get(lang, 'polski')} (lang={lang}). "
+                            "Never use Russian. Never mix Latin and Cyrillic letters in the same word "
+                            "(no forms like Statус / diплом). Sources header language must match the body.\n\n"
+                            + sys
+                        ),
+                    }
+                    try:
+                        out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
+                        out = _scrub_hallucinations(out, blob6, lang=lang)
+                    except Exception:
+                        out = ""
+                    if not out or not output_lang_ok(out, lang):
+                        out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
             out = strip_llm_deadline_notes(out)
             out = _postcheck_amounts(out)
             fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
