@@ -331,3 +331,25 @@
     en: Application submission channel
     uk: Канал подання заявок
     mn: Өргөдөл илгээх суваг
+- id: ukr_special_act
+  topic:
+  - stypendium_socjalne
+  value: Obywatele Ukrainy z ochroną czasową / PESEL UKR mogą ubiegać się o stypendium socjalne na zasadach specjalnych (oświadczenie – Załącznik Nr 8); nie dotyczy samej karty pobytu bez ochrony.
+  unit: null
+  academic_year: 2026/2027
+  applies_to:
+    pobyt:
+    - ukr
+  candidates_seen: []
+  source:
+    url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
+    ordinance: Specjalna ustawa UA / Załącznik Nr 8
+    document_date: '2026-09-08'
+    checked: '2026-11-05'
+  status: verified
+  i18n_label:
+    pl: Uprawnienia UA (ochrona czasowa) do stypendium socjalnego
+    en: UA temporary-protection eligibility for social scholarship
+    uk: Право UA (тимчасовий захист) на соціальну стипендію
+    mn: UA түр хамгаалалттай нийгмийн тэтгэлэг
+
