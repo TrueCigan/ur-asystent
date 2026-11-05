@@ -106,6 +106,20 @@ def run_unit(ctx, case):
     for m in exp.get("missing_not", []):
         if m in missing:
             fails.append(f"still asks {m}")
+    if "income_group" in exp:
+        try:
+            from facts import income_group, load_facts
+            ig = exp["income_group"]
+            groups = None
+            for fact in load_facts():
+                if fact.id in ("social_amount_groups", "social_income_threshold") and fact.value:
+                    groups = fact.value
+                    break
+            g, _amt = income_group(ig["income"], groups)
+            if g != ig.get("expect_group"):
+                fails.append(f"income_group={g} want {ig.get('expect_group')}")
+        except Exception as e:
+            fails.append(f"income_group error: {e}")
     return fails
 
 
@@ -252,8 +266,10 @@ def main():
             try:
                 from facts import income_group, load_facts
                 groups = None
-                for fact in load_facts():
-                    if fact.id == "social_amount_groups" and fact.value:
+                # Prefer CI fixture so boundaries don't depend on owner edits
+                fix = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "facts_test.yaml")
+                for fact in (load_facts(fix) if os.path.isfile(fix) else []) + load_facts():
+                    if fact.id in ("social_amount_groups", "social_income_threshold") and fact.value:
                         groups = fact.value
                         break
                 for row in (c["income_group_table"].get("cases") or []):

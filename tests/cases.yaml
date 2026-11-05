@@ -131,3 +131,97 @@
   turns: ["Mam orzeczenie o niepełnosprawności, jak dostać stypendium dla niepełnosprawnych?", "Polka, stacjonarne, I stopień, 2 rok, jeden kierunek", "A ile kosztuje akademik?"]
   unit: {topics_include: [akademik]}
   e2e: {must_not_match: ["(?i)orzeczeni\\w* o niepełnosprawno"]}
+
+# ---------- round 5: language ----------
+- id: r5-ru-then-en-sentence-switches-to-en
+  origin: r5-S8
+  turns: ["Здравствуйте! Как получить социальную стипендию в Радомском университете?", "im from belarus, have a karta pobytu, stationary, first degre, 2 year, one major only"]
+  per_turn_lang_not: [ru]
+  unit: {lang: en}
+  e2e: {lang_in: [en], must_not_match: ["Джерела", "Чи навчаєтесь"]}
+- id: r5-uk-short-reply-stays-uk
+  origin: r2/r3 regression guard
+  turns: ["Привіт! Скільки коштує гуртожиток?", "так"]
+  unit: {lang: uk}
+- id: r5-no-mixed-script-tokens
+  origin: r5-S8
+  turns: ["Здравствуйте! Как получить социальную стипендию в Радомском университете?", "im from belarus, have a karta pobytu, stationary, first degre, 2 year, one major only", "Full-time (stacjonarne), bachelor first cycle, I do not study a second programme and have no previous degree."]
+  per_turn_lang_not: [ru]
+  e2e: {every_turn: true, lang_in: [en, uk], must_not_match: ["\\b(?=\\w*[A-Za-z])(?=\\w*[А-Яа-яІіЇїЄєҐґ])\\w+\\b", "Statус", "diплом"]}
+- id: r5-output-lang-ok-rejects-mixed
+  origin: r5-S8 (pure function)
+  output_lang_check: {text: "PROFIL STUDENTA - Statус: cudzoziemiec - Drugi kierunek/diплом: tak", target: pl, expect_ok: false}
+- id: r5-output-lang-ok-rejects-pl-as-uk
+  origin: r5-S8 (pure function)
+  output_lang_check: {text: "Jako cudzoziemiec z kartą pobytu możesz ubiegać się o stypendium socjalne. Wniosek składasz w systemie, a próg dochodu sprawdzisz w zarządzeniu rektora na bieżący rok akademicki.", target: uk, expect_ok: false}
+
+# ---------- round 5: slots ----------
+- id: r5-status-pl-from-id-card
+  origin: r5-S4
+  turns: ["Mam orzeczenie o umiarkowanym stopniu niepełnosprawności. Jak uzyskać stypendium dla osób niepełnosprawnych i ile wynosi?", "Urodziłem się w Radomiu, rodzice też, dowód mam polski. To mój jedyny kierunek i wcześniej nic nie kończyłem. Studiuję zaocznie, 3 rok licencjatu."]
+  unit: {profile: {status: pl, tryb: niestacjonarne, poziom: I, rok: "3", drugi_kierunek: nie}, missing: []}
+  e2e: {must_not_match: ["(?i)jaki jest twój status"]}
+- id: r5-en-typos-stationary-first-degre
+  origin: r5-S8
+  turns: ["Здравствуйте! Как получить социальную стипендию в Радомском университете?", "im from belarus, have a karta pobytu, stationary, first degre, 2 year, one major only"]
+  per_turn_lang_not: [ru]
+  unit: {profile: {status: cudzoziemiec, tryb: stacjonarne, poziom: I, rok: "2", drugi_kierunek: nie}, missing: []}
+- id: r5-negated-second-programme-en
+  origin: r5-S8
+  turns: ["How do I get the social scholarship?", "Full-time (stacjonarne), bachelor first cycle, I do not study a second programme and have no previous degree."]
+  unit: {profile: {tryb: stacjonarne, poziom: I, drugi_kierunek: nie}}
+  e2e: {must_not_match: ["(?i)dwóch kierunkach", "(?i)two programmes", "(?i)second programme: yes"]}
+- id: r5-negated-second-programme-variants
+  origin: r5-S8 variants
+  turns: ["Jak dostać stypendium socjalne?", "Polka, stacjonarne, licencjat, 1 rok, nie mam drugiego kierunku ani dyplomu"]
+  unit: {profile: {status: pl, drugi_kierunek: nie}, missing: []}
+- id: r5-uk-weekends-is-part-time
+  origin: r5-S10
+  turns: ["Привіт! Я з України, маю тимчасовий захист. Скільки коштує гуртожиток і чи можу я отримати соціальну стипендію?", "Навчаюсь не вдень, а по вихідних, магістратура, другий рік. Другого напряму нема і диплома магістра ще не маю."]
+  per_turn_lang_not: [ru]
+  unit: {lang: uk, profile: {status: cudzoziemiec, tryb: niestacjonarne, poziom: II, rok: "2", drugi_kierunek: nie}, missing: []}
+- id: r5-no-repeat-same-clarify
+  origin: r5-S4/S8/S10
+  turns: ["Jak dostać stypendium socjalne?", "studiuje w weekendy, drugi stopien, pierwszy rok, polak, tylko ten kierunek"]
+  unit: {profile: {status: pl, tryb: niestacjonarne, poziom: II, rok: "1", drugi_kierunek: nie}, missing: []}
+
+# ---------- round 5: original question after clarify ----------
+- id: r5-original-question-answered-after-clarify
+  origin: r5-S10
+  turns: ["Привіт! Я з України, маю тимчасовий захист. Скільки коштує гуртожиток і чи можу я отримати соціальну стипендію?", "Навчаюсь не вдень, а по вихідних, магістратура, другий рік. Другого напряму нема і диплома магістра ще не маю.", "Заочна. А ще скажіть, як поїхати за програмою Erasmus+?"]
+  per_turn_lang_not: [ru]
+  unit: {topics_include: [akademik, stypendium_socjalne]}
+  e2e: {lang_in: [uk], must_match: ["(?i)гуртож", "(?i)соціальн\\w* стипенд", "(?i)erasmus"]}
+- id: r5-intents-accumulate
+  origin: r5-S10 variant
+  turns: ["Ile kosztuje akademik i czy dostanę stypendium socjalne?", "Polak, stacjonarne, I stopień, 1 rok, jeden kierunek. A jak z Erasmusem?"]
+  unit: {topics_include: [akademik, stypendium_socjalne]}
+  e2e: {must_match: ["(?i)akademik|dom studenta", "(?i)socjaln", "(?i)erasmus"]}
+
+# ---------- round 5: facts ----------
+- id: r5-income-1500-group-III
+  origin: r5-S1
+  turns: ["Cześć, jestem na pierwszym roku, chciałabym się dowiedzieć jak wygląda stypendium socjalne - kto może je dostać i ile wynosi?", "polka, stacjonarne, 1 stopien licencjat, jeden kierunek, dochod w rodzinie cos kolo 1500 na osobe"]
+  unit: {profile: {status: pl, tryb: stacjonarne, poziom: I, drugi_kierunek: nie}, missing: [], income_group: {income: 1500, expect_group: III}}
+  e2e: {must_match: ["(?i)III\\s*grup|grup\\w*\\s*III"], must_not_match: ["(?i)IV\\s*grup|grup\\w*\\s*IV"]}
+- id: r5-income-group-boundaries
+  origin: r5-S1 (pure function)
+  income_group_table: {cases: [{income: 1200.00, expect: II}, {income: 1200.01, expect: III}, {income: 1550.00, expect: III}, {income: 1550.01, expect: IV}]}
+- id: r5-single-cap-value
+  origin: r5-S1/S4/S9
+  turns: ["Mam orzeczenie o umiarkowanym stopniu niepełnosprawności. Jak uzyskać stypendium dla osób niepełnosprawnych i ile wynosi?", "obywatel Polski, zaocznie, 3 rok licencjatu, jeden kierunek"]
+  e2e: {stable_across_runs: ["(\\d[\\d .]*[.,]\\d{2})\\s*zł\\s*(?:miesięcznie)?.{0,40}(?:łączn|przekrocz)"], must_not_match: ["2025/2026[\\s\\S]*2026/2027|2026/2027[\\s\\S]*2025/2026"]}
+- id: r5-doctoral-amounts-present
+  origin: r5-S2
+  turns: ["Jestem doktorantem w Szkole Doktorskiej UR. Jakie są stypendia doktoranckie i ile wynoszą kwoty?"]
+  unit: {topics_include: [doktoranckie], missing: []}
+  e2e: {must_match: ["\\d[\\d .]*\\s*zł"], must_not_match: ["(?i)nie są podane"]}
+- id: r5-tuition-en-programme-amount
+  origin: r5-S5
+  turns: ["Hi, I am a foreign student from India. How much is the tuition fee for English-language study programmes at Radom University?", "I want to do a masters, the 2nd cycle, and I will study on weekends only because I also work in the city."]
+  unit: {lang: en, profile: {status: cudzoziemiec, poziom: II, tryb: niestacjonarne}}
+  e2e: {lang_in: [en], must_match: ["(?i)(€|eur|euro|zł|PLN)\\s*\\d|\\d[\\d ,.]*\\s*(€|eur|euro|zł|PLN)|(?i)not (yet )?(available|verified)"]}
+- id: r5-tuition-pl-no-status-question
+  origin: r5-S6
+  turns: ["Ile wynosi czesne na studiach niestacjonarnych w języku polskim?"]
+  unit: {missing_not: [status]}

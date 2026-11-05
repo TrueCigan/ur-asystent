@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -13,6 +14,21 @@ except ImportError:  # pragma: no cover
     yaml = None
 
 _FACTS_CACHE: list["Fact"] | None = None
+
+
+def current_academic_year(today: date | None = None) -> str:
+    """Academic year boundary: 1 October."""
+    d = today or date.today()
+    if d.month >= 10:
+        return f"{d.year}/{d.year + 1}"
+    return f"{d.year - 1}/{d.year}"
+
+
+def _year_key(y: str | None) -> tuple[int, int]:
+    if not y or not re.match(r"^\d{4}/\d{4}$", str(y)):
+        return (0, 0)
+    a, b = str(y).split("/")
+    return (int(a), int(b))
 
 
 @dataclass
@@ -89,12 +105,15 @@ def select_facts(
     topics: list[str],
     profile: dict | None = None,
     include_unverified: bool | None = None,
+    today: date | None = None,
 ) -> list[Fact]:
+    """Prefer current academic year per fact id; else latest. Never mix two years of the same id."""
     if include_unverified is None:
         include_unverified = os.getenv("FACTS_INJECT_UNVERIFIED", "").strip() == "1"
     profile = profile or {}
     tset = set(topics or [])
-    selected = []
+    cur = current_academic_year(today)
+    by_id: dict[str, list[Fact]] = {}
     for f in facts:
         if tset and f.topic and not (tset & set(f.topic)):
             continue
@@ -102,12 +121,120 @@ def select_facts(
             continue
         verified = f.status == "verified" and f.value is not None
         if verified or (include_unverified and f.value is not None):
-            selected.append(f)
+            by_id.setdefault(f.id, []).append(f)
+    selected = []
+    for _fid, rows in by_id.items():
+        exact = [r for r in rows if r.academic_year == cur]
+        if exact:
+            selected.append(exact[0])
+            continue
+        # no year / latest
+        rows_sorted = sorted(rows, key=lambda r: _year_key(r.academic_year), reverse=True)
+        selected.append(rows_sorted[0])
     return selected
 
 
-def render_facts_block(facts: list[Fact], lang: str = "pl") -> str:
-    if not facts:
+def _parse_pl_num(s: str) -> float | None:
+    raw = (s or "").strip().replace(" ", "").replace("\u00a0", "")
+    if not raw:
+        return None
+    if "," in raw and "." in raw:
+        raw = raw.replace(".", "").replace(",", ".")
+    elif "," in raw:
+        raw = raw.replace(",", ".")
+    try:
+        return float(raw)
+    except ValueError:
+        return None
+
+
+def _groups_table(groups: Any) -> list[dict]:
+    """Normalize groups to list of {group, min, max, amount?}."""
+    if not groups:
+        return []
+    if isinstance(groups, list):
+        out = []
+        for row in groups:
+            if not isinstance(row, dict):
+                continue
+            out.append({
+                "group": str(row.get("group") or row.get("id") or ""),
+                "min": float(row.get("min", 0)),
+                "max": float(row.get("max", 0)),
+                "amount": row.get("amount"),
+            })
+        return out
+    if isinstance(groups, dict):
+        # social_income_threshold shape: groups + amounts
+        ranges = groups.get("groups") if "groups" in groups else groups
+        amounts = groups.get("amounts") or {}
+        out = []
+        if isinstance(ranges, dict):
+            for g, span in ranges.items():
+                if not isinstance(span, str) or "-" not in span:
+                    continue
+                a, b = span.split("-", 1)
+                lo, hi = _parse_pl_num(a), _parse_pl_num(b)
+                if lo is None or hi is None:
+                    continue
+                out.append({"group": str(g), "min": lo, "max": hi, "amount": amounts.get(g)})
+        return out
+    return []
+
+
+def income_group(income_per_person: float, groups: Any) -> tuple[str | None, float | None]:
+    """Deterministic income → (group, amount). Upper bound inclusive."""
+    try:
+        income = float(income_per_person)
+    except (TypeError, ValueError):
+        return None, None
+    table = _groups_table(groups)
+    if not table:
+        return None, None
+    for row in sorted(table, key=lambda r: r["min"]):
+        if row["min"] <= income <= row["max"]:
+            amt = row.get("amount")
+            return row["group"], (float(amt) if amt is not None else None)
+    return None, None
+
+
+_INCOME_RE = re.compile(
+    r"(?i)(\d[\d\s.,]*)\s*(?:zł|zl|pln)?\s*"
+    r"(?:na\s*osob\w*|per\s*person|/os\b|на\s*особ\w*|на\s*человека|нэг\s*хүнд)",
+)
+
+
+def extract_income(text: str) -> float | None:
+    m = _INCOME_RE.search(text or "")
+    if not m:
+        # softer: "dochod ... 1500" / "income ... 1500"
+        m = re.search(
+            r"(?i)(?:doch[oó]d|income|доход|дохід|орлого).{0,40}?"
+            r"(\d[\d\s.,]*)\s*(?:zł|zl|pln)?",
+            text or "",
+        )
+    if not m:
+        return None
+    return _parse_pl_num(m.group(1))
+
+
+def computed_income_line(income: float, groups: Any, academic_year: str | None, lang: str = "pl") -> str | None:
+    g, amt = income_group(income, groups)
+    if not g:
+        return None
+    year = f" ({academic_year})" if academic_year else ""
+    amt_s = f"{amt:,.0f}".replace(",", " ") if amt is not None else "?"
+    labels = {
+        "pl": f"Twoja grupa dochodowa: {g} → {amt_s} zł/mies.{year}",
+        "en": f"Your income group: {g} → {amt_s} PLN/month{year}",
+        "uk": f"Ваша група доходу: {g} → {amt_s} злотих/міс.{year}",
+        "mn": f"Таны орлогын бүлэг: {g} → {amt_s} zł/сар{year}",
+    }
+    return labels.get(lang, labels["pl"])
+
+
+def render_facts_block(facts: list[Fact], lang: str = "pl", computed_lines: list[str] | None = None) -> str:
+    if not facts and not computed_lines:
         return ""
     lines = ["FACTS (authoritative — quote exactly, cite as [F1], [F2], …):"]
     for i, f in enumerate(facts, 1):
@@ -122,6 +249,8 @@ def render_facts_block(facts: list[Fact], lang: str = "pl") -> str:
             lines.append(f"[F{i}] {label}: {val}{unit}{year} (unverified){src}")
         else:
             lines.append(f"[F{i}] {label}: {val}{unit}{year}{src}")
+    for j, line in enumerate(computed_lines or [], 1):
+        lines.append(f"[F{len(facts) + j}] COMPUTED: {line}")
     return "\n".join(lines)
 
 
@@ -148,17 +277,23 @@ def amounts_in(text: str) -> set[Decimal]:
     return out
 
 
+def _collect_nums(obj, out: set[Decimal], depth: int = 0):
+    if depth > 4 or obj is None:
+        return
+    if isinstance(obj, (int, float, Decimal)) and not isinstance(obj, bool):
+        out.add(Decimal(str(obj)))
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            _collect_nums(v, out, depth + 1)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            _collect_nums(v, out, depth + 1)
+    elif isinstance(obj, str):
+        out |= amounts_in(obj + " zł")
+
+
 def fact_amounts(facts: list[Fact]) -> set[Decimal]:
     out: set[Decimal] = set()
     for f in facts:
-        if f.value is None:
-            continue
-        if isinstance(f.value, (int, float, Decimal)):
-            out.add(Decimal(str(f.value)))
-        elif isinstance(f.value, dict):
-            for v in f.value.values():
-                if isinstance(v, (int, float, Decimal)):
-                    out.add(Decimal(str(v)))
-        elif isinstance(f.value, str):
-            out |= amounts_in(f.value + " zł")
+        _collect_nums(f.value, out)
     return out
