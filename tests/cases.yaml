@@ -53,7 +53,8 @@
   e2e: {must_match: ["1[ .]?400"], must_not_match: ["USOS"]}
 - id: slot-doctoral-no-second-programme-q
   origin: r2-S5
-  turns: ["czy doktorant moze dostac stypendium rektora?"]
+  # Self-ID required (R6-5): bare "czy doktorant może…" is a topic question, not profile status
+  turns: ["Jestem doktorantem. Czy moge dostac stypendium rektora?"]
   unit: {profile: {status: doktorant}, missing: []}
 - id: slot-karta-pobytu-not-ochrona
   origin: r2-S8 / r3-S3
@@ -393,3 +394,31 @@
     lang: pl
     today: "2026-11-05"
     expect_count: 2
+
+# ---------- round 6: slots / topic switch ----------
+- id: r6-doctoral-topic-not-status
+  origin: r6-S2
+  turns: ["Hej, jestem Marek, 2 rok informatyki stacjonarnie, I stopień. Interesuje mnie stypendium doktoranckie, ile wynosi?"]
+  unit:
+    topics_include: [doktoranckie]
+    profile: {poziom: I, tryb: stacjonarne, rok: "2"}
+    profile_not: {status: doktorant, poziom: SD}
+- id: r6-not-doktorant-negation
+  origin: r6-S2
+  turns: ["Hej, jestem Marek, 2 rok informatyki stacjonarnie, I stopień. Interesuje mnie stypendium doktoranckie, ile wynosi?", "ups pomyłka, ja ni jestem doktorantem, tylko licencjat. Ale kumpel z doktoratu pyta, ile ma dostawać"]
+  unit:
+    profile_not: {status: doktorant}
+  e2e:
+    must_match: ["3570"]
+    must_not_match: ["(?i)rozbieżność w Twoim profilu"]
+- id: r6-topic-switch-no-reask-level
+  origin: r6-S10
+  turns:
+    - "Привіт, я Оксана з України, маю карту побуту. Скільки коштує гуртожиток і чи можу я отримати соціальну стипендію?"
+    - "Стаціонар, бакалаврат, перший курс, другого напряму нема і диплому теж. Взагалі я тільки приїхала, тож все з нуля"
+    - "А до речі, а коли в мене починається сесія і де дивитись розклад занять?"
+  per_turn_lang_not: [ru]
+  e2e:
+    lang_in: [uk]
+    must_not_match: ["(?i)На якому ви році", "(?i)громадянин Польщі"]
+    must_match: ["(?i)сесі|розклад|plan"]

@@ -186,7 +186,8 @@ SLOT_Q = {
 
 SLOT_OPTS = {
  "status": [
-  ("doktorant", r"doktorant|doktoranc|doctoral\s*school|phd\s*student|i'?m\s*a?\s*phd|doctoral\s*student|школ\w*\s*доктор|докторант|докторантур"),
+  # Self-ID only — bare "doktorant/doktoranckie" as a topic must NOT set status (R6-5)
+  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?:я\s+)докторант(?:к\w*)?|докторантур)"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
   ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|i(?:'?m|\s+am)\s+polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|dow[oó]d\w*\s+(mam\s+)?polsk|polsk\w*\s+dow[oó]d|polsk\w*\s+paszport|urodzi\w+\s+w\s+(polsce|radomiu)|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|\bforeigner\b|i'?m\s*a?\s*foreign|i\s*am\s*from\s+(?!poland|polsk)|from\s+(india|china|ukraine|belarus|vietnam|nigeria|turkey|georgia)|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
@@ -196,7 +197,8 @@ SLOT_OPTS = {
   ("niestacjonarne", r"niestacjonar|zaoczn|weekend|weekends?\s*only|part[-\s]?time|extramural|заочн\w*|вечірнь|вихідн|не\s*вдень|zjazd|sobot|niedziel|эчнээ|цагийн\s*сургалт"),
  ],
  "poziom": [
-  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|phd\b|doktoranc|докторантур|докторант(?!\w)"),
+  # No bare "doktorant/doktoranc" — self-ID or szkoła doktorska only (R6-5)
+  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?:я\s+)докторант(?:к\w*)?"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
   ("II", r"\bii\s*stop|\b2\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|\bmgr\b|magisterk|магістратур|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|магистр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
   ("I", r"\bi\s*stop|\b1\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|1st\s*degre|first\s*degre|bachelor|bachel?or|undergrad|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
@@ -308,9 +310,26 @@ CLARIFY = {
  "en": ("Before I answer – UR rules depend on your situation. Please clarify:",
         "You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”."),
  "uk": ("Перш ніж відповісти – правила UR залежать від вашої ситуації. Уточніть, будь ласка:",
-        "Можна однією фразою, напр. «громадянин Польщі, денна, І ступінь, тільки цей напрям, без диплома»."),
+        "Можна однією фразою, напр. «іноземець з картою побуту, денна, І ступінь, тільки цей напрям, без диплома»."),
  "mn": ("Хариулахаас өмнө – UR-ийн дүрэм таны нөхцөл байдлаас хамаарна. Тодруулна уу:",
         "Нэг өгүүлбэрээр хариулж болно, ж.нь. «оршин суух зөвшөөрөлтэй гадаадын оюутан, өдрийн, I зэрэг, 2-р курс, нэг мэргэжил»."),
+}
+_CLARIFY_TIP_BY_STATUS = {
+ "pl": {
+  "pl": "Możesz odpowiedzieć jednym zdaniem, np. „obywatel Polski, stacjonarne, I stopień, 2 rok, jeden kierunek”.",
+  "cudzoziemiec": "Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.",
+  "doktorant": "Możesz odpowiedzieć jednym zdaniem, np. „doktorant Szkoły Doktorskiej, 2 rok”.",
+ },
+ "en": {
+  "pl": "You can reply in one sentence, e.g. “Polish citizen, full-time, bachelor, year 2, one programme”.",
+  "cudzoziemiec": "You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.",
+  "doktorant": "You can reply in one sentence, e.g. “doctoral student, year 2”.",
+ },
+ "uk": {
+  "pl": "Можна однією фразою, напр. «громадянин Польщі, денна, І ступінь, тільки цей напрям».",
+  "cudzoziemiec": "Можна однією фразою, напр. «іноземець з картою побуту, денна, І ступінь, тільки цей напрям».",
+  "doktorant": "Можна однією фразою, напр. «докторант Школи докторської, 2 рік».",
+ },
 }
 
 def _negated_before(text, start, window=28):
@@ -408,6 +427,30 @@ def extract_profile(text, conflicts_out=None):
     ):
         if len(t) < 80 or re.search(r"(?i)диплом|напрям|kierun|dyplom|навч|stud|degree|program", t):
             prof["drugi_kierunek"] = "nie"
+    # Explicit "not a doctoral student" wins over earlier self-ID / benefit-name bleed (R6-5)
+    if re.search(
+        r"(?i)(?:\b(?:nie|ni|не)\s+jestem\s+doktorant|\bnie\s+jestem\s+doktorantem|"
+        r"\bi'?m\s+not\s+(?:a\s+)?(?:phd|doctoral)|не\s+(?:є|єсм)?\s*докторант|"
+        r"tylko\s+licencjat|only\s+(?:a\s+)?(?:bachelor|licencjat))",
+        t,
+    ):
+        if prof.get("status") == "doktorant":
+            del prof["status"]
+        if prof.get("poziom") == "SD":
+            del prof["poziom"]
+        prof.pop("status_doktor", None)
+    # I stopień / licencjat + "stypendium doktoranckie" without self-ID → keep I
+    if (
+        re.search(r"(?i)\bi\s*stop|licencjat|bachelor|бакалавр", t)
+        and re.search(r"(?i)doktoranc|doctoral\s*stipend|stypendium\s*doktor", t)
+        and not re.search(r"(?i)(?:jestem|i'?m|i\s+am)\s+(?:a\s+)?(?:doktorant|phd|doctoral)", t)
+    ):
+        if prof.get("status") == "doktorant":
+            del prof["status"]
+        if prof.get("poziom") == "SD":
+            prof["poziom"] = "I"
+        prof.pop("status_doktor", None)
+        prof.setdefault("poziom", "I")
     # Doktorant ⇒ poziom SD; NIE wymyślaj tryb/rok (BUG-05)
     if prof.get("status") == "doktorant":
         prof.setdefault("poziom", "SD")
@@ -583,8 +626,12 @@ def needed(question, history_text):
     missing = [x for x in req if x not in prof]
     return [n for n, _ in topics], prof, missing
 
-def clarify_text(lang, missing):
+def clarify_text(lang, missing, prof=None):
     head, tip = CLARIFY.get(lang, CLARIFY["pl"])
+    # Never ask the same slot twice in one clarify (R6-5)
+    missing = list(dict.fromkeys(missing or []))
+    status = (prof or {}).get("status")
+    tip = _CLARIFY_TIP_BY_STATUS.get(lang, {}).get(status) or tip
     qs = "\n".join(f"{i}. {SLOT_Q[m].get(lang, SLOT_Q[m]['pl'])}" for i, m in enumerate(missing, 1))
     return f"{head}\n{qs}\n\n{tip}"
 
@@ -628,16 +675,19 @@ SLOT_LABEL = {
 
 def clarify_answer(lang, missing, question, history, topics, prof):
     """Template clarify by default; optional LLM when CLARIFY_LLM=1."""
+    missing = list(dict.fromkeys(m for m in (missing or []) if m not in (prof or {})))
     if _clarify_llm_enabled():
         labels = SLOT_LABEL.get(lang, SLOT_LABEL["pl"])
         miss_l = ", ".join(labels.get(m, m) for m in missing)
         prof_txt = format_profile_txt(prof, lang)
+        tip = _CLARIFY_TIP_BY_STATUS.get(lang, {}).get((prof or {}).get("status"), "")
         sys = (CLARIFY_SYS.replace("{lang}", lang)
                           .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
                           .replace("{missing_labels}", miss_l)
                           .replace("{n}", str(len(missing)))
                           .replace("{profile}", prof_txt)
-                          .replace("{security_rules}", SECURITY_RULES))
+                          .replace("{security_rules}", SECURITY_RULES)
+               + (f"\nExample reply style: {tip}" if tip else ""))
         msgs = [{"role": "system", "content": sys}] + _safe_history(history, 6) + [
             {"role": "user", "content": wrap_untrusted("USER_QUESTION", question)}
         ]
@@ -645,7 +695,7 @@ def clarify_answer(lang, missing, question, history, topics, prof):
             return redact_secrets(call_llm(msgs, temperature=0.35)), "doprecyzowanie-llm"
         except Exception:
             pass
-    return clarify_text(lang, missing), "doprecyzowanie"
+    return clarify_text(lang, missing, prof=prof), "doprecyzowanie"
 
 def _safe_history(history, n=8):
     out = []
