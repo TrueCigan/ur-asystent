@@ -49,6 +49,8 @@
   main.host p { margin: 0; max-width: 46ch; font-size: 17px; line-height: 1.5; color: #3d4d5e; }
   #scenario-social {
     display: none;
+    position: relative;
+    z-index: 5; /* above #veil so the verified card stays usable before chat opens */
     margin-top: 40px;
     max-width: 640px;
     padding: 22px 22px 18px;
@@ -803,6 +805,17 @@ document.getElementById('new-chat').onclick = () => {
 };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !chatBusy) closePanel(); });
 
+let socialYearTpl = { confirmedYear: '2025/2026', confirmed: '', unconfirmed: '' };
+
+function syncSocialYearBanner(year) {
+  const banner = document.getElementById('ss-year-banner');
+  if (!banner || !year) return;
+  const ok = year === socialYearTpl.confirmedYear;
+  const tpl = ok ? socialYearTpl.confirmed : socialYearTpl.unconfirmed;
+  banner.textContent = (tpl || '').replace(/\{year\}/g, year);
+  banner.classList.toggle('warn', !ok);
+}
+
 function fillSocialCard(card) {
   const root = document.getElementById('scenario-social');
   if (!root || !card) return;
@@ -811,11 +824,14 @@ function fillSocialCard(card) {
   set('ss-badge', card.badge_verified);
   set('ss-title', card.title);
   set('ss-intro', card.intro);
-  const banner = document.getElementById('ss-year-banner');
-  if (banner) {
-    banner.textContent = (card.amounts && card.amounts.year_banner) || '';
-    banner.classList.toggle('warn', (card.amounts || {}).verification !== 'confirmed');
-  }
+  const am = card.amounts || {};
+  socialYearTpl = {
+    confirmedYear: am.academic_year || '2025/2026',
+    confirmed: am.year_banner_confirmed_tpl || am.year_banner || '',
+    unconfirmed: am.year_banner_unconfirmed_tpl || ''
+  };
+  const yearSel = document.getElementById('ss-year');
+  syncSocialYearBanner((yearSel && yearSel.value) || socialYearTpl.confirmedYear);
   set('ss-amounts-title', (card.amounts || {}).title);
   set('ss-amounts-note', (card.amounts || {}).note);
   const ul = document.getElementById('ss-groups');
@@ -869,8 +885,10 @@ function fillSocialCard(card) {
   set('ss-form-hint', fl.hint);
   set('ss-submit', fl.submit);
   set('ss-other', 'Inne tematy pozostają w czacie jako wyszukiwanie korpusu — nie oznaczamy ich jako scenariusz sprawdzony.');
-  const yearSel = document.getElementById('ss-year');
-  if (yearSel && card.default_estimate_year) yearSel.value = card.default_estimate_year;
+  if (yearSel && card.default_estimate_year) {
+    yearSel.value = card.default_estimate_year;
+    syncSocialYearBanner(yearSel.value);
+  }
 }
 
 async function loadSocialScenario() {
@@ -906,12 +924,7 @@ document.getElementById('ss-form')?.addEventListener('submit', async (e) => {
     interested_in_dorm_topup: dorm,
     dorm_conditions_met: null
   };
-  // Keep the amounts banner in sync with the selected calculator year
-  const banner = document.getElementById('ss-year-banner');
-  if (banner && j.year_banner) {
-    banner.textContent = j.year_banner;
-    banner.classList.toggle('warn', j.result === 'amounts_not_confirmed');
-  }
+  syncSocialYearBanner(year);
   if (!out) return;
   out.hidden = false;
   if (j.ok) {
@@ -922,20 +935,13 @@ document.getElementById('ss-form')?.addEventListener('submit', async (e) => {
     t += `\n${j.message || ''}`;
     out.textContent = t;
   } else {
-    out.textContent = (j.year_banner ? j.year_banner + '\n' : '') + (j.message || j.result || 'Error');
+    // Banner already shows year status — do not duplicate it in the result block
+    out.textContent = j.message || j.result || 'Error';
   }
 });
 
 document.getElementById('ss-year')?.addEventListener('change', () => {
-  const banner = document.getElementById('ss-year-banner');
-  const year = document.getElementById('ss-year')?.value;
-  if (!banner || !year) return;
-  // Optimistic local hint until the next estimate; confirmed table year is 2025/2026
-  if (year === '2025/2026') {
-    banner.classList.remove('warn');
-  } else {
-    banner.classList.add('warn');
-  }
+  syncSocialYearBanner(document.getElementById('ss-year')?.value);
 });
 
 fetch('/api/status').then(r => r.json()).then(j => {

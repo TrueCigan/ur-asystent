@@ -178,6 +178,8 @@ def build_card(lang: str = "pl") -> dict:
             "groups": groups,
             "fact": _fact_payload(income_f, lang),
             "year_banner": (t.get("year_banner_confirmed") or "").format(year=amount_year or ""),
+            "year_banner_confirmed_tpl": t.get("year_banner_confirmed") or "",
+            "year_banner_unconfirmed_tpl": t.get("year_banner_unconfirmed") or "",
             "period_label": t.get("amounts_period_label"),
         },
         "dorm_topup": {
@@ -390,10 +392,8 @@ def format_chat_answer(
         lines.append(f"- {g['group']}: {g.get('income_range')} → {g['amount_display']}")
     dorm = card.get("dorm_topup") or {}
     if dorm.get("amount_display"):
-        lines += [
-            "",
-            f"**{dorm.get('title')}**: {dorm['amount_display']} — {t.get('result_topup_conditional') or ''}",
-        ]
+        # Card summary: amount + rule only. Include/exclude labels belong in the estimate block.
+        lines += ["", f"**{dorm.get('title')}**: {dorm['amount_display']}"]
         if dorm.get("rule"):
             lines.append(str(dorm["rule"])[:500])
     if dl.get("value"):
@@ -413,10 +413,9 @@ def format_chat_answer(
         lines += ["", "—"]
         if used_form_income:
             lines.append(t.get("chat_no_reask") or "")
-        # Show year banner from *this* estimate (may be unconfirmed for another year)
-        if estimate_result.get("year_banner"):
-            lines.append(estimate_result["year_banner"])
         if estimate_result.get("ok"):
+            if estimate_result.get("year_banner"):
+                lines.append(estimate_result["year_banner"])
             lines.append(
                 f"{estimate_result.get('labels', {}).get('group')}: {estimate_result.get('income_group')} → "
                 f"{estimate_result.get('base_amount_display')}"
@@ -430,7 +429,8 @@ def format_chat_answer(
             )
             lines.append(estimate_result.get("message") or t.get("result_not_eligibility"))
         else:
-            lines.append(estimate_result.get("message") or "")
+            # One line for year rejection (message ≈ banner — do not duplicate)
+            lines.append(estimate_result.get("message") or estimate_result.get("year_banner") or "")
 
     # Sources from card facts only
     sources = []

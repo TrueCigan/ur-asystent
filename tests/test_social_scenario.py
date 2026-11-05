@@ -184,6 +184,19 @@ def test_topup_label_when_included():
     chat = S.format_chat_answer("pl", estimate_result=r)
     assert "1800" in chat["answer"]
     assert "≠ total" not in chat["answer"]
+    # Static card block must not contradict the included estimate
+    assert "nie wliczone" not in chat["answer"].lower()
+    assert "wliczone" in chat["answer"].lower()
+
+
+def test_year_rejection_not_duplicated_in_chat():
+    r = S.estimate("1000", academic_year="2026/2027", lang="pl")
+    assert r["result"] == "amounts_not_confirmed"
+    chat = S.format_chat_answer("pl", estimate_result=r)
+    # Message once — not banner + message twice
+    low = chat["answer"].lower()
+    assert low.count("brak potwierdzonej tabeli") == 1
+    assert "szacunek nie jest traktowany" not in low  # unconfirmed banner not also appended
 
 
 def test_chat_followup_not_stuck(monkeypatch=None):
