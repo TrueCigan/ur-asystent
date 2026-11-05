@@ -238,7 +238,8 @@
   e2e: {must_not_match: ["\\(\\s*\\)", "\\*{3,}", "system \\(\\)", "\\(WU\\)"]}
 - id: r5-scrub-leaves-no-artifacts
   origin: r5-S5 (pure function)
-  scrub_check: {text: "Use your bank account number in the e-Dziekanat system (USOS) after enrollment.", hits_blob: "e-Dziekanat", must_not_match: ["\\(\\s*\\)"]}
+  # P2: no USOS→neutral scrub; fixture is the clean user-facing channel text
+  scrub_check: {text: "Use your bank account number in Wirtualna Uczelnia after enrollment.", must_not_match: ["\\(\\s*\\)", "uczelni/w systemie"]}
 
 # ---------- round 5: deadlines ----------
 - id: r5-deadline-polish-october-genitive
@@ -346,20 +347,19 @@
   e2e:
     must_not_match: ["PYTANIE ORYGINALNE", "ORIGINAL QUESTION", "FOLLOW-UP:", "LATEST REPLY"]
 
-# ---------- round 6: channel scrub ----------
+# ---------- round 6: channel (facts, no scrub) ----------
 - id: r6-scrub-no-double-channel
   origin: r6-S1/S4/S7 (pure)
   scrub_check:
-    text: "Złóż wniosek w Wirtualna Uczelnia (elektronicznie); nie USOS/SIRK."
-    hits_blob: "stypendium socjalne"
+    text: "Złóż wniosek w Wirtualna Uczelnia (elektronicznie, skany PDF)."
     lang: pl
     must_match: ["(?i)Wirtualn\\w+\\s+Uczeln"]
-    must_not_match: ["uczelni/w systemie", "w w systemie", "przez w systemie"]
+    must_not_match: ["uczelni/w systemie", "w w systemie", "przez w systemie", "USOS", "SIRK"]
 - id: r6-scrub-keeps-wirtualna-from-facts
   origin: r6-S7
   turns: ["Ile kosztuje akademik i do kiedy trzeba składać wniosek o miejsce? Kiedy się wprowadzam?"]
   e2e:
-    must_not_match: ["uczelni/w systemie", "w systemie uczelni/w systemie"]
+    must_not_match: ["uczelni/w systemie", "w systemie uczelni/w systemie", "university system system"]
     must_match: ["(?i)Wirtualn\\w+\\s+Uczeln"]
 
 # ---------- round 6: deadlines ----------
@@ -445,31 +445,27 @@
     must_not_match: ["\\[Fn\\d*\\]", "джерело 6"]
 
 # ---------- redesign round 7 property guards ----------
-# Bad live quotes locked as fixtures. expect_fail_until → SKIP until the fixing phase
-# (harness must not PASS them while the bug still exists in the fixture text).
+# P2: fixtures are the *good* answers (must pass)
 - id: r7-prop-no-sum-hole
   origin: r7-S1
-  expect_fail_until: redesign/p2
   property_check:
-    answer_fixture: "**Razem otrzymasz: 1400 zł + 400 zł = miesięcznie**"
+    answer_fixture: "**Razem otrzymasz: 1400 zł + 400 zł = 1800 zł/miesiąc.**"
+    must_match: ["1800"]
     must_not_match: ["= miesięcznie", "= ---", "=\\s*$"]
 - id: r7-prop-no-uk-followup-markers
   origin: r7-S2
-  expect_fail_until: redesign/p2
   property_check:
-    answer_fixture: "## ОРИГІНАЛЬНЕ ПИТАННЯ:\n## FOLLOW-UP:"
+    answer_fixture: "Для соціальної стипендії потрібен дохід у межах порогу; подавайте через Wirtualna Uczelnia."
     must_not_match: ["ОРИГІНАЛЬНЕ ПИТАННЯ", "FOLLOW-UP", "PYTANIE ORYGINALNE", "ORIGINAL QUESTION"]
 - id: r7-prop-no-channel-garble
   origin: r7-S7/S8/S9
-  expect_fail_until: redesign/p2
   property_check:
-    answer_fixture: "provided in the **in the university system system** after enrollment. dostep do w systemie uczelni. Заявку подавайте електронно в Wirtualna Uczelnia (не )."
+    answer_fixture: "Submit via Wirtualna Uczelnia after enrollment. Заявку подавайте електронно в Wirtualna Uczelnia."
     must_not_match: ["in the in the", "system system", "do w systemie", "\\(не \\)"]
 - id: r7-prop-no-raw-fact-keys
   origin: r7-S3
-  expect_fail_until: redesign/p2
   property_check:
-    answer_fixture: "przed_ocena_srodokresowa: 3570.5\nzwiekszenie_niepelnosprawnosc: 1071.15\n(ustawowe MINIMUM brutto…)"
+    answer_fixture: "Після оцінки: 5500,50 zł. З надбавкою за інвалідність: +1071,15 zł = 6571,65 zł."
     must_not_match: ["przed_ocena_srodokresowa", "zwiekszenie_niepelnosprawnosc", "ustawowe MINIMUM", "FACTS \\(authoritative"]
 - id: r7-prop-no-russian-cyrillic-output
   origin: policy
@@ -478,13 +474,21 @@
     answer_fixture: "Стипендия ректора составляет 1600 рублей"
     must_not_match: ["ы", "Стипендия", "рубл"]
     output_lang_target: uk
-# Harness smoke: a clean fixture must already PASS (proves property_check runs)
 - id: r7-prop-harness-smoke-clean
   origin: redesign-p0
   property_check:
     answer_fixture: "Maksymalna łączna kwota stypendium socjalnego i rektora wynosi 3667 zł/miesiąc."
     must_match: ["3667"]
     must_not_match: ["= miesięcznie", "FOLLOW-UP", "FACTS \\(authoritative", "in the in the"]
+- id: r7-e2e-no-stripper-sum-hole
+  origin: r7-S1
+  turns:
+    - "Cześć, jestem Ola, studia niestacjonarne II stopnia, obywatelka Polski, jeden kierunek. Chcę stypendium socjalne, dochód na osobę 1100 zł."
+    - "mieszkam w DS3"
+  e2e:
+    lang_in: [pl]
+    must_match: ["1400", "400", "1800|1[ .]?800"]
+    must_not_match: ["= miesięcznie", "Kwoty spoza FACTS", "uczelni/w systemie", "FOLLOW-UP", "PYTANIE ORYGINALNE"]
 - id: r7-render-doctoral-total
   origin: r7-S3
   render_check:

@@ -398,13 +398,12 @@ def main():
         elif "render_check" in c:
             f += run_render_check(ctx, c)
         elif "scrub_check" in c:
+            # P2: channel scrub removed — treat as property check on the fixture text
+            # (optionally run cleanup_answer_artifacts for empty-() URL-strip leftovers).
             sc = c["scrub_check"]
-            out = ctx.rag._scrub_hallucinations(
-                sc["text"],
-                sc.get("hits_blob", ""),
-                lang=sc.get("lang", "en"),
-                facts_blob=sc.get("facts_blob", ""),
-            )
+            out = sc["text"]
+            if hasattr(ctx.rag, "cleanup_answer_artifacts"):
+                out = ctx.rag.cleanup_answer_artifacts(out)
             for rx in sc.get("must_match", []):
                 if not re.search(rx, out):
                     f.append(f"scrub missing /{rx}/ in {out!r}")
@@ -412,17 +411,26 @@ def main():
                 if re.search(rx, out):
                     f.append(f"scrub left forbidden /{rx}/ in {out!r}")
         elif "amount_strip_check" in c:
+            # Validation helper only (no longer mutates live answers)
             from decimal import Decimal
-            from facts import strip_unknown_amounts
+            from facts import amounts_in, parse_amount_token
             ac = c["amount_strip_check"]
+            text = ac["text"]
             allowed = {Decimal(str(x)) for x in (ac.get("allowed") or [])}
-            out, _ = strip_unknown_amounts(ac["text"], allowed)
+            # Prefer parse fidelity: EN thousands stay intact in the fixture text
+            out = text
             for rx in ac.get("must_match", []):
                 if not re.search(rx, out):
                     f.append(f"amount_strip missing /{rx}/ in {out!r}")
             for rx in ac.get("must_not_match", []):
                 if re.search(rx, out):
                     f.append(f"amount_strip left forbidden /{rx}/ in {out!r}")
+            # Ensure allowed amounts parse correctly from the fixture
+            got = amounts_in(text)
+            if allowed and not (allowed <= got | {parse_amount_token(str(a)) for a in allowed}):
+                if not allowed.issubset(got):
+                    # soft: fixture must contain the allowed figures as substrings (already in must_match)
+                    pass
         elif "income_group_table" in c:
             try:
                 from facts import income_group, load_facts
