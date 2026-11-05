@@ -10,6 +10,9 @@ Output JSON only:
 {"intents":[...],"slot_updates":{...},"answers_pending":bool,"conflicts":[],"message_lang":"...","explicit_lang_switch":null}
 Interpret short replies as answers to pending slots. Negations of second programme are NOT dwa_kierunki.
 Nationality: Polish=>pl; other country/foreigner=>cudzoziemiec. karta pobytu=>pobyt_czasowy (not ochrona unless PESEL UKR).
+status=doktorant ONLY on self-identification (jestem doktorantem / I'm a PhD student / szkoła doktorska).
+Mentions of "stypendium doktoranckie" / doctoral scholarship as a TOPIC do NOT set status=doktorant or poziom=SD.
+"nie jestem doktorantem" / "I'm not a doctoral student" / "tylko licencjat" → clear status away from doktorant; keep I/bachelor if stated.
 """
 
 _SLOT_ENUMS = {

@@ -159,25 +159,30 @@ def run_deadline(ctx, case):
     if d.get("today"):
         from datetime import date
         today = date.fromisoformat(d["today"])
-    # Prefer parse+render with today when available
-    if today is not None and hasattr(ctx.rag, "deadlines"):
-        from deadlines import parse_deadlines, render_deadline_notes
-        out = render_deadline_notes(parse_deadlines(d["text"], today), d.get("lang", "pl"), today)
-    elif today is not None:
-        try:
-            from deadlines import parse_deadlines, render_deadline_notes
-            out = render_deadline_notes(parse_deadlines(d["text"], today), d.get("lang", "pl"), today)
-        except Exception:
-            out = ctx.rag.deadline_passed_note(d["text"], d.get("lang", "pl"))
-    else:
+    # Mirror production: strip LLM inline notes, then code-owned warnings
+    cleaned = d["text"]
+    try:
+        from deadlines import parse_deadlines, render_deadline_notes, strip_llm_deadline_notes
+        cleaned = strip_llm_deadline_notes(d["text"])
+        if today is not None:
+            notes = render_deadline_notes(parse_deadlines(cleaned, today), d.get("lang", "pl"), today)
+        else:
+            notes = ctx.rag.deadline_passed_note(cleaned, d.get("lang", "pl"))
+        out = notes
+        combined = cleaned + (notes or "")
+    except Exception:
         out = ctx.rag.deadline_passed_note(d["text"], d.get("lang", "pl"))
+        combined = out
     n = out.count("⚠️")
     f = [] if n == d["expect_count"] else [f"deadline notes={n} want {d['expect_count']}: {out!r}"]
     for rx in d.get("must_not_match", []):
         if re.search(rx, out):
             f.append(f"note matches forbidden {rx}")
+    for rx in d.get("body_must_not_match", []):
+        if re.search(rx, cleaned):
+            f.append(f"body matches forbidden {rx}")
     for rx in d.get("must_match", []):
-        if not re.search(rx, out):
+        if not re.search(rx, combined):
             f.append(f"note missing /{rx}/")
     return f
 
@@ -318,7 +323,15 @@ def main():
             f += run_prompt_budget(ctx, c)
         elif "scrub_check" in c:
             sc = c["scrub_check"]
-            out = ctx.rag._scrub_hallucinations(sc["text"], sc.get("hits_blob", ""), lang=sc.get("lang", "en"))
+            out = ctx.rag._scrub_hallucinations(
+                sc["text"],
+                sc.get("hits_blob", ""),
+                lang=sc.get("lang", "en"),
+                facts_blob=sc.get("facts_blob", ""),
+            )
+            for rx in sc.get("must_match", []):
+                if not re.search(rx, out):
+                    f.append(f"scrub missing /{rx}/ in {out!r}")
             for rx in sc.get("must_not_match", []):
                 if re.search(rx, out):
                     f.append(f"scrub left forbidden /{rx}/ in {out!r}")

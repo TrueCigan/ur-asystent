@@ -53,7 +53,8 @@
   e2e: {must_match: ["1[ .]?400"], must_not_match: ["USOS"]}
 - id: slot-doctoral-no-second-programme-q
   origin: r2-S5
-  turns: ["czy doktorant moze dostac stypendium rektora?"]
+  # Self-ID required (R6-5): bare "czy doktorant może…" is a topic question, not profile status
+  turns: ["Jestem doktorantem. Czy moge dostac stypendium rektora?"]
   unit: {profile: {status: doktorant}, missing: []}
 - id: slot-karta-pobytu-not-ochrona
   origin: r2-S8 / r3-S3
@@ -330,3 +331,115 @@
     lang_in: [uk]
     must_not_match: ["2099"]
     must_match: ["1908"]
+
+# ---------- round 6: facts render ----------
+- id: r6-facts-dict-not-repr
+  origin: r6-S5
+  turns: ["Hello, I am Ahmed, a foreigner studying in an English-language programme. How much is the tuition fee per semester?", "im on a full time bachelors, first yr, so basically the usual stuff"]
+  e2e:
+    lang_in: [en]
+    must_match: ["2100", "2600"]
+    must_not_match: ["FACTS \\(authoritative", "\\{'International Business", "quote exactly"]
+- id: r6-no-internal-markers
+  origin: r6-S2
+  turns: ["Hej, jestem Marek, 2 rok informatyki stacjonarnie, I stopień. Interesuje mnie stypendium doktoranckie, ile wynosi?", "ups pomyłka, ja ni jestem doktorantem, tylko licencjat. Ale kumpel z doktoratu pyta, ile ma dostawać"]
+  e2e:
+    must_not_match: ["PYTANIE ORYGINALNE", "ORIGINAL QUESTION", "FOLLOW-UP:", "LATEST REPLY"]
+
+# ---------- round 6: channel scrub ----------
+- id: r6-scrub-no-double-channel
+  origin: r6-S1/S4/S7 (pure)
+  scrub_check:
+    text: "Złóż wniosek w Wirtualna Uczelnia (elektronicznie); nie USOS/SIRK."
+    hits_blob: "stypendium socjalne"
+    lang: pl
+    must_match: ["(?i)Wirtualn\\w+\\s+Uczeln"]
+    must_not_match: ["uczelni/w systemie", "w w systemie", "przez w systemie"]
+- id: r6-scrub-keeps-wirtualna-from-facts
+  origin: r6-S7
+  turns: ["Ile kosztuje akademik i do kiedy trzeba składać wniosek o miejsce? Kiedy się wprowadzam?"]
+  e2e:
+    must_not_match: ["uczelni/w systemie", "w systemie uczelni/w systemie"]
+    must_match: ["(?i)Wirtualn\\w+\\s+Uczeln"]
+
+# ---------- round 6: deadlines ----------
+- id: r6-deadline-no-inline-double
+  origin: r6-S7
+  deadline_note:
+    text: "Wniosek do 15.05.2026 – termin minął [F2]. Zadatek 94 zł: wpłacić do 31.08.2026 [F2]."
+    lang: pl
+    today: "2026-11-05"
+    expect_count: 2
+    body_must_not_match: ["termin minął"]
+    must_match: ["15\\.05\\.2026", "31\\.08\\.2026"]
+- id: r6-deadline-movein-window
+  origin: r6-S7
+  deadline_note:
+    text: "Kwaterowanie: 29–30 września i 1 października 2026, godz. 8–15"
+    lang: pl
+    today: "2026-11-05"
+    expect_count: 1
+    must_match: ["29\\.09\\.2026|01\\.10\\.2026"]
+- id: r6-deadline-bip-not-flagged
+  origin: r6-S2
+  deadline_note:
+    text: "Uchwała nr 000-9/2/2026 z dnia 09.02.2026. Strona zaktualizowana 08.02.2026."
+    lang: pl
+    today: "2026-11-05"
+    expect_count: 0
+- id: r6-deadline-1-pazdziernika
+  origin: r6-S6
+  deadline_note:
+    text: "Semestr zimowy: do 1 października (lub do 15 października, jeśli jesteś na 1. roku)"
+    lang: pl
+    today: "2026-11-05"
+    expect_count: 2
+
+# ---------- round 6: slots / topic switch ----------
+- id: r6-doctoral-topic-not-status
+  origin: r6-S2
+  turns: ["Hej, jestem Marek, 2 rok informatyki stacjonarnie, I stopień. Interesuje mnie stypendium doktoranckie, ile wynosi?"]
+  unit:
+    topics_include: [doktoranckie]
+    profile: {poziom: I, tryb: stacjonarne, rok: "2"}
+    profile_not: {status: doktorant, poziom: SD}
+- id: r6-not-doktorant-negation
+  origin: r6-S2
+  turns: ["Hej, jestem Marek, 2 rok informatyki stacjonarnie, I stopień. Interesuje mnie stypendium doktoranckie, ile wynosi?", "ups pomyłka, ja ni jestem doktorantem, tylko licencjat. Ale kumpel z doktoratu pyta, ile ma dostawać"]
+  unit:
+    profile_not: {status: doktorant}
+  e2e:
+    must_match: ["3570"]
+    must_not_match: ["(?i)rozbieżność w Twoim profilu"]
+- id: r6-topic-switch-no-reask-level
+  origin: r6-S10
+  turns:
+    - "Привіт, я Оксана з України, маю карту побуту. Скільки коштує гуртожиток і чи можу я отримати соціальну стипендію?"
+    - "Стаціонар, бакалаврат, перший курс, другого напряму нема і диплому теж. Взагалі я тільки приїхала, тож все з нуля"
+    - "А до речі, а коли в мене починається сесія і де дивитись розклад занять?"
+  per_turn_lang_not: [ru]
+  e2e:
+    lang_in: [uk]
+    must_not_match: ["(?i)На якому ви році", "(?i)громадянин Польщі"]
+    must_match: ["(?i)сесі|розклад|plan"]
+
+# ---------- round 6: corpus / citations ----------
+- id: r6-retrieval-no-2014-dorm
+  origin: r6-S7
+  turns: ["Ile kosztuje akademik i do kiedy trzeba składać wniosek o miejsce?"]
+  unit:
+    topics_include: [akademik]
+    retrieval:
+      must_not_match_urls: ["2014", "akademik_instrukcja_2014"]
+- id: r6-retrieval-no-2018-fees
+  origin: r6-S5
+  turns: ["Hello, I am Ahmed, a foreigner studying in an English-language programme. How much is the tuition fee per semester?", "im on a full time bachelors, first yr"]
+  unit:
+    retrieval:
+      must_not_match_urls: ["2018", "2019-2020", "2019-20"]
+- id: r6-citations-subset
+  origin: r6-S3/S10
+  turns: ["Jestem Kasia, doktorantka Szkoły Doktorskiej, 1 rok. Czy mogę dostać stypendium rektora?"]
+  e2e:
+    citations_subset_of_sources: true
+    must_not_match: ["\\[Fn\\d*\\]", "джерело 6"]

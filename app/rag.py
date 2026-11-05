@@ -16,8 +16,9 @@ from lang import (
 from deadlines import deadline_passed_note, strip_llm_deadline_notes
 from decimal import Decimal
 from facts import (
-    load_facts, select_facts, render_facts_block, amounts_in, fact_amounts,
-    extract_income, computed_income_line, income_group, strip_unknown_amounts,
+    load_facts, select_facts, render_facts_block, render_facts_for_user,
+    amounts_in, fact_amounts, extract_income, computed_income_line, income_group,
+    strip_unknown_amounts,
 )
 
 IDX = None
@@ -185,7 +186,8 @@ SLOT_Q = {
 
 SLOT_OPTS = {
  "status": [
-  ("doktorant", r"doktorant|doktoranc|doctoral\s*school|phd\s*student|i'?m\s*a?\s*phd|doctoral\s*student|школ\w*\s*доктор|докторант|докторантур"),
+  # Self-ID only — bare "doktorant/doktoranckie" as a topic must NOT set status (R6-5)
+  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?:я\s+)докторант(?:к\w*)?|докторантур)"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
   ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|i(?:'?m|\s+am)\s+polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|dow[oó]d\w*\s+(mam\s+)?polsk|polsk\w*\s+dow[oó]d|polsk\w*\s+paszport|urodzi\w+\s+w\s+(polsce|radomiu)|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|\bforeigner\b|i'?m\s*a?\s*foreign|i\s*am\s*from\s+(?!poland|polsk)|from\s+(india|china|ukraine|belarus|vietnam|nigeria|turkey|georgia)|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
@@ -195,7 +197,8 @@ SLOT_OPTS = {
   ("niestacjonarne", r"niestacjonar|zaoczn|weekend|weekends?\s*only|part[-\s]?time|extramural|заочн\w*|вечірнь|вихідн|не\s*вдень|zjazd|sobot|niedziel|эчнээ|цагийн\s*сургалт"),
  ],
  "poziom": [
-  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|phd\b|doktoranc|докторантур|докторант(?!\w)"),
+  # No bare "doktorant/doktoranc" — self-ID or szkoła doktorska only (R6-5)
+  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?:я\s+)докторант(?:к\w*)?"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
   ("II", r"\bii\s*stop|\b2\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|\bmgr\b|magisterk|магістратур|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|магистр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
   ("I", r"\bi\s*stop|\b1\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|1st\s*degre|first\s*degre|bachelor|bachel?or|undergrad|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
@@ -307,9 +310,26 @@ CLARIFY = {
  "en": ("Before I answer – UR rules depend on your situation. Please clarify:",
         "You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”."),
  "uk": ("Перш ніж відповісти – правила UR залежать від вашої ситуації. Уточніть, будь ласка:",
-        "Можна однією фразою, напр. «громадянин Польщі, денна, І ступінь, тільки цей напрям, без диплома»."),
+        "Можна однією фразою, напр. «іноземець з картою побуту, денна, І ступінь, тільки цей напрям, без диплома»."),
  "mn": ("Хариулахаас өмнө – UR-ийн дүрэм таны нөхцөл байдлаас хамаарна. Тодруулна уу:",
         "Нэг өгүүлбэрээр хариулж болно, ж.нь. «оршин суух зөвшөөрөлтэй гадаадын оюутан, өдрийн, I зэрэг, 2-р курс, нэг мэргэжил»."),
+}
+_CLARIFY_TIP_BY_STATUS = {
+ "pl": {
+  "pl": "Możesz odpowiedzieć jednym zdaniem, np. „obywatel Polski, stacjonarne, I stopień, 2 rok, jeden kierunek”.",
+  "cudzoziemiec": "Możesz odpowiedzieć jednym zdaniem, np. „cudzoziemiec z kartą pobytu, stacjonarne, I stopień, 2 rok, jeden kierunek”.",
+  "doktorant": "Możesz odpowiedzieć jednym zdaniem, np. „doktorant Szkoły Doktorskiej, 2 rok”.",
+ },
+ "en": {
+  "pl": "You can reply in one sentence, e.g. “Polish citizen, full-time, bachelor, year 2, one programme”.",
+  "cudzoziemiec": "You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.",
+  "doktorant": "You can reply in one sentence, e.g. “doctoral student, year 2”.",
+ },
+ "uk": {
+  "pl": "Можна однією фразою, напр. «громадянин Польщі, денна, І ступінь, тільки цей напрям».",
+  "cudzoziemiec": "Можна однією фразою, напр. «іноземець з картою побуту, денна, І ступінь, тільки цей напрям».",
+  "doktorant": "Можна однією фразою, напр. «докторант Школи докторської, 2 рік».",
+ },
 }
 
 def _negated_before(text, start, window=28):
@@ -407,6 +427,30 @@ def extract_profile(text, conflicts_out=None):
     ):
         if len(t) < 80 or re.search(r"(?i)диплом|напрям|kierun|dyplom|навч|stud|degree|program", t):
             prof["drugi_kierunek"] = "nie"
+    # Explicit "not a doctoral student" wins over earlier self-ID / benefit-name bleed (R6-5)
+    if re.search(
+        r"(?i)(?:\b(?:nie|ni|не)\s+jestem\s+doktorant|\bnie\s+jestem\s+doktorantem|"
+        r"\bi'?m\s+not\s+(?:a\s+)?(?:phd|doctoral)|не\s+(?:є|єсм)?\s*докторант|"
+        r"tylko\s+licencjat|only\s+(?:a\s+)?(?:bachelor|licencjat))",
+        t,
+    ):
+        if prof.get("status") == "doktorant":
+            del prof["status"]
+        if prof.get("poziom") == "SD":
+            del prof["poziom"]
+        prof.pop("status_doktor", None)
+    # I stopień / licencjat + "stypendium doktoranckie" without self-ID → keep I
+    if (
+        re.search(r"(?i)\bi\s*stop|licencjat|bachelor|бакалавр", t)
+        and re.search(r"(?i)doktoranc|doctoral\s*stipend|stypendium\s*doktor", t)
+        and not re.search(r"(?i)(?:jestem|i'?m|i\s+am)\s+(?:a\s+)?(?:doktorant|phd|doctoral)", t)
+    ):
+        if prof.get("status") == "doktorant":
+            del prof["status"]
+        if prof.get("poziom") == "SD":
+            prof["poziom"] = "I"
+        prof.pop("status_doktor", None)
+        prof.setdefault("poziom", "I")
     # Doktorant ⇒ poziom SD; NIE wymyślaj tryb/rok (BUG-05)
     if prof.get("status") == "doktorant":
         prof.setdefault("poziom", "SD")
@@ -582,8 +626,12 @@ def needed(question, history_text):
     missing = [x for x in req if x not in prof]
     return [n for n, _ in topics], prof, missing
 
-def clarify_text(lang, missing):
+def clarify_text(lang, missing, prof=None):
     head, tip = CLARIFY.get(lang, CLARIFY["pl"])
+    # Never ask the same slot twice in one clarify (R6-5)
+    missing = list(dict.fromkeys(missing or []))
+    status = (prof or {}).get("status")
+    tip = _CLARIFY_TIP_BY_STATUS.get(lang, {}).get(status) or tip
     qs = "\n".join(f"{i}. {SLOT_Q[m].get(lang, SLOT_Q[m]['pl'])}" for i, m in enumerate(missing, 1))
     return f"{head}\n{qs}\n\n{tip}"
 
@@ -627,16 +675,19 @@ SLOT_LABEL = {
 
 def clarify_answer(lang, missing, question, history, topics, prof):
     """Template clarify by default; optional LLM when CLARIFY_LLM=1."""
+    missing = list(dict.fromkeys(m for m in (missing or []) if m not in (prof or {})))
     if _clarify_llm_enabled():
         labels = SLOT_LABEL.get(lang, SLOT_LABEL["pl"])
         miss_l = ", ".join(labels.get(m, m) for m in missing)
         prof_txt = format_profile_txt(prof, lang)
+        tip = _CLARIFY_TIP_BY_STATUS.get(lang, {}).get((prof or {}).get("status"), "")
         sys = (CLARIFY_SYS.replace("{lang}", lang)
                           .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
                           .replace("{missing_labels}", miss_l)
                           .replace("{n}", str(len(missing)))
                           .replace("{profile}", prof_txt)
-                          .replace("{security_rules}", SECURITY_RULES))
+                          .replace("{security_rules}", SECURITY_RULES)
+               + (f"\nExample reply style: {tip}" if tip else ""))
         msgs = [{"role": "system", "content": sys}] + _safe_history(history, 6) + [
             {"role": "user", "content": wrap_untrusted("USER_QUESTION", question)}
         ]
@@ -644,7 +695,7 @@ def clarify_answer(lang, missing, question, history, topics, prof):
             return redact_secrets(call_llm(msgs, temperature=0.35)), "doprecyzowanie-llm"
         except Exception:
             pass
-    return clarify_text(lang, missing), "doprecyzowanie"
+    return clarify_text(lang, missing, prof=prof), "doprecyzowanie"
 
 def _safe_history(history, n=8):
     out = []
@@ -1096,12 +1147,35 @@ def extract_source_facts(hits):
     facts["sents"] = sents[:4]
     return facts
 
+def strip_internal_markers(text: str) -> str:
+    """Remove prompt wrappers / strip-notes that must never reach the user (R6-2)."""
+    if not text:
+        return text
+    t = text
+    t = re.sub(r"(?i)FACTS\s*\(authoritative[^\n]*\n?", "", t)
+    t = re.sub(
+        r"(?im)^\s*(ORIGINAL QUESTION\(S\)?|PYTANIE ORYGINALNE|FOLLOW-UP|LATEST REPLY)\s*:\s*",
+        "",
+        t,
+    )
+    t = re.sub(
+        r"(?i)\n?\(?\s*(Kwoty spoza FACTS[^\n]*|Amounts not in FACTS[^\n]*|Суми поза FACTS[^\n]*|FACTS/эх сурвалжид[^\n]*)\)?",
+        "",
+        t,
+    )
+    t = re.sub(r"(?i)quote exactly,?\s*cite as\s*\[F\d+\][^\n]*", "", t)
+    return re.sub(r"\n{3,}", "\n\n", t).strip() or t
+
+
 def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=""):
     """Czytelna odpowiedź bez LLM – fakty + kroki + URL, nie surowy dump."""
     facts = extract_source_facts(hits)
     lines = [err + NO_LLM.get(lang, NO_LLM["pl"]).format(prof=prof_txt)]
     if facts_block:
-        lines.append("\n" + facts_block)
+        # Never dump the LLM prompt header into the user-visible answer
+        user_facts = strip_internal_markers(facts_block)
+        if user_facts:
+            lines.append("\n" + user_facts)
     tset = set(topics or [])
 
     if "stypendium_socjalne" in tset:
@@ -1320,23 +1394,61 @@ _NEUTRAL_SYSTEM = {
     "uk": "в системі університету",
     "mn": "их сургуулийн системд",
 }
+_CANONICAL_CHANNEL_RE = re.compile(r"(?i)^Wirtualn\w+\s+(?:Uczelnia|Dziekanat)$")
+_NEG_BEFORE_SYSTEM_RE = re.compile(
+    r"(?i)(?:nie\s+(?:w|przez)|not\s+(?:in|via|through)|не\s+(?:через|в))\s*$"
+)
 
 
-def _scrub_hallucinations(text, hits_blob="", lang="pl"):
-    """Replace unknown system names with a neutral phrase; clean empty () / **** (R5-6)."""
+def _collapse_channel_phrases(text: str) -> str:
+    """Collapse doubled neutral-channel phrases after scrub (R6-3)."""
     if not text:
         return text
-    blob = hits_blob or ""
+    t = text
+    t = re.sub(r"(?i)(w systemie uczelni)([/ ]+\1)+", r"\1", t)
+    t = re.sub(r"(?i)(в системі університету)([/ ]+\1)+", r"\1", t)
+    t = re.sub(r"(?i)(in the university system)([/ ]+\1)+", r"\1", t)
+    t = re.sub(r"(?i)w\s+w systemie", "w systemie", t)
+    t = re.sub(r"(?i)nie\s+przez\s+w systemie", "nie przez system uczelni", t)
+    t = re.sub(r"(?i)nie\s+w\s+w systemie", "nie w systemie", t)
+    t = re.sub(r"(?i);\s*nie\s*/\s*", "; ", t)
+    t = re.sub(r"(?i)\bnie\s*/\s*", "nie ", t)
+    t = re.sub(r"(?i)/\s*(?=[.;,]|$)", "", t)
+    t = re.sub(r"(?i);\s*nie\s*[.]?\s*(?=[.]|$)", ".", t)
+    t = re.sub(r"(?i);\s*nie\s*$", "", t)
+    t = re.sub(r"\s{2,}", " ", t)
+    t = re.sub(r"\s+([.;,])", r"\1", t)
+    return t
+
+
+def _scrub_hallucinations(text, hits_blob="", lang="pl", facts_blob=""):
+    """Replace unknown system names with a neutral phrase; clean empty () / **** (R5-6/R6-3)."""
+    if not text:
+        return text
+    # FACTS channel text is an allow-blob (never scrub Wirtualna Uczelnia from submission_channel)
+    blob = f"{hits_blob or ''}\n{facts_blob or ''}\nWirtualna Uczelnia\nWirtualny Dziekanat"
     neutral = _NEUTRAL_SYSTEM.get(lang, _NEUTRAL_SYSTEM["pl"])
+    # Drop negated campus-system lists in one go: "nie USOS/SIRK" → "nie "
+    text = re.sub(
+        r"(?i)\b((?:nie|not|не)\s+)(?:w\s+|in\s+|через\s+|в\s+)?(?:USOS|SIRK)(?:\s*/\s*(?:USOS|SIRK))*",
+        r"\1",
+        text,
+    )
 
     def _repl(m):
         name = m.group(1)
+        if _CANONICAL_CHANNEL_RE.match(name.strip()):
+            return m.group(0)
         key = name.split()[0]
         if re.search(re.escape(key), blob, re.I):
             return m.group(0)
+        left = text[max(0, m.start() - 40):m.start()]
+        if _NEG_BEFORE_SYSTEM_RE.search(left) or re.search(r"(?i)(?:nie|not|не)\s+(?:[\w/]+\s*)*$", left):
+            return ""
         return neutral
 
     text = _SYSTEM_NAME_RE.sub(_repl, text)
+    text = _collapse_channel_phrases(text)
     text = cleanup_answer_artifacts(text)
     return re.sub(r"[ \t]{2,}", " ", text)
 
@@ -1568,6 +1680,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         if line:
             computed_lines.append(line)
     facts_block = render_facts_block(selected_facts, lang, computed_lines=computed_lines)
+    facts_for_user = render_facts_for_user(selected_facts, lang, computed_lines=computed_lines)
     # FACTS-only allow-list (do not union hit-blob amounts — stale chunk figures like 2099,70)
     allowed_amounts = fact_amounts(selected_facts)
     if income_val is not None:
@@ -1616,11 +1729,11 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         try:
             blob6 = _hit_blob(hits[:6])
             out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.3)))
-            out = _scrub_hallucinations(out, blob6, lang=lang)
+            out = _scrub_hallucinations(out, blob6, lang=lang, facts_blob=facts_for_user)
             if not output_lang_ok(out, lang):
                 # Skip language regen if remaining budget < 20s → fallback (R5-8)
                 if _time.monotonic() + 20 > _t_deadline:
-                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
+                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
                 else:
                     msgs[0] = {
                         "role": "system",
@@ -1633,11 +1746,11 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                     }
                     try:
                         out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
-                        out = _scrub_hallucinations(out, blob6, lang=lang)
+                        out = _scrub_hallucinations(out, blob6, lang=lang, facts_blob=facts_for_user)
                     except Exception:
                         out = ""
                     if not out or not output_lang_ok(out, lang):
-                        out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
+                        out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
             out = strip_llm_deadline_notes(out)
             out = _postcheck_amounts(out)
             # One silent regen if amounts still unknown or answer cut mid-bullet (R6-1)
@@ -1650,13 +1763,14 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                 try:
                     msgs2 = list(msgs) + [{"role": "user", "content": nudge}]
                     out2 = strip_untrusted_wrappers(redact_secrets(call_llm(msgs2, temperature=0.2)))
-                    out2 = _scrub_hallucinations(out2, blob6, lang=lang)
+                    out2 = _scrub_hallucinations(out2, blob6, lang=lang, facts_blob=facts_for_user)
                     out2 = strip_llm_deadline_notes(out2)
                     out2 = _postcheck_amounts(out2)
                     if out2 and (not _looks_truncated(out2) or len(out2) > len(out)):
                         out = out2
                 except Exception:
                     pass
+            out = strip_internal_markers(out)
             fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
             out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
             out += deadline_passed_note(out, lang)
@@ -1667,10 +1781,11 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     else:
         err = ""
     blob6 = _hit_blob(hits[:6])
-    ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_block)))
-    ans = _scrub_hallucinations(ans, blob6, lang=lang)
+    ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)))
+    ans = _scrub_hallucinations(ans, blob6, lang=lang, facts_blob=facts_for_user)
     ans = strip_llm_deadline_notes(ans)
     ans = _postcheck_amounts(ans)
+    ans = strip_internal_markers(ans)
     fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
     ans = finalize_answer_urls(ans, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
     ans += deadline_passed_note(ans, lang)
