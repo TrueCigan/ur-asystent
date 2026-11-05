@@ -14,11 +14,9 @@ from lang import (
     sticky_lang_from_user_turns,
 )
 from deadlines import deadline_passed_note, strip_llm_deadline_notes
-from decimal import Decimal
 from facts import (
     load_facts, select_facts, render_facts_block, render_facts_for_user,
-    amounts_in, fact_amounts, extract_income, computed_income_line, income_group,
-    strip_unknown_amounts,
+    extract_income, computed_income_line,
 )
 
 IDX = None
@@ -662,7 +660,7 @@ RULES:
    - fact_ids: ids you referenced. source_ids: 1-based indices from SOURCES cards.
    - computed_need: optional list from [doctoral_with_disability_po, doctoral_with_disability_przed, social_ii_plus_dorm].
 3. Structure template: direct answer → conditions for THIS profile → next steps. Answer every prior user ask before the latest follow-up.
-4. Cite with [n] only; do not write a sources section or URLs (system appends them). Never invent USOS/SIRK, menu paths, or dates not in sources.
+4. Cite with [n] only; do not write a sources section or URLs (system appends them). Never invent menu paths or dates not in sources. Never mention USOS or SIRK — channel is Wirtualna Uczelnia only (via {{F:submission_channel}} when needed).
 5. Do not invent profile fields. Never claim a second programme unless profile says yes.
 6. If FACT cards mention UKR temporary protection and profile has pobyt=ukr, state that clearly via placeholders / prose without inventing amounts.
 7. Never echo PROFILE / SOURCES / dialogue field names into template.
@@ -975,7 +973,6 @@ SRC_HDR = {"pl": "Źródła", "en": "Sources", "uk": "Джерела", "mn": "Э
 OUTDATED = {"pl": "informacja może być nieaktualna", "en": "may be outdated", "uk": "може бути неактуальною", "mn": "хуучирсан байж болно"}
 _URL_RE = re.compile(r"https?://[^\s)\]\"'<>]+", re.I)
 _SRC_HEAD_RE = re.compile(r"(?im)^\s*(źródła|sources|джерела|источники|эх\s*сурвалж)\s*:?\s*$")
-_SYSTEM_NAME_RE = re.compile(r"(?i)\b(USOS|SIRK|Wirtualn\w+\s+\w+)\b")
 
 def render_sources(hits, lang="pl", max_n=5, fact_entries=None):
     """Code-owned sources list in the session language. Numbers match body citations."""
@@ -1089,7 +1086,7 @@ def finalize_answer_urls(text, hits, fact_urls=None, lang="pl", hits_blob=""):
 
 
 def cleanup_answer_artifacts(text: str) -> str:
-    """Collapse empty (), ****, dangling labels after scrub/URL strip."""
+    """Collapse empty () / **** left after URL stripping (not channel scrub)."""
     if not text:
         return text
     t = text
@@ -1097,9 +1094,6 @@ def cleanup_answer_artifacts(text: str) -> str:
     t = re.sub(r"\*{3,}", "", t)
     t = re.sub(r"[ \t]{2,}", " ", t)
     t = re.sub(r" +\n", "\n", t)
-    t = re.sub(r"(?i)\b(w systemie|in the(?:\s+\w+)?\s+system|в системі|системд)\s+$",
-               r"\1", t, flags=re.M)
-    # Drop lines that are only a label ending with colon
     kept = []
     for line in t.splitlines():
         if re.match(r"(?i)^\s*[\wА-Яа-яІіЇїЄєҐґӨөҮү ./\-]{1,40}:\s*$", line):
@@ -1156,35 +1150,13 @@ def extract_source_facts(hits):
     facts["sents"] = sents[:4]
     return facts
 
-def strip_internal_markers(text: str) -> str:
-    """Remove prompt wrappers / strip-notes that must never reach the user (R6-2)."""
-    if not text:
-        return text
-    t = text
-    t = re.sub(r"(?i)FACTS\s*\(authoritative[^\n]*\n?", "", t)
-    t = re.sub(
-        r"(?im)^\s*(ORIGINAL QUESTION\(S\)?|PYTANIE ORYGINALNE|FOLLOW-UP|LATEST REPLY)\s*:\s*",
-        "",
-        t,
-    )
-    t = re.sub(
-        r"(?i)\n?\(?\s*(Kwoty spoza FACTS[^\n]*|Amounts not in FACTS[^\n]*|Суми поза FACTS[^\n]*|FACTS/эх сурвалжид[^\n]*)\)?",
-        "",
-        t,
-    )
-    t = re.sub(r"(?i)quote exactly,?\s*cite as\s*\[F\d+\][^\n]*", "", t)
-    return re.sub(r"\n{3,}", "\n\n", t).strip() or t
-
-
 def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=""):
     """Czytelna odpowiedź bez LLM – fakty + kroki + URL, nie surowy dump."""
     facts = extract_source_facts(hits)
     lines = [err + NO_LLM.get(lang, NO_LLM["pl"]).format(prof=prof_txt)]
     if facts_block:
-        # Never dump the LLM prompt header into the user-visible answer
-        user_facts = strip_internal_markers(facts_block)
-        if user_facts:
-            lines.append("\n" + user_facts)
+        # Only user-facing facts (never render_facts_block / prompt header)
+        lines.append("\n" + facts_block)
     tset = set(topics or [])
 
     if "stypendium_socjalne" in tset:
@@ -1343,7 +1315,10 @@ def _accumulate_topics(topics, *texts, prior=None):
 
 
 def _user_question_for_llm(question, history, state=None):
-    """ORIGINAL QUESTION(S) + FOLLOW-UP so clarify/follow-ups never drop the first ask (R5-4)."""
+    """Build free-text dialogue context without echoable marker labels (P2).
+
+    Structured path uses JSON ``dialogue``; this is only for free-text fallback.
+    """
     substantive = []
     if state and getattr(state, "original_question", None):
         oq = state.original_question.strip()
@@ -1359,24 +1334,22 @@ def _user_question_for_llm(question, history, state=None):
             if c not in substantive:
                 substantive.append(c)
     q = (question or "").strip()
-    # After a clarify turn, short slot replies are not new questions — keep ORIGINAL + LATEST REPLY
     if _last_assistant_was_clarify(history) and q and q.lower() not in [s.lower() for s in substantive]:
         if not _topic_names_in(q) or len(q.split()) <= 12:
             orig = substantive[-1] if substantive else (state.original_question if state else None)
             if orig and orig.lower() != q.lower():
-                return f"ORIGINAL QUESTION: {orig}\nLATEST REPLY: {question}"
+                return f"Earlier ask: {orig}\nSlot reply: {question}"
     originals = [s for s in substantive if s.lower() != q.lower()]
     if not originals:
         return question
-    # New topical follow-up (e.g. Erasmus after dorm+social): answer ALL pending items
     if q and (_topic_names_in(q) or not _last_assistant_was_clarify(history)):
-        body = "ORIGINAL QUESTION(S):\n" + "\n".join(f"- {o}" for o in originals)
+        body = "Earlier asks:\n" + "\n".join(f"- {o}" for o in originals)
         if q:
-            body += f"\nFOLLOW-UP: {q}"
-        body += "\n\nAnswer every item in ORIGINAL QUESTION(S) first, in order, then FOLLOW-UP."
+            body += f"\nCurrent ask: {q}"
+        body += "\n\nAnswer every earlier ask first, in order, then the current ask."
         return body
     orig = originals[-1]
-    return f"ORIGINAL QUESTION: {orig}\nLATEST REPLY: {question}"
+    return f"Earlier ask: {orig}\nSlot reply: {question}"
 
 
 def search_topics(base_q, topics, prof, k_per=4, fac=None):
@@ -1396,70 +1369,6 @@ def search_topics(base_q, topics, prof, k_per=4, fac=None):
             seen.add(key)
             merged.append(h)
     return merged[:12]
-
-_NEUTRAL_SYSTEM = {
-    "pl": "w systemie uczelni",
-    "en": "in the university system",
-    "uk": "в системі університету",
-    "mn": "их сургуулийн системд",
-}
-_CANONICAL_CHANNEL_RE = re.compile(r"(?i)^Wirtualn\w+\s+(?:Uczelnia|Dziekanat)$")
-_NEG_BEFORE_SYSTEM_RE = re.compile(
-    r"(?i)(?:nie\s+(?:w|przez)|not\s+(?:in|via|through)|не\s+(?:через|в))\s*$"
-)
-
-
-def _collapse_channel_phrases(text: str) -> str:
-    """Collapse doubled neutral-channel phrases after scrub (R6-3)."""
-    if not text:
-        return text
-    t = text
-    t = re.sub(r"(?i)(w systemie uczelni)([/ ]+\1)+", r"\1", t)
-    t = re.sub(r"(?i)(в системі університету)([/ ]+\1)+", r"\1", t)
-    t = re.sub(r"(?i)(in the university system)([/ ]+\1)+", r"\1", t)
-    t = re.sub(r"(?i)w\s+w systemie", "w systemie", t)
-    t = re.sub(r"(?i)nie\s+przez\s+w systemie", "nie przez system uczelni", t)
-    t = re.sub(r"(?i)nie\s+w\s+w systemie", "nie w systemie", t)
-    t = re.sub(r"(?i);\s*nie\s*/\s*", "; ", t)
-    t = re.sub(r"(?i)\bnie\s*/\s*", "nie ", t)
-    t = re.sub(r"(?i)/\s*(?=[.;,]|$)", "", t)
-    t = re.sub(r"(?i);\s*nie\s*[.]?\s*(?=[.]|$)", ".", t)
-    t = re.sub(r"(?i);\s*nie\s*$", "", t)
-    t = re.sub(r"\s{2,}", " ", t)
-    t = re.sub(r"\s+([.;,])", r"\1", t)
-    return t
-
-
-def _scrub_hallucinations(text, hits_blob="", lang="pl", facts_blob=""):
-    """Replace unknown system names with a neutral phrase; clean empty () / **** (R5-6/R6-3)."""
-    if not text:
-        return text
-    # FACTS channel text is an allow-blob (never scrub Wirtualna Uczelnia from submission_channel)
-    blob = f"{hits_blob or ''}\n{facts_blob or ''}\nWirtualna Uczelnia\nWirtualny Dziekanat"
-    neutral = _NEUTRAL_SYSTEM.get(lang, _NEUTRAL_SYSTEM["pl"])
-    # Drop negated campus-system lists in one go: "nie USOS/SIRK" → "nie "
-    text = re.sub(
-        r"(?i)\b((?:nie|not|не)\s+)(?:w\s+|in\s+|через\s+|в\s+)?(?:USOS|SIRK)(?:\s*/\s*(?:USOS|SIRK))*",
-        r"\1",
-        text,
-    )
-
-    def _repl(m):
-        name = m.group(1)
-        if _CANONICAL_CHANNEL_RE.match(name.strip()):
-            return m.group(0)
-        key = name.split()[0]
-        if re.search(re.escape(key), blob, re.I):
-            return m.group(0)
-        left = text[max(0, m.start() - 40):m.start()]
-        if _NEG_BEFORE_SYSTEM_RE.search(left) or re.search(r"(?i)(?:nie|not|не)\s+(?:[\w/]+\s*)*$", left):
-            return ""
-        return neutral
-
-    text = _SYSTEM_NAME_RE.sub(_repl, text)
-    text = _collapse_channel_phrases(text)
-    text = cleanup_answer_artifacts(text)
-    return re.sub(r"[ \t]{2,}", " ", text)
 
 _GENERAL_PROFILE_SLOTS = {"status", "poziom", "rok", "tryb", "kierunek", "drugi_kierunek"}
 _SENSITIVE_PROFILE_SLOTS = {"niepelnosprawnosc", "pobyt"}
@@ -1690,47 +1599,13 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
             computed_lines.append(line)
     facts_block = render_facts_block(selected_facts, lang, computed_lines=computed_lines)
     facts_for_user = render_facts_for_user(selected_facts, lang, computed_lines=computed_lines)
-    # FACTS-only allow-list (do not union hit-blob amounts — stale chunk figures like 2099,70)
-    allowed_amounts = fact_amounts(selected_facts)
-    if income_val is not None:
-        allowed_amounts.add(Decimal(str(income_val)))
-        _g, amt = income_group(
-            income_val,
-            next((f.value for f in selected_facts if f.id == "social_income_threshold"), None),
-        )
-        if amt is not None:
-            allowed_amounts.add(Decimal(str(amt)))
-
-    def _postcheck_amounts(text):
-        if not selected_facts or not text:
-            return text
-        cleaned, _ = strip_unknown_amounts(text, allowed_amounts)
-        return cleaned
-
-    def _looks_truncated(text: str) -> bool:
-        t = (text or "").rstrip()
-        if len(t) < 40:
-            return False
-        if re.search(r"(?i)\b(podaj|подай|submit|zł[oó]ż|apply)\s*$", t):
-            return True
-        # Mid-bullet: "1. Гуртожиток: Подай" / ends with "label: word" and no terminal punct
-        if re.search(r"\d+\.\s+[^\n:]{2,40}:\s+\S{1,20}$", t) and not re.search(r"[.!?…]\s*$", t):
-            return True
-        return False
 
     blob6 = _hit_blob(hits[:6])
     fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
 
-    def _finalize(out: str, mode: str, skip_amount_scrub: bool = False):
-        if mode != "llm-structured":
-            out = _scrub_hallucinations(out, blob6, lang=lang, facts_blob=facts_for_user)
-            out = strip_llm_deadline_notes(out)
-            if not skip_amount_scrub:
-                out = _postcheck_amounts(out)
-            out = strip_internal_markers(out)
-        else:
-            out = strip_llm_deadline_notes(out)
-            out = strip_internal_markers(out)
+    def _finalize(out: str, mode: str):
+        # No amount/channel scrub — figures come from render.py; channel from FACTS (P2)
+        out = strip_llm_deadline_notes(out)
         out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
         out += deadline_passed_note(out, lang)
         state.original_question = None
@@ -1802,7 +1677,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                                 lang=lang,
                             )
                     if out and output_lang_ok(out, lang):
-                        return _finalize(out, "llm-structured", skip_amount_scrub=True)
+                        return _finalize(out, "llm-structured")
             # JSON failed → free-text legacy once, then fallback
             sys_ft = (SYSTEM_FREE_TEXT.replace("{today}", datetime.date.today().isoformat())
                                       .replace("{lang}", lang)

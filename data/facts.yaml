@@ -377,12 +377,12 @@
   - stypendium_rektora
   - stypendium_niepeln
   - akademik
-  value: Wirtualna Uczelnia (elektronicznie, skany PDF); nie USOS/SIRK
+  value: Wirtualna Uczelnia (elektronicznie, skany PDF)
   unit: null
   academic_year: null
   applies_to: {}
   candidates_seen:
-  - note: Wirtualna Uczelnia / Wirtualny Dziekanat; never USOS/SIRK unless verified
+  - note: Wirtualna Uczelnia / Wirtualny Dziekanat; never mention USOS/SIRK in user-facing text (prompt constraint only)
   source:
     url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
     ordinance: Strona 'Świadczenia dla studentów' + 'Domy studenckie'
