@@ -1,4 +1,5 @@
 """Polityki jakości retrieval per temat (kanoniczne źródła, boost/kara, force-hits)."""
+import os
 import re
 
 TOPIC_POLICY = {
@@ -174,11 +175,69 @@ def policy_for(topic: str) -> dict:
     return TOPIC_POLICY.get(topic) or {}
 
 
+_CORPUS_CACHE: dict | None = None
+
+
+def load_corpus_policy() -> dict:
+    global _CORPUS_CACHE
+    if _CORPUS_CACHE is not None:
+        return _CORPUS_CACHE
+    try:
+        import yaml
+        path = os.path.join(os.path.dirname(__file__), "..", "data", "corpus_policy.yaml")
+        _CORPUS_CACHE = yaml.safe_load(open(path, encoding="utf-8")) or {}
+    except Exception:
+        _CORPUS_CACHE = {}
+    return _CORPUS_CACHE
+
+
+def is_denied_chunk(chunk: dict, topics: set | None = None) -> bool:
+    """Hard exclude conference/staff-mobility / superseded fee docs (R5-9)."""
+    pol = load_corpus_policy()
+    url = (chunk.get("url") or "")
+    title = (chunk.get("title") or "")
+    blob = f"{url} {title}"
+    for sub in pol.get("deny_url_substrings") or []:
+        if sub and sub.lower() in blob.lower():
+            return True
+    for sub in pol.get("deny_title_substrings") or []:
+        if sub and sub.lower() in title.lower():
+            return True
+    by_topic = pol.get("deny_url_substrings_for_topic") or {}
+    for t in topics or []:
+        for sub in by_topic.get(t) or []:
+            if sub and sub.lower() in url.lower():
+                return True
+    return False
+
+
+def normalize_query(q: str) -> str:
+    """Typos + lowercase helpers before BM25 (R5-9)."""
+    if not q:
+        return q
+    out = q
+    typos = (load_corpus_policy().get("typo_map") or {})
+    for bad, good in typos.items():
+        out = re.sub(rf"(?i)\b{re.escape(bad)}\b", good, out)
+    # light: jedno → 1 for year/person noise
+    out = re.sub(r"(?i)\bjedno\b", "1", out)
+    return out
+
+
 def apply_policy_scores(sc, chunks, topics, profile):
     """Modyfikuje wektor scorerów według TOPIC_POLICY (+ lekkie reguły oplaty/plan poza tabelą)."""
     topics = set(topics or [])
     status = (profile or {}).get("status")
     pobyt = (profile or {}).get("pobyt")
+    # Hard deny → score ~0
+    for i, c in enumerate(chunks):
+        if is_denied_chunk(c, topics):
+            sc[i] *= 0.0
+            continue
+        # Recency boost for ≥2025
+        mod = (c.get("modified") or "")[:4]
+        if mod >= "2025":
+            sc[i] *= 1.15
     for topic in topics:
         pol = TOPIC_POLICY.get(topic)
         if not pol:
@@ -188,6 +247,8 @@ def apply_policy_scores(sc, chunks, topics, profile):
         bm = pol.get("boost_mult", 2.5)
         pm = pol.get("penalize_mult", 0.1)
         for i, c in enumerate(chunks):
+            if sc[i] == 0:
+                continue
             title = (c.get("title") or "").lower()
             url = (c.get("url") or "").lower()
             blob = title + " " + url

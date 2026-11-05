@@ -120,6 +120,35 @@ def run_unit(ctx, case):
                 fails.append(f"income_group={g} want {ig.get('expect_group')}")
         except Exception as e:
             fails.append(f"income_group error: {e}")
+    if "retrieval" in exp:
+        try:
+            q = case["turns"][-1]
+            hu = "\n".join(case["turns"][:-1])
+            topics = topics or []
+            if not topics:
+                topics, prof, _ = rag.needed(q, hu)
+            else:
+                _, prof, _ = rag.needed(q, hu)
+            query = rag.build_query(q, case["turns"][:-1], topics, prof)
+            # BM25-only: temporarily disable embeddings if present
+            emb = None
+            if getattr(rag, "IDX", None) and rag.IDX.get("emb") is not None:
+                emb = rag.IDX["emb"]
+                rag.IDX["emb"] = None
+            try:
+                hits = rag.search(query, k=5, topics=topics, profile=prof)
+            finally:
+                if emb is not None and rag.IDX is not None:
+                    rag.IDX["emb"] = emb
+            urls = " ".join((h.get("url") or "") for h in hits)
+            for sub in (exp["retrieval"].get("must_not_match_urls") or []):
+                if sub in urls:
+                    fails.append(f"retrieval url contains forbidden {sub!r}")
+            for sub in (exp["retrieval"].get("top5_must_match_url") or []):
+                if sub.lower() not in urls.lower():
+                    fails.append(f"top5 missing url substring {sub!r} in {urls[:200]!r}")
+        except Exception as e:
+            fails.append(f"retrieval error: {e}")
     return fails
 
 
@@ -185,7 +214,7 @@ def ask(ctx, url, q, hist):
     return ctx.rag.answer(q, hist)
 
 
-def check_answer(r, exp):
+def check_answer(r, exp, elapsed=None):
     f, ans = [], r.get("answer") or ""
     if exp.get("lang_in") and guess_lang(ans) not in exp["lang_in"]:
         f.append(f"answer lang={guess_lang(ans)} not in {exp['lang_in']}")
@@ -198,32 +227,62 @@ def check_answer(r, exp):
     for s, mx in (exp.get("max_count") or {}).items():
         if ans.count(s) > mx:
             f.append(f"'{s}' x{ans.count(s)} > {mx}")
+    if exp.get("max_seconds") is not None and elapsed is not None and elapsed > exp["max_seconds"]:
+        f.append(f"took {elapsed:.1f}s > {exp['max_seconds']}s")
     if exp.get("urls_subset_of_sources"):
         src = json.dumps(r.get("sources") or [], ensure_ascii=False)
         bad = [u for u in URL.findall(ans) if u.rstrip(".,;") not in src]
         if bad:
             f.append(f"urls not in sources: {bad[:3]}")
+    if exp.get("citations_subset_of_sources"):
+        # Body [n] must be ≤ listed sources under Źródła/Sources/Джерела
+        body, _, src_block = ans.partition("Źródła:")
+        if "Sources:" in ans and "Źródła:" not in ans:
+            body, _, src_block = ans.partition("Sources:")
+        if "Джерела:" in ans:
+            body, _, src_block = ans.partition("Джерела:")
+        n_src = len(re.findall(r"(?m)^\s*\[\d+\]\s*https?://", src_block or ""))
+        cites = [int(x) for x in re.findall(r"\[(\d+)\]", body)]
+        bad = [c for c in cites if c < 1 or (n_src and c > n_src)]
+        if bad:
+            f.append(f"citations not in sources list: {bad[:5]} (n_src={n_src})")
     return f
 
 
 def run_e2e(ctx, case, url, runs):
+    import time
     exp = case.get("e2e") or {}
-    if not exp:
+    fault = case.get("fault") or {}
+    if not exp and not fault:
         return []
+    # R5-8: monkeypatch LLM timeout
+    orig_llm = None
+    if fault.get("llm") == "timeout" and not url:
+        import httpx
+        orig_llm = ctx.rag.call_llm
+        def _boom(*_a, **_k):
+            raise httpx.ReadTimeout("simulated")
+        ctx.rag.call_llm = _boom
     fails, captures = [], []
-    for _ in range(runs):
-        hist = []
-        r = {}
-        for i, q in enumerate(case["turns"]):
-            r = ask(ctx, url, q, hist)
-            if exp.get("every_turn") or i == len(case["turns"]) - 1:
-                fails += [f"turn{i+1}: {x}" for x in check_answer(r, exp)]
-            hist += [{"role": "user", "content": q}, {"role": "assistant", "content": r.get("answer", "")}]
-        for rx in exp.get("stable_across_runs", []):
-            m = re.search(rx, r.get("answer", ""), re.I | re.S)
-            captures.append(m.group(1) if m else None)
-    if exp.get("stable_across_runs") and len(set(captures)) > 1:
-        fails.append(f"unstable across runs: {captures}")
+    try:
+        for _ in range(runs):
+            hist = []
+            r = {}
+            for i, q in enumerate(case["turns"]):
+                t0 = time.monotonic()
+                r = ask(ctx, url, q, hist)
+                elapsed = time.monotonic() - t0
+                if exp.get("every_turn") or i == len(case["turns"]) - 1:
+                    fails += [f"turn{i+1}: {x}" for x in check_answer(r, exp or {}, elapsed=elapsed)]
+                hist += [{"role": "user", "content": q}, {"role": "assistant", "content": r.get("answer", "")}]
+            for rx in (exp or {}).get("stable_across_runs", []):
+                m = re.search(rx, r.get("answer", ""), re.I | re.S)
+                captures.append(m.group(1) if m else None)
+        if (exp or {}).get("stable_across_runs") and len(set(captures)) > 1:
+            fails.append(f"unstable across runs: {captures}")
+    finally:
+        if orig_llm is not None:
+            ctx.rag.call_llm = orig_llm
     return sorted(set(fails))
 
 
@@ -258,7 +317,7 @@ def main():
             f += run_prompt_budget(ctx, c)
         elif "scrub_check" in c:
             sc = c["scrub_check"]
-            out = ctx.rag._scrub_hallucinations(sc["text"], sc.get("hits_blob", ""))
+            out = ctx.rag._scrub_hallucinations(sc["text"], sc.get("hits_blob", ""), lang=sc.get("lang", "en"))
             for rx in sc.get("must_not_match", []):
                 if re.search(rx, out):
                     f.append(f"scrub left forbidden /{rx}/ in {out!r}")
@@ -282,7 +341,10 @@ def main():
             if a.layer in ("unit", "all") and ("unit" in c or "per_turn_lang_not" in c or "turns" in c):
                 if "unit" in c or "per_turn_lang_not" in c:
                     f += run_unit(ctx, c)
-            if a.layer in ("e2e", "all"):
+            # fault cases exercise answer() even on unit layer (deterministic mock)
+            if c.get("fault") and a.layer in ("unit", "e2e", "all"):
+                f += run_e2e(ctx, c, a.url if a.layer != "unit" else None, a.runs if a.layer != "unit" else 1)
+            elif a.layer in ("e2e", "all"):
                 f += run_e2e(ctx, c, a.url, a.runs)
         print(("FAIL " if f else "PASS ") + f"{c['id']:<34} {c.get('origin','')}" + ("".join(f"\n     - {x}" for x in f)))
         failed += bool(f)

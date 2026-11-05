@@ -20,11 +20,25 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      LLM_PROVIDER: gemini
+      LLM_PROVIDER: anthropic
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}   # embeddings only
+      EMBED_PROVIDER: gemini
+      SESSION_SECRET: ci-only
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -r requirements.txt pyyaml
+      - name: Check provider wiring
+        run: |
+          python - <<'PY'
+          import os, sys
+          sys.path.insert(0, "app")
+          assert os.environ.get("LLM_PROVIDER") == "anthropic"
+          import rag
+          # status-style report (no network)
+          print("provider_env=", os.environ.get("LLM_PROVIDER"))
+          print("llm_enabled=", rag.llm_enabled())
+          PY
       - run: python tests/eval_dialogues.py --repo . --layer e2e --runs 3

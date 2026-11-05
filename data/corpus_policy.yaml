@@ -1,0 +1,39 @@
+# Deny patterns for retrieval (substring match on URL or title). Case-insensitive.
+deny_url_substrings:
+  - Wspolczesne-wyzwania
+  - Badania-i-perspektywy
+  - Staff-Mobility
+  - GREEN-TRAVEL
+  - wskazowki-dla-prowadzacych
+  - wskazówki-dla-prowadzących
+  - regulamin-transportu
+  - Regulamin-domu-19-2019
+  - /nauka/
+  - /konferencje/
+  - OSWIADCZENIE-GREEN-TRAVEL
+  - squarespace.com
+
+deny_title_substrings:
+  - konferenc
+  - monograf
+  - Staff Mobility
+  - Green Travel
+# Old fee ordinances that confuse current tuition answers
+deny_url_substrings_for_topic:
+  oplaty:
+    - "2018"
+    - "2019-20"
+    - "2019/20"
+    - R-38-2020
+    - "2014"
+    - "2015"
+    - "2016"
+    - "2017"
+typo_map:
+  scholarsip: scholarship
+  incom: income
+  stypendjum: stypendium
+  foreigner: foreigner
+  stacionar: stacjonarne
+  stationary: stacjonarne
+  whats: what is

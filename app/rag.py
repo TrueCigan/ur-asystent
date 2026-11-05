@@ -46,6 +46,9 @@ def _char(q):
 # ---------- wyszukiwanie hybrydowe (BM25 + wektory, fuzja RRF) ----------
 def search(q, k=8, prefer=None, topics=None, profile=None):
     if IDX is None: load()
+    from topic_policy import normalize_query, is_denied_chunk
+    from url_norm import normalize_url
+    q = normalize_query(q or "")
     ch = IDX["chunks"]; n = len(ch)
     bm = _bm25(q)
     vec = _char(q)
@@ -80,15 +83,43 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
             elif fac and c.get("source") in PLAN_SOURCES and c.get("source") != fac:
                 sc[i] *= 0.15
     out, per_url = [], {}
+    tset = set(topics or [])
     for i in np.argsort(-sc):
-        c = ch[i]
-        if per_url.get(c["url"], 0) >= 2:
+        if sc[i] <= 0:
             continue
-        per_url[c["url"]] = per_url.get(c["url"], 0) + 1
-        out.append(dict(c, score=float(sc[i])))
+        c = ch[i]
+        if is_denied_chunk(c, tset):
+            continue
+        u = normalize_url(c.get("url") or "")
+        if per_url.get(u, 0) >= 2:
+            continue
+        per_url[u] = per_url.get(u, 0) + 1
+        hit = dict(c, score=float(sc[i]), url=u)
+        out.append(hit)
         if len(out) >= k:
             break
     return out
+
+
+def build_query(question, history, topics, prof):
+    """Same query shaping as answer() — for retrieval unit tests (R5-9)."""
+    hist_user = ""
+    if isinstance(history, list):
+        hist_user = "\n".join(
+            (m.get("content") if isinstance(m, dict) else str(m)) for m in history
+        )
+    elif history:
+        hist_user = str(history)
+    base_q = question or ""
+    if hist_user:
+        prev = [p for p in re.split(r"\n+", hist_user) if p.strip() and any(re.search(rx, p, re.I) for _, rx, _ in TOPICS)]
+        if prev:
+            base_q = prev[-1] + " " + (question or "")
+    q = base_q
+    q += " " + " ".join(TOPIC_PL_QUERY[t] for t in (topics or []) if t in TOPIC_PL_QUERY and t != "cudzoziemcy")
+    q += " " + query_extras(topics or [], prof or {})
+    from topic_policy import normalize_query
+    return normalize_query(q)
 
 # ---------- język (PL / EN / UK / MN) — sticky sesja; RU → UK (polityka) ----------
 # LANG_NAME imported from lang.py
@@ -483,6 +514,9 @@ def _recent_benefit_from_history(history_text):
     return many[-1] if many else None
 
 def needed(question, history_text):
+    from topic_policy import normalize_query
+    question = normalize_query(question or "")
+    history_text = normalize_query(history_text or "")
     q = question.lower()
     topics = [(n, s) for n, rx, s in TOPICS if re.search(rx, q, re.I)]
     # Negacja drugiego kierunku ≠ pytanie o dwa kierunki (BUG-R2-04)
@@ -570,24 +604,17 @@ Known profile so far: {profile}
 def _clarify_llm_enabled():
     return os.getenv("CLARIFY_LLM", "").strip() == "1" and llm_enabled()
 
-SYSTEM = """You are a helpful campus information assistant for students of Kazimierz Pułaski University of Radom (Uniwersytet Radomski, UR).
-Your job is to SAVE the student’s time: extract concrete rules from the provided source fragments (who may apply, amounts, deadlines, documents, where to submit) so they rarely need to dig through PDFs themselves.
-Tone: clear, calm, practical — like a well-informed staff member at Biuro Obsługi Studenta. Not a bureaucratic form, not a chatbot script.
+SYSTEM = """You are a campus info assistant for Uniwersytet Radomski (UR). Be clear and practical. Today: {today}.
 
-HARD RULES:
-1. Answer in {lang_name} (lang={lang}). NEVER answer in Russian. If the user writes Russian or asks for Russian (“по-русски”, “in Russian”), answer in Ukrainian and do NOT offer or promise Russian. Keep official names (UR, Biuro Obsługi Studenta, zarządzenie codes) when useful. If the user asks to switch language (“po polsku”, “на польській”, “in English”), switch language — do NOT treat that as a question about tuition “in the Polish language”.
-2. Use ONLY the FACTS block (if present) and the source fragments below. No outside knowledge. Numbers, prices, caps, deadlines: use ONLY the FACTS block or quote a source chunk verbatim; if neither has it, say it is not available. ALWAYS first give every concrete fact that IS in the sources (eligibility yes/no for THIS profile, income thresholds, document lists, deadlines, submission channel, links). FORBIDDEN: an answer that only says you don’t know / contact BOS when sources contain a relevant section (e.g. “Stypendium dla cudzoziemców”, “obywatel Ukrainy”). Mention Biuro Obsługi Studenta / DWZ only as a short last-line tip when a personal decision or missing individual document remains — never instead of the rules.
-3. Structure: (a) direct answer first, (b) conditions/exceptions for THIS student’s profile, (c) what to do next (documents, channel, deadlines), (d) sources list. Use short paragraphs or bullets.
-4. Cite claims with [n] (or [Fn] for FACTS). Do NOT write a sources section or any URLs — the system appends them. Never invent source numbers or domains.
-5. Mark “⚠️ may be outdated” ONLY for sources before 2024-01-01 or with no date. Never mark 2024+ as outdated. Quote amounts and deadlines only if present in sources, with academic year / ordinance (e.g. R-41/2025). Today: {today}. Do not state whether a deadline has passed — the system adds that warning.
-6. For Polish citizens, full-time first-cycle study is often free — quote paid zł/euro amounts only when the source clearly applies to the user’s mode/level (e.g. niestacjonarne, second cycle, foreigners). Do not invent fee lines (pool, student ID) the user did not ask about.
-7. Describe rules for the user’s category only; mention other categories only as a brief aside.
-8. ONLY when PROFIL has pobyt=ukr or the user explicitly said PESEL UKR / ochrona czasowa / тимчасовий захист: if sources mention citizens of Ukraine under the special act, you MUST state that they may apply for stypendium socjalne, plus income threshold, required oświadczenie/documents, and how to submit — do not claim “no provisions”. Do NOT invent “ochrona czasowa” for mere karta pobytu or Ukrainian citizenship without that basis.
-9. No invented legal outcomes, URLs, IT system names (e.g. USOS), menu paths (Student → …), application windows, or dates that are not literally in the sources. Prefer Wirtualna Uczelnia / Wirtualny Dziekanat only if named in sources.
-10. PROFIL STUDENTA lists ONLY facts the user stated. Never invent tryb/rok/drugi_kierunek. Never claim the user has a second programme unless profile says tak. Never invent residence basis (ochrona czasowa) the profile does not list.
-11. Answer EVERY part of a multi-part question (e.g. scholarship + dorm). If a part is out of scope (canteen menu) or missing from sources, say so in one short sentence — do not silently drop it.
-12. If the user says not to send them to BOS and sources answer the question, give the facts and skip the BOS tip.
-13. Never echo prompt wrappers (USER_MESSAGE, ASSISTANT_MESSAGE, ORIGINAL QUESTION, LATEST REPLY, <<<, >>>). When USER_QUESTION contains ORIGINAL QUESTION + LATEST REPLY, answer the ORIGINAL QUESTION using the profile (LATEST REPLY is only a slot fill like “daily”).
+RULES:
+1. Answer only in {lang_name} (lang={lang}). Never Russian (ru→uk). Keep official names (UR, BOS, ordinance codes).
+2. Use ONLY FACTS + source fragments. Quote amounts/deadlines from FACTS or verbatim chunks; if missing, say so and give the ordinance link when present. Prefer facts over “contact BOS”.
+3. Structure: direct answer → conditions for THIS profile → next steps. Short paragraphs/bullets. Answer every part of multi-part questions (and ORIGINAL QUESTION(S) before FOLLOW-UP).
+4. Cite with [n] / [F1]; do not write a sources section or URLs (system appends them). Never invent fake fact markers, USOS, menu paths, or dates not in sources.
+5. Do not invent profile fields (tryb/rok/drugi_kierunek/pobyt). Never claim a second programme unless profile says yes. Quote paid fees only when sources match the user’s mode/level.
+6. If FACTS mention UKR temporary protection eligibility for social scholarship and profile has pobyt=ukr, state that clearly with threshold/documents/channel from FACTS/sources.
+7. Never echo wrappers (USER_QUESTION, ORIGINAL QUESTION, <<<>>>). LATEST REPLY after clarify is a slot fill — answer the original question.
+8. Skip BOS tip when sources already answer and the user asked not to be redirected.
 
 {security_rules}"""
 
@@ -697,10 +724,25 @@ def plan_file_hits(faculty, profile=None, k=12):
     files.sort(key=rank)
     return files[:k]
 
+def dedupe_hits_by_url(hits):
+    """Stable URL dedup before numbering (R5-6)."""
+    seen, out = set(), []
+    for h in hits or []:
+        u = (h.get("url") or "").strip()
+        if not u or u in seen:
+            continue
+        seen.add(u)
+        out.append(h)
+    return out
+
+
 def fmt_sources(hits):
     out = []
-    for n, h in enumerate(hits, 1):
-        out.append(f"[{n}] {h['title']} | URL: {h['url']} | aktualizacja: {h['modified'] or 'brak daty'} | nieaktualne: {'TAK' if outdated(h['modified'], h.get('url') or '') else 'nie'}\n{h['text'][:2500]}")
+    for n, h in enumerate(dedupe_hits_by_url(hits), 1):
+        out.append(
+            f"[{n}] {h['title']} | URL: {h['url']} | aktualizacja: {h['modified'] or 'brak daty'} | "
+            f"nieaktualne: {'TAK' if outdated(h['modified'], h.get('url') or '') else 'nie'}\n{h['text'][:2500]}"
+        )
     return "\n\n".join(out)
 
 def outdated(m, url=""):
@@ -738,6 +780,10 @@ def ensure_canonical_hits(hits, topics, profile, q):
             hits = merge_forced_hits(more, forced)
     return hits[:12]
 
+_ANTHROPIC_TIMEOUT = httpx.Timeout(connect=5.0, read=45.0, write=10.0, pool=5.0)
+REQUEST_BUDGET_SEC = 55.0
+
+
 def call_llm(messages, temperature=0.25):
     prov = os.getenv("LLM_PROVIDER", "").lower(); key = os.getenv("LLM_API_KEY", "")
     model = os.getenv("LLM_MODEL", "")
@@ -764,12 +810,40 @@ def call_llm(messages, temperature=0.25):
                 break  # 404/400 / wyczerpane retry -> następny model
         raise RuntimeError(f"Gemini niedostępny ({last})")
     if prov == "anthropic":
-        r = httpx.post("https://api.anthropic.com/v1/messages", timeout=120,
-            headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
-            json={"model": model or "claude-sonnet-4-5", "max_tokens": 1400, "system": messages[0]["content"], "messages": messages[1:], "temperature": temperature})
-        if r.status_code >= 400:
+        import time, random, logging
+        log = logging.getLogger("ur.llm")
+        last = None
+        for att in range(2):
+            t0 = time.monotonic()
+            try:
+                r = httpx.post(
+                    "https://api.anthropic.com/v1/messages",
+                    timeout=_ANTHROPIC_TIMEOUT,
+                    headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
+                    json={
+                        "model": model or "claude-sonnet-4-5",
+                        "max_tokens": 900,
+                        "system": messages[0]["content"],
+                        "messages": messages[1:],
+                        "temperature": temperature,
+                    },
+                )
+            except httpx.TimeoutException as e:
+                last = e
+                if att == 0:
+                    time.sleep(1.0 + random.random())
+                    continue
+                raise RuntimeError("Anthropic timeout") from e
+            rid = r.headers.get("request-id") or r.headers.get("x-request-id") or ""
+            log.info("anthropic status=%s latency=%.2fs request-id=%s", r.status_code, time.monotonic() - t0, rid)
+            if r.status_code == 200:
+                return r.json()["content"][0]["text"]
+            last = f"HTTP {r.status_code}"
+            if r.status_code in (429, 500, 529) and att == 0:
+                time.sleep(1.0 + random.random())
+                continue
             raise RuntimeError(f"Anthropic niedostępny (HTTP {r.status_code})")
-        return r.json()["content"][0]["text"]
+        raise RuntimeError(f"Anthropic niedostępny ({last})")
     base = {"openai": "https://api.openai.com/v1", "xai": "https://api.x.ai/v1", "ollama": "http://localhost:11434/v1"}.get(prov) or os.getenv("LLM_BASE_URL")
     base = os.getenv("LLM_BASE_URL", base)
     # block clearly non-http(s) bases to reduce SSRF risk if env is mis-set
@@ -843,29 +917,87 @@ _URL_RE = re.compile(r"https?://[^\s)\]\"'<>]+", re.I)
 _SRC_HEAD_RE = re.compile(r"(?im)^\s*(źródła|sources|джерела|источники|эх\s*сурвалж)\s*:?\s*$")
 _SYSTEM_NAME_RE = re.compile(r"(?i)\b(USOS|SIRK|Wirtualn\w+\s+\w+)\b")
 
-def render_sources(hits, lang="pl", max_n=5):
-    """Code-owned sources list in the session language."""
-    lines, seen = [], set()
-    for h in hits or []:
-        u = (h.get("url") or "").strip()
-        if not u or u in seen:
-            continue
-        seen.add(u)
+def render_sources(hits, lang="pl", max_n=5, fact_entries=None):
+    """Code-owned sources list in the session language. Numbers match body citations."""
+    from url_norm import normalize_url
+    lines = []
+    for h in dedupe_hits_by_url(hits)[:max_n]:
+        u = normalize_url((h.get("url") or "").strip())
         warn = ""
         if outdated(h.get("modified"), u):
             warn = f" ⚠️ {OUTDATED.get(lang, OUTDATED['pl'])}"
         lines.append(f"[{len(lines)+1}] {u} – {h.get('modified') or '—'}{warn}")
-        if len(lines) >= max_n:
-            break
+    for fe in fact_entries or []:
+        # already formatted as [F1] title – url
+        lines.append(fe)
     if not lines:
         return ""
     return f"\n\n{SRC_HDR.get(lang, 'Źródła')}:\n" + "\n".join(lines)
 
-def finalize_answer_urls(text, hits, fact_urls=None, lang="pl"):
-    """Strip LLM sources section + unknown URLs; append code-rendered sources."""
+
+_CITE_RE = re.compile(r"\[(?:F|Fn|FN)?(\d+)\]")
+_EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
+
+
+def align_citations(body: str, hits, fact_urls=None) -> tuple[str, list, list[str]]:
+    """Renumber [n]/[Fk] to cited-only 1..k / F1..; drop dangling markers (R5-6)."""
+    hits = dedupe_hits_by_url(hits)
+    fact_urls = [u for u in (fact_urls or []) if u]
+    cited_order, fact_order = [], []
+    # Normalize [Fn8] → treat as fact marker; bare [8] as source index
+    def _collect(m):
+        raw = m.group(0)
+        num = int(m.group(1))
+        is_fact = bool(re.match(r"\[F", raw, re.I))
+        if is_fact:
+            if 1 <= num <= max(len(fact_urls), num) and num not in fact_order:
+                # keep fact index if we have that many facts; else drop later
+                if num not in fact_order:
+                    fact_order.append(num)
+            return raw
+        if 1 <= num <= len(hits):
+            if num not in cited_order:
+                cited_order.append(num)
+            return raw
+        return ""  # dangling
+
+    # First pass: drop dangling, remember cited
+    tmp = _CITE_RE.sub(_collect, body or "")
+    # Rebuild maps old→new
+    src_map = {old: i for i, old in enumerate(cited_order, 1)}
+    # Fact markers: renumber in order of first appearance among those with urls
+    valid_facts = [n for n in fact_order if 1 <= n <= len(fact_urls)]
+    fact_map = {old: i for i, old in enumerate(valid_facts, 1)}
+
+    def _rewrite(m):
+        raw = m.group(0)
+        num = int(m.group(1))
+        if re.match(r"\[F", raw, re.I):
+            if num in fact_map:
+                return f"[F{fact_map[num]}]"
+            return ""
+        if num in src_map:
+            return f"[{src_map[num]}]"
+        return ""
+
+    new_body = _CITE_RE.sub(_rewrite, tmp)
+    cited_hits = [hits[i - 1] for i in cited_order if 1 <= i <= len(hits)]
+    # If nothing cited, fall back to top hits for transparency
+    if not cited_hits and hits:
+        cited_hits = hits[:5]
+        # strip any leftover markers already handled
+    fact_entries = []
+    for old in valid_facts:
+        new_i = fact_map[old]
+        u = fact_urls[old - 1]
+        fact_entries.append(f"[F{new_i}] {u}")
+    return new_body, cited_hits, fact_entries
+
+
+def finalize_answer_urls(text, hits, fact_urls=None, lang="pl", hits_blob=""):
+    """Strip LLM sources section + unknown URLs; align citations; append sources."""
     if not text:
         text = ""
-    # Cut from sources-like heading to end
     lines, cut = [], False
     for line in text.splitlines():
         if _SRC_HEAD_RE.match(line.strip()):
@@ -873,6 +1005,14 @@ def finalize_answer_urls(text, hits, fact_urls=None, lang="pl"):
             break
         lines.append(line)
     body = "\n".join(lines).rstrip()
+    # Official UR emails only if present in retrieved text
+    blob = hits_blob or _hit_blob(hits)
+    def _email(m):
+        e = m.group(0)
+        if re.search(r"@(?:uthrad\.pl|uniwersytetradom\.pl)\b", e, re.I) and e.lower() in (blob or "").lower():
+            return e
+        return ""
+    body = _EMAIL_RE.sub(_email, body)
     allowed = {(h.get("url") or "").rstrip("/") for h in (hits or []) if h.get("url")}
     for u in fact_urls or []:
         if u:
@@ -881,9 +1021,31 @@ def finalize_answer_urls(text, hits, fact_urls=None, lang="pl"):
         u = m.group(0).rstrip(".,;)")
         return u if u.rstrip("/") in allowed or u in allowed else ""
     body = _URL_RE.sub(_keep, body)
+    body, cited_hits, fact_entries = align_citations(body, hits, fact_urls=fact_urls)
+    body = cleanup_answer_artifacts(body)
     body = re.sub(r"[ \t]{2,}", " ", body)
     body = re.sub(r"\n{3,}", "\n\n", body).rstrip()
-    return body + render_sources(hits, lang)
+    return body + render_sources(cited_hits, lang, max_n=8, fact_entries=fact_entries)
+
+
+def cleanup_answer_artifacts(text: str) -> str:
+    """Collapse empty (), ****, dangling labels after scrub/URL strip."""
+    if not text:
+        return text
+    t = text
+    t = re.sub(r"\(\s*\)", "", t)
+    t = re.sub(r"\*{3,}", "", t)
+    t = re.sub(r"[ \t]{2,}", " ", t)
+    t = re.sub(r" +\n", "\n", t)
+    t = re.sub(r"(?i)\b(w systemie|in the(?:\s+\w+)?\s+system|в системі|системд)\s+$",
+               r"\1", t, flags=re.M)
+    # Drop lines that are only a label ending with colon
+    kept = []
+    for line in t.splitlines():
+        if re.match(r"(?i)^\s*[\wА-Яа-яІіЇїЄєҐґӨөҮү ./\-]{1,40}:\s*$", line):
+            continue
+        kept.append(line)
+    return "\n".join(kept)
 LLM_ERR = {
  "pl": "(Model językowy chwilowo niedostępny – poniżej zestawienie z oficjalnych źródeł.)\n\n",
  "en": "(Language model temporarily unavailable – below is a summary from official sources.)\n\n",
@@ -1152,18 +1314,30 @@ def search_topics(base_q, topics, prof, k_per=4, fac=None):
             merged.append(h)
     return merged[:12]
 
-def _scrub_hallucinations(text, hits_blob=""):
-    """Remove system names absent from sources (USOS/SIRK/…)."""
+_NEUTRAL_SYSTEM = {
+    "pl": "w systemie uczelni",
+    "en": "in the university system",
+    "uk": "в системі університету",
+    "mn": "их сургуулийн системд",
+}
+
+
+def _scrub_hallucinations(text, hits_blob="", lang="pl"):
+    """Replace unknown system names with a neutral phrase; clean empty () / **** (R5-6)."""
     if not text:
         return text
     blob = hits_blob or ""
+    neutral = _NEUTRAL_SYSTEM.get(lang, _NEUTRAL_SYSTEM["pl"])
 
     def _repl(m):
         name = m.group(1)
         key = name.split()[0]
-        return m.group(0) if re.search(re.escape(key), blob, re.I) else ""
+        if re.search(re.escape(key), blob, re.I):
+            return m.group(0)
+        return neutral
 
     text = _SYSTEM_NAME_RE.sub(_repl, text)
+    text = cleanup_answer_artifacts(text)
     return re.sub(r"[ \t]{2,}", " ", text)
 
 _GENERAL_PROFILE_SLOTS = {"status", "poziom", "rok", "tryb", "kierunek", "drugi_kierunek"}
@@ -1223,6 +1397,8 @@ def _attach_state(result, state):
 
 def answer(question, history, session_lang=None, state_token=None, conv_id=None):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang, state)"""
+    import time as _time
+    _t_deadline = _time.monotonic() + REQUEST_BUDGET_SEC
     from session import resolve_state
     question = redact_secrets((question or "").strip())
     history = [
@@ -1261,11 +1437,22 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     )
     state.intents = list(topics)
     prev_pending = list(state.pending_slots or [])
-    if missing and prev_pending and question.strip():
-        # User answered a clarify but slots still missing → try LLM extractor, then one targeted Q
+    # R5-3: LLM slot extractor (default ON when LLM configured; EXTRACTOR_LLM=0 to disable)
+    _want_extract = bool(
+        missing
+        and question.strip()
+        and (
+            prev_pending
+            or _last_assistant_was_clarify(history)
+            or len(re.findall(r"\w+", question, re.U)) >= 6
+        )
+    )
+    if _want_extract:
         try:
             from extract import extract_turn, apply_extraction
-            data = extract_turn(question, prof, state.pending_question, prev_pending, call_llm)
+            data = extract_turn(
+                question, prof, state.pending_question, prev_pending or missing, call_llm,
+            )
             if data:
                 prof2, confs = apply_extraction(prof, data)
                 # Never invent disability unless the turn mentions it
@@ -1278,7 +1465,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                 _, missing = merge_state_profile(state, prof, topics, history)
         except Exception:
             pass
-        if missing and set(missing) & set(prev_pending):
+        if missing and prev_pending and set(missing) & set(prev_pending):
             # Do not re-ask the full list — one remaining slot only
             missing = [m for m in missing if m in prev_pending][:1] or missing[:1]
     if missing:
@@ -1430,38 +1617,40 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         )
         facts_section = (facts_block + "\n\n") if facts_block else ""
         msgs = [{"role": "system", "content": lang_guard + sys}] + _safe_history(history, 8) + [{"role": "user", "content":
-                f"PROFIL STUDENTA: {prof_txt}\nLANG: {lang}\nTEMATY: {', '.join(topics) or '—'}\n"
-                "QUALITY: Use FACTS and canonical UR pages first. Give eligibility/amounts/steps when present. "
-                "Never answer with only “contact BOS” if fragments already answer the question. "
-                "Never invent USOS, menu paths, or dates absent from sources. Never write the word ŹRÓDŁA.\n\n"
+                f"PROFILE: {prof_txt}\nLANG: {lang}\nTOPICS: {', '.join(topics) or '—'}\n\n"
                 + facts_section
                 + f"SOURCES:\n{fmt_sources(hits)}\n\n"
                 + wrap_untrusted("USER_QUESTION", llm_q)
-                + "\n\nNapisz konkretną, naturalną odpowiedź według zasad systemowych."}]
+                + "\n\nAnswer per system rules."}]
         try:
+            blob6 = _hit_blob(hits[:6])
             out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.3)))
-            out = _scrub_hallucinations(out, _hit_blob(hits[:6]))
+            out = _scrub_hallucinations(out, blob6, lang=lang)
             if not output_lang_ok(out, lang):
-                msgs[0] = {
-                    "role": "system",
-                    "content": (
-                        f"CRITICAL: Respond ONLY in {LANG_NAME.get(lang, 'polski')} (lang={lang}). "
-                        "Never use Russian. Never mix Latin and Cyrillic letters in the same word "
-                        "(no forms like Statус / diплом). Sources header language must match the body.\n\n"
-                        + sys
-                    ),
-                }
-                try:
-                    out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
-                    out = _scrub_hallucinations(out, _hit_blob(hits[:6]))
-                except Exception:
-                    out = ""
-                if not out or not output_lang_ok(out, lang):
+                # Skip language regen if remaining budget < 20s → fallback (R5-8)
+                if _time.monotonic() + 20 > _t_deadline:
                     out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
+                else:
+                    msgs[0] = {
+                        "role": "system",
+                        "content": (
+                            f"CRITICAL: Respond ONLY in {LANG_NAME.get(lang, 'polski')} (lang={lang}). "
+                            "Never use Russian. Never mix Latin and Cyrillic letters in the same word "
+                            "(no forms like Statус / diплом). Sources header language must match the body.\n\n"
+                            + sys
+                        ),
+                    }
+                    try:
+                        out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
+                        out = _scrub_hallucinations(out, blob6, lang=lang)
+                    except Exception:
+                        out = ""
+                    if not out or not output_lang_ok(out, lang):
+                        out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_block)
             out = strip_llm_deadline_notes(out)
             out = _postcheck_amounts(out)
             fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
-            out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang)
+            out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
             out += deadline_passed_note(out, lang)
             state.original_question = None
             return _attach_state(dict(clarify=False, mode="llm", sources=srcs, profile=prof, topics=topics, lang=lang, answer=out), state)
@@ -1469,12 +1658,12 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
     else:
         err = ""
+    blob6 = _hit_blob(hits[:6])
     ans = strip_untrusted_wrappers(redact_secrets(compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_block)))
-    ans = _scrub_hallucinations(ans, _hit_blob(hits[:6]))
+    ans = _scrub_hallucinations(ans, blob6, lang=lang)
     ans = strip_llm_deadline_notes(ans)
-    # fallback already appends SRC_HDR — strip duplicate then re-render from hits
     fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
-    ans = finalize_answer_urls(ans, hits[:6], fact_urls=fact_urls, lang=lang)
+    ans = finalize_answer_urls(ans, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
     ans += deadline_passed_note(ans, lang)
     state.original_question = None
     return _attach_state(dict(clarify=False, mode="wyszukiwanie", sources=srcs, profile=prof, topics=topics, lang=lang, answer=ans), state)
