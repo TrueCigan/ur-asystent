@@ -54,6 +54,7 @@ KNOWN_CASE_KEYS = {
     "id", "origin", "turns", "unit", "per_turn_lang_not", "e2e", "deadline_note",
     "output_lang_check", "income_group_table", "scrub_check", "amount_strip_check",
     "property_check", "render_check", "expect_fail_until", "prompt_budget", "fault",
+    "e2e_pr",  # P6: mark critical subset for PR-time e2e (see --e2e-pr)
 }
 
 
@@ -396,6 +397,11 @@ def main():
     ap.add_argument("--url")
     ap.add_argument("--runs", type=int, default=1)
     ap.add_argument("--only")
+    ap.add_argument(
+        "--e2e-pr",
+        action="store_true",
+        help="Only cases marked e2e_pr: true (cheap PR subset; use with --layer e2e)",
+    )
     a = ap.parse_args()
     cases = yaml.safe_load(open(a.cases, encoding="utf-8"))
     ctx = Ctx(os.path.abspath(a.repo))
@@ -404,6 +410,8 @@ def main():
     skipped = 0
     for c in cases:
         if a.only and not re.search(a.only, c["id"]):
+            continue
+        if a.e2e_pr and not c.get("e2e_pr"):
             continue
         # allow nested unit keys freely; flag unknown top-level only
         unknown = {k for k in c if k not in KNOWN_CASE_KEYS}
