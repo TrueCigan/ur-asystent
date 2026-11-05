@@ -233,9 +233,7 @@
   value:
     kierunki_nietechniczne: 2300
     kierunki_techniczne_inzynierskie: 3200
-    International Business & Finance: 7000
-    Mechanical Engineering: 9000
-    note: czesne za semestr, niestacjonarne I st., rozpoczynający 2026/2027; stawka zależy od kierunku (np. Administracja 2300, Informatyka 3200)
+    note: czesne za semestr, niestacjonarne I st. (PL), rozpoczynający 2026/2027; stawka zależy od kierunku (np. Administracja 2300, Informatyka 3200). English-programme fees are in tuition_english_programmes.
   unit: PLN/semester
   academic_year: 2026/2027
   applies_to:
@@ -265,7 +263,10 @@
     przed_ocena_srodokresowa: 3570.5
     po_ocenie_srodokresowej: 5500.5
     zwiekszenie_niepelnosprawnosc: 1071.15
-    note: 'ustawowe MINIMUM brutto (art. 209 PSWN: 37%/57% wynagrodzenia profesora 9650 zł); brak opublikowanego zarządzenia URad. z kwotami Szkoły Doktorskiej'
+    base_rate_percent_of_professor_przed: 37
+    base_rate_percent_of_professor_po: 57
+    disability_topup_percent_of_przed: 30
+    note: 'ustawowe MINIMUM brutto art. 209 PSWN; base rates 37%/57% of professor salary; disability top-up +30% of pre-evaluation amount (=1071.15). Do not quote 37% as the disability top-up.'
   unit: PLN/month
   academic_year: 2026/2027
   applies_to:

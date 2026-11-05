@@ -9,10 +9,15 @@ EXTRACT_SCHEMA_HINT = """
 Output JSON only:
 {"intents":[...],"slot_updates":{...},"answers_pending":bool,"conflicts":[],"message_lang":"...","explicit_lang_switch":null}
 Interpret short replies as answers to pending slots. Negations of second programme are NOT dwa_kierunki.
-Nationality: Polish=>pl; other country/foreigner=>cudzoziemiec. karta pobytu=>pobyt_czasowy (not ochrona unless PESEL UKR).
-status=doktorant ONLY on self-identification (jestem doktorantem / I'm a PhD student / szkoła doktorska).
-Mentions of "stypendium doktoranckie" / doctoral scholarship as a TOPIC do NOT set status=doktorant or poziom=SD.
-"nie jestem doktorantem" / "I'm not a doctoral student" / "tylko licencjat" → clear status away from doktorant; keep I/bachelor if stated.
+Nationality: Polish / Polish student => pl; other country/foreigner => cudzoziemiec.
+pobyt=ukr ONLY if temporary protection / PESEL UKR / ochrona czasowa / охорона is stated — NEVER from "из Украины" / "з України" alone (that is cudzoziemiec without pobyt=ukr).
+karta pobytu => pobyt_czasowy.
+status=doktorant / poziom=SD ONLY on self-identification (jestem doktorantem / I'm a PhD student / szkoła doktorska).
+Mentions of "stypendium doktoranckie" as a TOPIC do NOT set status=doktorant.
+"nie jestem doktorantem" / "tylko licencjat" → clear doktorant; keep I/bachelor if stated.
+Disability degree words (znaczna / значительная / considerable) => niepelnosprawnosc=tak — do NOT leave that slot missing.
+Never clear a filled slot unless explicit negation/conflict.
+Never invent arithmetic percentages; amounts come from facts.
 """
 
 _SLOT_ENUMS = {
@@ -43,23 +48,43 @@ def extractor_llm_enabled() -> bool:
     return bool(os.getenv("LLM_API_KEY") or os.getenv("GEMINI_API_KEY"))
 
 
-def extract_turn(message: str, profile: dict, pending_question: str | None, pending_slots: list, call_llm) -> dict | None:
+def extract_turn(
+    message: str,
+    profile: dict,
+    pending_question: str | None,
+    pending_slots: list,
+    call_llm,
+    *,
+    original_question: str | None = None,
+    intents: list | None = None,
+    user_turns: list | None = None,
+) -> dict | None:
     """Return parsed extraction dict or None to signal regex fallback.
 
     Preferred path for R5-3 when regex leaves clarifying slots unanswered.
+    Pass full dialogue state so the model does not re-invent filled slots (P4).
     """
     if not extractor_llm_enabled():
         return None
     if not message or not call_llm:
         return None
     allowed = ", ".join(sorted(_SLOT_ENUMS))
+    recent = list(user_turns or [])[-6:]
+    state_blob = {
+        "profile": profile or {},
+        "pending_slots": pending_slots or [],
+        "pending_question": pending_question,
+        "original_question": original_question,
+        "intents": intents or [],
+        "user_turns": recent,
+    }
     sys = (
         "You extract structured student-profile slots for Uniwersytet Radomski assistant. "
         + EXTRACT_SCHEMA_HINT
         + f"\nAllowed slots: {allowed}. Use null when unknown. "
         "Never set niepelnosprawnosc unless the message mentions disability. "
         "Negations of second programme / no previous degree → drugi_kierunek=nie.\n"
-        f"Known profile: {profile}. Pending question: {pending_question}. Pending slots: {pending_slots}."
+        f"Dialogue state: {json.dumps(state_blob, ensure_ascii=False)}"
     )
     try:
         raw = call_llm(
@@ -110,7 +135,10 @@ def apply_extraction(state_profile: dict, data: dict, min_conf: float = 0.7) -> 
         if val not in allowed:
             continue
         if slot in prof and prof[slot] != val:
-            conflicts.append({"slot": slot, "old": prof[slot], "new": val})
+            # Never overwrite a filled slot without an explicit conflict record (P4)
+            conflicts.append({"slot": slot, "old": prof[slot], "new": val, "reason": "conflict"})
+            continue
+        if slot in prof and prof[slot] == val:
             continue
         prof[slot] = val
     return prof, conflicts

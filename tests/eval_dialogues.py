@@ -121,6 +121,34 @@ def run_unit(ctx, case):
                 fails.append(f"income_group={g} want {ig.get('expect_group')}")
         except Exception as e:
             fails.append(f"income_group error: {e}")
+    if "derived_equals" in exp:
+        try:
+            from decimal import Decimal
+            from facts import load_facts
+            from render import build_computed
+            facts = load_facts()
+            computed = build_computed(facts, need=None, profile=prof or {})
+            for item in exp["derived_equals"]:
+                name = item["name"]
+                got = computed.get(name)
+                if got is None:
+                    fails.append(f"derived {name} missing")
+                    continue
+                if "expect" in item:
+                    want = Decimal(str(item["expect"]))
+                    if abs(got - want) > Decimal("0.01"):
+                        fails.append(f"derived.{name}={got} want {want}")
+                if "equals_fact" in item:
+                    fid = item["equals_fact"]
+                    fact = next((f for f in facts if f.id == fid), None)
+                    if fact is None:
+                        fails.append(f"derived equals_fact {fid} missing")
+                    else:
+                        fv = Decimal(str(fact.value))
+                        if abs(got - fv) > Decimal("0.01"):
+                            fails.append(f"derived.{name}={got} != fact {fid}={fv}")
+        except Exception as e:
+            fails.append(f"derived_equals error: {e}")
     if "retrieval" in exp:
         try:
             q = case["turns"][-1]
