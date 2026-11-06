@@ -6,12 +6,6 @@ on:
   schedule:
     - cron: "0 3 * * *"        # nightly e2e
   workflow_dispatch:
-    inputs:
-      case_ids:
-        description: 'Optional case-id regex. Empty keeps the nightly full e2e. A value runs only those cases once.'
-        required: false
-        type: string
-        default: ''
 jobs:
   eval-unit:
     runs-on: ubuntu-latest
@@ -35,7 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       run: ${{ steps.decide.outputs.run }}
-      cases: ${{ steps.decide.outputs.cases }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,12 +42,6 @@ jobs:
             echo "eval-e2e-pr skipped because HEAD contains [skip e2e]. Skipped is not a pass."
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
-          fi
-          if printf '%s\n' "$msg" | grep -q '\[e2e cases\]'; then
-            echo 'cases=^(topic-english-programme-tuition|r5-tuition-en-programme-amount|lang-ru-rector-stays-uk|lang-mn-never-ru)$' >> "$GITHUB_OUTPUT"
-            echo "eval-e2e-cases will run those four ids once. This is not the 15-case job."
-          else
-            echo "cases=" >> "$GITHUB_OUTPUT"
           fi
   eval-e2e-pr:
     # Live model subset. A failure fails this workflow. [skip e2e] skips the job;
@@ -86,33 +73,8 @@ jobs:
       - name: Critical e2e subset (e2e_pr)
         if: steps.gate.outputs.skip != '1'
         run: python tests/eval_dialogues.py --repo . --layer e2e --e2e-pr --runs 1
-  eval-e2e-cases:
-    # Four fixed ids when the head commit says [e2e cases]. [skip e2e] still skips the 15-case job.
-    # workflow_dispatch with case_ids is the other entry; this token cannot start that dispatch.
-    needs: e2e-pr-gate
-    if: >
-      always() && (
-        (github.event_name == 'workflow_dispatch' && inputs.case_ids != '') ||
-        (github.event_name == 'pull_request' && needs.e2e-pr-gate.outputs.cases != '')
-      )
-    runs-on: ubuntu-latest
-    env:
-      LLM_PROVIDER: anthropic
-      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      EMBED_PROVIDER: gemini
-      SESSION_SECRET: ci-only
-      SCENARIO_SOCIAL: "0"
-      CASE_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.case_ids || needs.e2e-pr-gate.outputs.cases }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
-      - run: pip install -r requirements.txt pyyaml
-      - name: Targeted e2e cases, one run
-        run: python tests/eval_dialogues.py --repo . --layer e2e --only "$CASE_ONLY" --runs 1
   eval-e2e:
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.case_ids == '')
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       LLM_PROVIDER: anthropic

@@ -944,6 +944,40 @@ _ANTHROPIC_TIMEOUT = httpx.Timeout(connect=5.0, read=45.0, write=10.0, pool=5.0)
 REQUEST_BUDGET_SEC = 55.0
 
 
+_LLM_ATTEMPTS = []
+
+
+def _reset_llm_attempts():
+    _LLM_ATTEMPTS.clear()
+
+
+def _record_llm_attempt(*, transport, http_status=None, request_id=None):
+    """Transport evidence only. Never store a key, cookie, or response body."""
+    rid = (request_id or "").strip()
+    if re.search(r"(?i)key|bearer|secret|token|cookie", rid):
+        rid = ""
+    _LLM_ATTEMPTS.append({
+        "provider": (os.getenv("LLM_PROVIDER") or "").lower() or None,
+        "transport": transport,
+        "http_status": http_status,
+        "request_id": (rid[:64] or None),
+    })
+
+
+def llm_path_from_attempts(*, final, model_used, discarded):
+    last = _LLM_ATTEMPTS[-1] if _LLM_ATTEMPTS else {}
+    return {
+        "final": final,
+        "model_used": bool(model_used),
+        "discarded": discarded,
+        "attempted": bool(_LLM_ATTEMPTS),
+        "transport": last.get("transport") or "not_called",
+        "http_status": last.get("http_status"),
+        "request_id": last.get("request_id"),
+        "provider": last.get("provider"),
+    }
+
+
 def call_llm(messages, temperature=0.25):
     prov = os.getenv("LLM_PROVIDER", "").lower(); key = os.getenv("LLM_API_KEY", "")
     model = os.getenv("LLM_MODEL", "")
@@ -989,15 +1023,21 @@ def call_llm(messages, temperature=0.25):
                     },
                 )
             except httpx.TimeoutException as e:
+                _record_llm_attempt(transport="error", http_status=None)
                 last = e
                 if att == 0:
                     time.sleep(1.0 + random.random())
                     continue
                 raise RuntimeError("Anthropic timeout") from e
+            except Exception:
+                _record_llm_attempt(transport="error", http_status=None)
+                raise
             rid = r.headers.get("request-id") or r.headers.get("x-request-id") or ""
             log.info("anthropic status=%s latency=%.2fs request-id=%s", r.status_code, time.monotonic() - t0, rid)
             if r.status_code == 200:
+                _record_llm_attempt(transport="ok", http_status=200, request_id=rid)
                 return r.json()["content"][0]["text"]
+            _record_llm_attempt(transport="error", http_status=r.status_code, request_id=rid)
             last = f"HTTP {r.status_code}"
             if r.status_code in (429, 500, 529) and att == 0:
                 time.sleep(1.0 + random.random())
@@ -1617,25 +1657,101 @@ def _apply_scenario_estimate(state, scenario_context) -> None:
     state.profile = prof
 
 
-def _with_selected_english_tuition(out, lang, selected_facts, question, hist_user):
-    """Keep the verified English-programme amount when that fact was used.
+_ME_NAME = re.compile(r"mechanical\s+engineering", re.I)
+_IB_NAME = re.compile(r"international\s+business|business\s*&\s*finance|\bIB\s*&?\s*F\b|\bbusiness\b", re.I)
+def _verified_fee_lines(fact):
+    """Programme label and amount come from the verified fact, not a second table."""
+    value = getattr(fact, "value", None)
+    if not isinstance(value, dict):
+        return {}
+    lines = {}
+    for key, amount in value.items():
+        try:
+            shown = str(int(amount))
+        except (TypeError, ValueError):
+            continue
+        label = f"{key}: {shown} EUR"
+        if _ME_NAME.search(str(key)):
+            lines["me"] = label
+        elif re.search(r"international\s+business|business\s*&\s*finance", str(key), re.I):
+            lines["ib"] = label
+    return lines
 
-    The model may answer in English and still omit 2100 EUR. The figure stays
-    the fact value, not a new amount.
-    """
+
+def _programme_focus(question):
+    """Which English programme this turn is asking about. History does not decide."""
+    q = question or ""
+    me = bool(_ME_NAME.search(q))
+    ib = bool(_IB_NAME.search(q))
+    if me and not ib:
+        return "me"
+    if ib and not me:
+        return "ib"
+    return "any"
+
+
+def _fee_amount(line):
+    return (line or "").partition(":")[2].strip()
+
+
+def _wrong_programme_fee(sentence, lines):
+    me = bool(_ME_NAME.search(sentence))
+    ib = bool(_IB_NAME.search(sentence or ""))
+    me_amt = _fee_amount(lines.get("me"))
+    ib_amt = _fee_amount(lines.get("ib"))
+    if me and ib_amt and ib_amt in (sentence or "") and me_amt not in (sentence or ""):
+        return "me"
+    if ib and not me and me_amt and me_amt in (sentence or "") and ib_amt not in (sentence or ""):
+        return "ib"
+    return None
+
+
+def _with_selected_english_tuition(out, lang, selected_facts, question, hist_user):
+    """Align a named programme with its verified fee. Do not append 2100 beside a wrong binding."""
     if lang != "en":
-        return out
+        return out, False
     fact = next((f for f in selected_facts or [] if getattr(f, "id", None) == "tuition_english_programmes"), None)
     if fact is None:
-        return out
-    blob = f"{hist_user or ''}\n{question or ''}"
-    if not re.search(r"(?i)english|angielsk|business", blob):
-        return out
-    if re.search(r"2[ ,.]?100\s*(EUR|euro)", out or "", re.I):
-        return out
-    from facts import _fact_entry_lines
-    block = "\n".join(_fact_entry_lines(fact, 1, "en", for_user=True))
-    return ((out or "").rstrip() + "\n" + block).strip()
+        return out, False
+    blob = f"{question or ''}\n{hist_user or ''}"
+    if not re.search(r"(?i)english|angielsk|mechanical|business", blob):
+        return out, False
+    lines = _verified_fee_lines(fact)
+    if not lines:
+        return out, False
+    changed = False
+    kept = []
+    for sent in re.split(r"\n+|(?<=[.!?])\s+", out or ""):
+        sent = sent.strip()
+        if not sent:
+            continue
+        bad = _wrong_programme_fee(sent, lines)
+        if bad and lines.get(bad):
+            kept.append(lines[bad])
+            changed = True
+        else:
+            kept.append(sent)
+    text = "\n".join(kept).strip()
+    focus = _programme_focus(question)
+
+    def _has(kind):
+        line = lines.get(kind) or ""
+        name = line.partition(":")[0].split("(")[0].strip()
+        amount = _fee_amount(line)
+        return bool(name and amount and name.lower() in text.lower() and amount in text)
+
+    needed = []
+    if focus == "me":
+        needed = ["me"]
+    elif focus == "ib":
+        needed = ["ib"]
+    elif re.search(r"(?i)english|angielsk", f"{question or ''}\n{hist_user or ''}"):
+        needed = ["ib", "me"]
+    for kind in needed:
+        if lines.get(kind) and not _has(kind):
+            text = (text + "\n" + lines[kind]).strip()
+            changed = True
+    return text, changed
 
 
 def _attach_state(result, state):
@@ -1648,6 +1764,7 @@ def _attach_state(result, state):
 
 def answer(question, history, session_lang=None, state_token=None, conv_id=None, scenario_context=None):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang, state)"""
+    _reset_llm_attempts()
     import time as _time
     _t_deadline = _time.monotonic() + REQUEST_BUDGET_SEC
     from session import resolve_state
@@ -1912,7 +2029,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             url = ((getattr(f, "source", None) or {}).get("url") or "").strip()
         fact_urls.append(url)
 
-    def _finalize(out: str, mode: str):
+    def _finalize(out: str, mode: str, llm_path: dict):
         # No amount/channel scrub — figures come from render.py; channel from FACTS (P2)
         out = strip_llm_deadline_notes(out)
         cited = []
@@ -1920,15 +2037,22 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6, cited_fact_indexes=cited,
         )
         out += deadline_passed_note(out, lang)
-        out = _with_selected_english_tuition(out, lang, selected_facts, question, hist_user)
+        out, fee_corrected = _with_selected_english_tuition(out, lang, selected_facts, question, hist_user)
+        if fee_corrected:
+            llm_path = dict(llm_path)
+            llm_path["fee_corrected"] = True
         state.original_question = None
         official = merge_official_sources(srcs, selected_facts, cited)
         return _attach_state(
-            dict(clarify=False, mode=mode, sources=official, profile=prof, topics=topics, lang=lang, answer=out),
+            dict(
+                clarify=False, mode=mode, sources=official, profile=prof, topics=topics,
+                lang=lang, answer=out, llm_path=llm_path,
+            ),
             state,
         )
 
     if llm_enabled():
+        _reset_llm_attempts()
         import datetime
         import json as _json
         from render import (
@@ -2002,7 +2126,9 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                                 lang=lang,
                             )
                     if out and output_lang_ok(out, lang):
-                        return _finalize(out, "llm-structured")
+                        return _finalize(out, "llm-structured", llm_path_from_attempts(
+                            final="model", model_used=True, discarded=None,
+                        ))
             # JSON failed → free-text legacy once, then fallback
             sys_ft = (SYSTEM_FREE_TEXT.replace("{today}", datetime.date.today().isoformat())
                                       .replace("{lang}", lang)
@@ -2019,15 +2145,29 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                     + "\n\nAnswer per system rules. Prefer amounts from FACTS only."
                 ),
             }]
-            out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs_ft, temperature=0.3)))
-            if not out or not output_lang_ok(out, lang):
+            model_text = strip_untrusted_wrappers(redact_secrets(call_llm(msgs_ft, temperature=0.3)))
+            if not model_text or not output_lang_ok(model_text, lang):
                 out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
-            return _finalize(out, "llm")
+                return _finalize(out, "wyszukiwanie", llm_path_from_attempts(
+                    final="fallback", model_used=False,
+                    discarded="empty" if not model_text else "lang",
+                ))
+            return _finalize(model_text, "llm", llm_path_from_attempts(
+                final="model", model_used=True, discarded=None,
+            ))
         except Exception:
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
+            ans = strip_untrusted_wrappers(redact_secrets(
+                compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
+            ))
+            return _finalize(ans, "wyszukiwanie", llm_path_from_attempts(
+                final="fallback", model_used=False, discarded="exception",
+            ))
     else:
         err = ""
     ans = strip_untrusted_wrappers(redact_secrets(
         compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
     ))
-    return _finalize(ans, "wyszukiwanie")
+    return _finalize(ans, "wyszukiwanie", llm_path_from_attempts(
+        final="fallback", model_used=False, discarded="not_enabled",
+    ))

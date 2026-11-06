@@ -63,7 +63,11 @@ What held up on the social-scholarship work (`3133929` and the commits under it)
 
 What did not work: clearing only the visible form, treating 0,00 as group I, mixing the 3560,60 and 3667 caps, calling the workflow green while the advisory e2e job was red, rounding 6571,65 to 6571, matching `я` inside `для`, calling the 2024 stipend page proof of a 2026 period, and treating a Polish quotation under an English header as an English answer.
 
-Still open after the offline fixes, until one later live run: English tuition turn 2 missing 2100 EUR, and the same kind of follow-up answered in Polish. The no-LLM path keeps English and 2100. `SCENARIO_SOCIAL` is not on in the deployed service. Whether 3667 replaces 3560,60 inside the 2025/2026 academic year after 01.01.2026 is unresolved; do not merge those figures.
+The four-case runner on `140c846` (workflow run 42198353726, about 4.4 seconds) printed PASS. That result is **LLM UNCONFIRMED**. The log has no success status, no request id, and no model reply. The offline fallback already satisfies those four assertions, so a text match is not a model call. Do not describe that batch as a successful live or model run. A short wall clock without a request id is not a generation.
+
+A live check now fails closed unless the recorded path shows transport HTTP 200, a provider request id, and `model_used` with `final=model`. Transport success is not enough when the model text was discarded and the fallback is what the student sees. A programme check must reject a wrong binding, such as Mechanical Engineering at 2100 EUR, instead of appending 2100 beside it. International Business & Finance stays 2100 EUR. Mechanical Engineering is 2600 EUR. Missing Polish diacritics is not proof that the reply is English.
+
+Still open, and not claimed from that runner: whether a real model keeps English on the two tuition turns, and whether 3667 replaces 3560,60 inside the 2025/2026 academic year after 01.01.2026. Do not merge those stipend figures. `SCENARIO_SOCIAL` stays off in the deployed service.
 
 ## Verified scenario: social scholarship
 

@@ -352,6 +352,37 @@ def check_answer(r, exp, elapsed=None):
     return f
 
 
+def model_path_unconfirmed(r):
+    """A matching fallback is not a model answer. Fault cases are checked separately."""
+    path = r.get("llm_path") or {}
+    if (
+        path.get("final") == "model"
+        and path.get("model_used") is True
+        and path.get("transport") == "ok"
+        and path.get("http_status") == 200
+        and path.get("request_id")
+    ):
+        return None
+    return (
+        "model path unconfirmed: final=%s transport=%s http_status=%s model_used=%s discarded=%s"
+        % (
+            path.get("final"),
+            path.get("transport"),
+            path.get("http_status"),
+            path.get("model_used"),
+            path.get("discarded"),
+        )
+    )
+
+
+def sanitized_path_record(r):
+    path = r.get("llm_path") or {}
+    keep = ("final", "model_used", "discarded", "attempted", "transport", "http_status", "request_id", "provider", "fee_corrected")
+    excerpt = re.sub(r"\s+", " ", r.get("answer") or "")[:240]
+    excerpt = re.sub(r"(?i)(api[_-]?key|bearer|cookie|session)\s*[:=]\s*\S+", r"\1=[redacted]", excerpt)
+    return {"mode": r.get("mode"), "llm_path": {k: path.get(k) for k in keep}, "answer_excerpt": excerpt}
+
+
 def run_e2e(ctx, case, url, runs):
     import time
     exp = case.get("e2e") or {}
@@ -377,6 +408,11 @@ def run_e2e(ctx, case, url, runs):
                 elapsed = time.monotonic() - t0
                 if exp.get("every_turn") or i == len(case["turns"]) - 1:
                     fails += [f"turn{i+1}: {x}" for x in check_answer(r, exp or {}, elapsed=elapsed)]
+                    if not url and not fault:
+                        gap = model_path_unconfirmed(r)
+                        if gap:
+                            fails.append(f"turn{i+1}: {gap}")
+                        print("PATH " + json.dumps(sanitized_path_record(r), ensure_ascii=False), flush=True)
                 hist += [{"role": "user", "content": q}, {"role": "assistant", "content": r.get("answer", "")}]
             for rx in (exp or {}).get("stable_across_runs", []):
                 m = re.search(rx, r.get("answer", ""), re.I | re.S)

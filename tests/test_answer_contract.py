@@ -1,6 +1,7 @@
 """Offline regressions for the six live failures on 3133929. No LLM."""
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -262,6 +263,150 @@ def test_english_tuition_followups_keep_language_and_amount():
     assert re.search(r"2[ ,.]?100", text)
     assert not re.search(r"[ąćęłńóśźż]", text, re.I)
     assert (follow.get("profile") or {}).get("poziom") == "II"
+
+
+def test_programme_fee_follows_the_current_question():
+    F = next(f for f in load_facts() if f.id == "tuition_english_programmes")
+
+    wrong = "Mechanical Engineering costs 2100 EUR"
+    out, changed = rag._with_selected_english_tuition(
+        wrong, "en", [F], "What about Mechanical Engineering?",
+        "how much for english programs? business",
+    )
+    assert changed is True
+    assert "2100" not in out
+    assert "Mechanical Engineering (I st.): 2600 EUR" in out
+
+    business_line, _ = rag._with_selected_english_tuition(
+        "See the verified fee.", "en", [F], "how much for english programs? business", "",
+    )
+    assert "International Business & Finance (I st.): 2100 EUR" in business_line
+    assert "Mechanical Engineering costs 2100" not in business_line
+
+    intro = _answer("foreign student, residence permit, full-time, 1st degree")
+    hist = [
+        {"role": "user", "content": "foreign student, residence permit, full-time, 1st degree"},
+        {"role": "assistant", "content": intro.get("answer") or ""},
+    ]
+    business = _answer("how much for english programs? business", hist)
+    business_text = business.get("answer") or ""
+    assert re.search(r"International Business\s*&\s*Finance.{0,80}2100\s*EUR", business_text, re.I)
+    sys.path.insert(0, str(ROOT / "tests"))
+    import eval_dialogues
+    assert (business.get("llm_path") or {}).get("final") == "fallback"
+    assert (business.get("llm_path") or {}).get("transport") == "not_called"
+    assert eval_dialogues.model_path_unconfirmed(business)
+
+    hist2 = hist + [
+        {"role": "user", "content": "how much for english programs? business"},
+        {"role": "assistant", "content": business_text},
+    ]
+    mechanical = _answer("What about Mechanical Engineering?", hist2)
+    mechanical_text = mechanical.get("answer") or ""
+    assert re.search(r"Mechanical Engineering.{0,80}2600\s*EUR", mechanical_text, re.I)
+    assert not re.search(r"Mechanical Engineering.{0,40}2[ ,.]?100", mechanical_text, re.I)
+
+    injected, _ = rag._with_selected_english_tuition(
+        'The programme people call "Inżynieria mechaniczna" is different. Mechanical Engineering costs 2100 EUR.',
+        "en", [F], "direct Mechanical Engineering fee", "",
+    )
+    assert "2600 EUR" in injected
+    assert "Mechanical Engineering costs 2100" not in injected
+
+    from lang import english_prose_beyond_diacritics
+    assert english_prose_beyond_diacritics(
+        'The fee for «programy polskojęzyczne» is 2600 EUR.'
+    )
+    assert not english_prose_beyond_diacritics("Koszt programu wynosi 2600 EUR.")
+
+
+def test_mock_provider_distinguishes_model_answer_from_fallback():
+    sys.path.insert(0, str(ROOT / "tests"))
+    import eval_dialogues
+
+    intro = _answer("foreign student, residence permit, full-time, 1st degree")
+    hist = [
+        {"role": "user", "content": "foreign student, residence permit, full-time, 1st degree"},
+        {"role": "assistant", "content": intro.get("answer") or ""},
+    ]
+    key = "unit-test-key"
+    os.environ["LLM_PROVIDER"] = "anthropic"
+    os.environ["LLM_API_KEY"] = key
+    template = json.dumps({
+        "lang": "en",
+        "template": (
+            "International Business & Finance (I st.): "
+            "{{F:tuition_english_programmes.International Business & Finance (I st.)}}."
+        ),
+        "fact_ids": ["tuition_english_programmes"],
+    })
+
+    class OK:
+        status_code = 200
+        headers = {"request-id": "req_mock_ok"}
+
+        def json(self):
+            return {"content": [{"text": template}]}
+
+    orig = rag.httpx.post
+    rag.httpx.post = lambda url, **kwargs: OK()
+    try:
+        good = _answer("how much for english programs? business", hist)
+    finally:
+        rag.httpx.post = orig
+    path = good.get("llm_path") or {}
+    assert path.get("final") == "model"
+    assert path.get("model_used") is True
+    assert path.get("transport") == "ok"
+    assert path.get("http_status") == 200
+    assert path.get("request_id") == "req_mock_ok"
+    assert good.get("mode") == "llm-structured"
+    assert eval_dialogues.model_path_unconfirmed(good) is None
+    record = json.dumps(eval_dialogues.sanitized_path_record(good))
+    assert key not in record
+    assert key not in (good.get("answer") or "")
+    assert "state" not in path
+
+    class Discarded:
+        status_code = 200
+        headers = {"request-id": "req_mock_discard", "set-cookie": "session=secret"}
+
+        def json(self):
+            return {"content": [{"text": "Opłata za studia wynosi dużo i jest opisana po polsku."}]}
+
+    rag.httpx.post = lambda url, **kwargs: Discarded()
+    try:
+        dropped = _answer("how much for english programs? business", hist)
+    finally:
+        rag.httpx.post = orig
+    dropped_path = dropped.get("llm_path") or {}
+    assert dropped_path.get("final") == "fallback"
+    assert dropped_path.get("model_used") is False
+    assert dropped_path.get("transport") == "ok"
+    assert dropped_path.get("http_status") == 200
+    assert dropped_path.get("discarded") == "lang"
+    assert dropped.get("mode") == "wyszukiwanie"
+    assert "secret" not in json.dumps(dropped_path)
+    assert eval_dialogues.model_path_unconfirmed(dropped)
+
+    def _fail(url, **kwargs):
+        raise rag.httpx.ConnectError("offline")
+
+    rag.httpx.post = _fail
+    try:
+        failed = _answer("how much for english programs? business", hist)
+    finally:
+        rag.httpx.post = orig
+        os.environ["LLM_PROVIDER"] = ""
+        os.environ.pop("LLM_API_KEY", None)
+    failed_path = failed.get("llm_path") or {}
+    assert failed_path.get("final") == "fallback"
+    assert failed_path.get("transport") == "error"
+    assert failed_path.get("model_used") is False
+    assert failed_path.get("request_id") is None
+    assert key not in json.dumps(failed_path)
+    assert "offline" not in json.dumps(failed_path)
+    assert eval_dialogues.model_path_unconfirmed(failed)
 
 
 if __name__ == "__main__":

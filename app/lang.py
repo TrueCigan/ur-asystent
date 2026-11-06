@@ -162,6 +162,20 @@ def _strip_sources_block(text: str) -> str:
     return "\n".join(lines)
 
 
+def english_prose_beyond_diacritics(text: str) -> bool:
+    """English is a property of the prose, not of missing Polish diacritics.
+
+    Quoted fragments are ignored. "Koszt programu wynosi 2600 EUR" has no
+    ąćęłńóśźż and is still not English.
+    """
+    body = re.sub(r"«[^»]*»|\"[^\"]{0,240}\"|„[^“]{0,240}“", " ", text or "")
+    polish = bool(re.search(r"\b(koszt|wynosi|programu|opłata|oplata|jest|dla|studia)\b", body, re.I))
+    english = bool(re.search(r"\b(the|is|are|for|about|costs|fee|programme|program)\b", body, re.I))
+    if polish and not english:
+        return False
+    return english
+
+
 def output_lang_ok(answer: str, target: str) -> bool:
     """False if Russian, Mongolian, wrong language body, or mixed-script tokens."""
     if not answer or not answer.strip():
