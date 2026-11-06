@@ -100,6 +100,13 @@
     font-size: 14px;
   }
   #scenario-social form.est .row-check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink); }
+  #scenario-social form.est input[type=checkbox] {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    padding: 0;
+  }
   #scenario-social form.est button {
     justify-self: start;
     background: var(--blue);
@@ -350,9 +357,21 @@
   #panel.ready .fold { opacity: 1; transform: none; transition: opacity .35s ease, transform .35s var(--ease); }
 
   @media (max-width: 640px) {
-    main.host { padding-top: 36px; }
+    main.host { padding-top: 36px; padding-bottom: 88px; }
     main.host h1 { font-size: 28px; }
     #panel { right: 8px; bottom: 8px; left: 8px; width: auto; height: min(720px, calc(100dvh - 16px)); }
+    /* Full crest sits in the middle of a 390px screen and covers the amount table. */
+    #launcher {
+      left: auto;
+      right: 12px;
+      top: auto;
+      bottom: 12px;
+      transform: none;
+      width: auto;
+      padding: 0;
+    }
+    #launcher .crest { width: 56px; }
+    #launcher .word, #launcher .hint { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -947,6 +966,8 @@ document.getElementById('ss-year')?.addEventListener('change', () => {
     out.textContent = '';
     out.hidden = true;
   }
+  // Signed sessionState cannot be edited here. The server drops estimate fields
+  // (income, year, dorm) unless this request sends scenario_context again.
   scenarioCtx = null;
 });
 

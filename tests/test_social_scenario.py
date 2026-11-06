@@ -253,6 +253,87 @@ def test_year_rejection_not_duplicated_in_chat():
     assert "szacunek nie jest traktowany" not in low  # unconfirmed banner not also appended
 
 
+def test_signed_session_drops_stale_year_estimate():
+    """Established HMAC state must not replay a 2025/2026 payout after the form
+    stops sending scenario_context (year changed, including back-and-forth)."""
+    prev = os.environ.get("SCENARIO_SOCIAL")
+    os.environ["SCENARIO_SOCIAL"] = "1"
+    try:
+        import rag
+        from session import SessionState, decode, encode
+
+        established = SessionState(
+            profile={
+                "status": "student",
+                "income_per_person": "1100",
+                "estimate_year": "2025/2026",
+                "interested_in_dorm_topup": True,
+                "dorm_conditions_met": None,
+            },
+            conv_id="conv-year-switch",
+            updated_at=10**10,
+        )
+        token = encode(established)
+        hist = [
+            {"role": "user", "content": "Jak dostać stypendium socjalne?"},
+            {"role": "assistant", "content": "Grupa dochodowa: II → 1400.00 zł"},
+        ]
+        q = "Jak dostać stypendium socjalne na wybrany rok?"
+        stale = rag.answer(q, hist, state_token=token, conv_id="conv-year-switch")
+        assert stale.get("mode") == "scenario-social"
+        assert "Grupa dochodowa:" not in (stale.get("answer") or "")
+        est = (stale.get("scenario") or {}).get("estimate")
+        assert not est or est.get("result") != "amount_estimate"
+        kept = decode(stale.get("state"))
+        assert kept.profile.get("status") == "student"
+        for k in ("income_per_person", "estimate_year", "interested_in_dorm_topup", "dorm_conditions_met"):
+            assert k not in kept.profile
+
+        # Toggle back to 2025/2026 without a new calculation must not resurrect 1400.
+        again = rag.answer(q, hist, state_token=stale.get("state"), conv_id="conv-year-switch")
+        assert "Grupa dochodowa:" not in (again.get("answer") or "")
+        assert decode(again.get("state")).profile.get("status") == "student"
+
+        # Current request context still wins, and a year with no table pays nothing.
+        unconfirmed = rag.answer(
+            q, hist, state_token=token, conv_id="conv-year-switch",
+            scenario_context={
+                "income_per_person": "1100",
+                "estimate_year": "2026/2027",
+                "interested_in_dorm_topup": True,
+                "dorm_conditions_met": None,
+            },
+        )
+        uest = (unconfirmed.get("scenario") or {}).get("estimate") or {}
+        assert uest.get("result") == "amounts_not_confirmed"
+        assert uest.get("income_group") is None
+        assert "Grupa dochodowa:" not in (unconfirmed.get("answer") or "")
+        uprof = decode(unconfirmed.get("state")).profile
+        assert uprof.get("status") == "student"
+        assert uprof.get("estimate_year") == "2026/2027"
+
+        # Same signed session still estimates when the form re-sends 2025/2026.
+        fresh = rag.answer(
+            q, hist, state_token=token, conv_id="conv-year-switch",
+            scenario_context={
+                "income_per_person": "1100",
+                "estimate_year": "2025/2026",
+                "interested_in_dorm_topup": True,
+                "dorm_conditions_met": None,
+            },
+        )
+        fest = (fresh.get("scenario") or {}).get("estimate") or {}
+        assert fest.get("result") == "amount_estimate"
+        assert fest.get("income_group") == "II"
+        assert fest.get("total_display_amount") == "1400.00"
+        assert decode(fresh.get("state")).profile.get("status") == "student"
+    finally:
+        if prev is None:
+            os.environ.pop("SCENARIO_SOCIAL", None)
+        else:
+            os.environ["SCENARIO_SOCIAL"] = prev
+
+
 def test_chat_followup_not_stuck(monkeypatch=None):
     prev = os.environ.get("SCENARIO_SOCIAL")
     os.environ["SCENARIO_SOCIAL"] = "1"

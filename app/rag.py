@@ -1480,6 +1480,28 @@ def merge_state_profile(state, prof, topics, history):
     missing = [x for x in req if x not in merged]
     return merged, missing
 
+# Form estimate inputs are not durable student profile. A signed token may still
+# carry them after the user changes academic year (client cannot rewrite the HMAC).
+# They apply only when THIS request re-sends scenario_context.
+_SCENARIO_ESTIMATE_KEYS = (
+    "income_per_person",
+    "estimate_year",
+    "interested_in_dorm_topup",
+    "dorm_conditions_met",
+)
+
+
+def _apply_scenario_estimate(state, scenario_context) -> None:
+    prof = dict(getattr(state, "profile", None) or {})
+    for k in _SCENARIO_ESTIMATE_KEYS:
+        prof.pop(k, None)
+    if isinstance(scenario_context, dict):
+        for k in _SCENARIO_ESTIMATE_KEYS:
+            if k in scenario_context and scenario_context[k] is not None:
+                prof[k] = scenario_context[k]
+    state.profile = prof
+
+
 def _attach_state(result, state):
     try:
         from session import encode
@@ -1500,13 +1522,9 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
         if isinstance(m, dict) and m.get("role") in ("user", "assistant")
     ]
     state = resolve_state(state_token, history, conv_id=conv_id)
-    # Merge verified-scenario form context into profile (income estimate inputs only)
-    if isinstance(scenario_context, dict) and scenario_context:
-        prof0 = dict(getattr(state, "profile", None) or {})
-        for k in ("income_per_person", "estimate_year", "interested_in_dorm_topup", "dorm_conditions_met"):
-            if k in scenario_context and scenario_context[k] is not None:
-                prof0[k] = scenario_context[k]
-        state.profile = prof0
+    # Drop stale form estimate from the signed token; keep status/tryb/etc.
+    # Re-apply only keys this request sent (null does not revive the old year).
+    _apply_scenario_estimate(state, scenario_context)
     hist_user = "\n".join(m["content"] for m in history if m["role"] == "user")
     user_turns = [m["content"] for m in history if m["role"] == "user"]
     seed_lang = session_lang or state.lang
