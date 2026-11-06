@@ -347,7 +347,8 @@
   applies_to: {}
   candidates_seen: []
   source:
-    ordinance: Dz.U. 2026 poz. 525 z 14.04.2026 — wynagrodzenie profesora 9650 zł od 01.01.2026. Przepis o wynagrodzeniu, nie o przyznaniu stypendium.
+    url: https://dziennikustaw.gov.pl/DU/2026/525
+    ordinance: Dz.U. 2026 poz. 525 z 14.04.2026 — wynagrodzenie profesora 9650 zł należne od 01.01.2026. To przepis o wynagrodzeniu. Nie ustala okresu stypendium doktoranckiego.
     document_date: '2026-04-14'
     checked: '2026-11-05'
   status: verified

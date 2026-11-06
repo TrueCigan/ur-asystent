@@ -78,31 +78,78 @@ def test_rector_and_dorm_answers_only_cite_official_sources():
                 assert all(isinstance(i, str) and i for i in ids)
 
 
+_SPEAKER_DOCTORAL = [
+    ("я аспірант", True),
+    ("я аспірантка", True),
+    ("я аспірантки", True),
+    ("я аспіранткою", True),
+    ("я є аспірантом", True),
+    ("я є аспіранткою", True),
+    ("Я аспірантці", True),
+    ("я докторант", True),
+    ("я докторантка", True),
+    ("я аспирант", True),
+    ("я аспирантка", True),
+    ("jestem doktorantem", True),
+    ("jestem doktorantką", True),
+    ("I'm a doctoral student", True),
+    ("I am a PhD student", True),
+    ("doctoral student", True),
+    ("phd student", True),
+    ("Вона є аспіранткою", False),
+    ("Він є аспірантом", False),
+    ("Вони є аспірантами", False),
+    ("Ми є аспірантами", False),
+    ("Мій колега є аспірантом", False),
+    ("Моя колега є аспіранткою", False),
+    ("для аспіранта", False),
+    ("стипендія для аспірантів", False),
+    ("є аспірантом", False),
+    ("я не аспірантка", False),
+    ("не є аспірантом", False),
+    ("я не є аспіранткою", False),
+    ("«я аспірантка»", False),
+    ("Розкажіть про аспірантуру в університеті", False),
+    ("она аспирантка", False),
+    ("он аспирант", False),
+    ("они аспиранты", False),
+    ("мой коллега аспирант", False),
+    ("я не аспирант", False),
+    ("Ona jest doktorantką", False),
+    ("On jest doktorantem", False),
+    ("Oni są doktorantami", False),
+    ("Ona jest w szkole doktorskiej", False),
+    ("Mój kolega jest doktorantem", False),
+    ("nie jestem doktorantem", False),
+    ("She is a doctoral student", False),
+    ("He is a PhD student", False),
+    ("They are doctoral students", False),
+    ("We are doctoral students", False),
+    ("My colleague is a doctoral student", False),
+    ("I'm not a doctoral student", False),
+    ('"she is a doctoral student"', False),
+]
+
+
 def test_ukrainian_doctoral_self_id_variants_and_amounts():
     from rag import extract_profile
-    for text in (
-        "я аспірант",
-        "я аспірантка",
-        "я аспірантки",
-        "я аспіранткою",
-        "є аспірантом",
-        "є аспіранткою",
-        "Я аспірантці",
-    ):
+    for text, owns in _SPEAKER_DOCTORAL:
         prof = extract_profile(text)
-        assert prof.get("status") == "doktorant", text
-        assert prof.get("poziom") == "SD", text
+        if owns:
+            assert prof.get("status") == "doktorant", text
+            assert prof.get("poziom") == "SD", text
+        else:
+            assert prof.get("status") != "doktorant", text
+            assert prof.get("poziom") != "SD", text
     for text in (
-        "Розкажіть про аспірантуру в університеті",
-        "Яка стипендія для аспіранта?",
-        "стипендія для аспірантів",
-        "я не аспірантка",
-        "не є аспірантом",
-        "я не є аспіранткою",
+        "Вона є аспіранткою. Яка стипендія?",
+        "Мій колега є аспірантом. Яка стипендія?",
+        "Вони є аспірантами. Яка стипендія?",
     ):
-        prof = extract_profile(text)
-        assert prof.get("status") != "doktorant", text
-        assert prof.get("poziom") != "SD", text
+        result = _answer(text)
+        assert result.get("profile", {}).get("status") != "doktorant", text
+        assert result.get("clarify") is True, text
+        assert "6571" not in (result.get("answer") or ""), text
     third = _answer("Яка стипендія для аспірантів?")
     assert third.get("profile", {}).get("status") != "doktorant"
     assert third.get("clarify") is True
@@ -166,10 +213,21 @@ def test_doctoral_dates_stay_with_the_source_that_states_them():
     assert stipend.source["url"] == "https://www.gov.pl/web/nauka/stypendium-doktoranckie"
     assert "Nie ustala roku 2026/2027 ani daty 01.01.2026" in stipend.source["ordinance"]
     assert salary.source["document_date"] == "2026-04-14"
-    assert salary.source.get("url") in (None, "")
+    assert salary.source.get("url") == "https://dziennikustaw.gov.pl/DU/2026/525"
     assert "Dz.U. 2026 poz. 525" in salary.source["ordinance"]
     assert "01.01.2026" in salary.source["ordinance"]
-    assert "nie o przyznaniu stypendium" in salary.source["ordinance"]
+    assert "Nie ustala okresu stypendium" in salary.source["ordinance"]
+    result = _answer(
+        "Jestem doktorantką po ocenie śródokresowej z orzeczeniem o niepełnosprawności. Ile dostanę?"
+    )
+    salary_src = next(
+        s for s in result["sources"]
+        if (s.get("url") or "").rstrip("/") == "https://dziennikustaw.gov.pl/DU/2026/525"
+    )
+    assert salary_src["fact_ids"] == ["professor_salary_monthly"]
+    stipend_src = next(s for s in result["sources"] if "stypendium-doktoranckie" in (s.get("url") or ""))
+    assert "doctoral_stipend_amount" in stipend_src["fact_ids"]
+    assert "professor_salary_monthly" not in stipend_src["fact_ids"]
     assert str(doctoral_components(stipend)["total_po"]) == "6571.65"
 
 

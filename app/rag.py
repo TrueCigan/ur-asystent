@@ -185,7 +185,7 @@ SLOT_Q = {
 SLOT_OPTS = {
  "status": [
   # Self-ID only — bare "doktorant/doktoranckie" as a topic must NOT set status (R6-5)
-  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?<!не\s)(?<!ні\s)(?<!\w)я(?!\s+(?:не|ні)\b)\s+докторант(?:к\w*)?|(?<!не\s)(?<!ні\s)(?<!\w)(?:я|є)(?!\s+(?:не|ні)\b)\s+аспірант\w*|докторантур)"),
+  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?<!не\s)(?<!ні\s)(?<!\w)я(?!\s+(?:не|ні)\b)\s+докторант(?:к\w*)?|(?<!не\s)(?<!ні\s)(?<!\w)(?:я|є)(?!\s+(?:не|ні)\b)\s+аспірант\w*|(?<!\w)я(?!\s+(?:не|ні)\b)\s+аспирант\w*|докторантур)"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
   ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|polish\s*student|i(?:'?m|\s+am)\s+(?:a\s+)?polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|obywatelk\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|dow[oó]d\w*\s+(mam\s+)?polsk|polsk\w*\s+dow[oó]d|polsk\w*\s+paszport|urodzi\w+\s+w\s+(polsce|radomiu)|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|\bforeigner\b|i'?m\s*a?\s*foreign|i\s*am\s*from\s+(?!poland|polsk)|from\s+(india|china|ukraine|belarus|vietnam|nigeria|turkey|georgia)|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
@@ -196,7 +196,7 @@ SLOT_OPTS = {
  ],
  "poziom": [
   # No bare "doktorant/doktoranc" — self-ID or szkoła doktorska only (R6-5)
-  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?<!не\s)(?<!ні\s)(?<!\w)я(?!\s+(?:не|ні)\b)\s+докторант(?:к\w*)?|(?<!не\s)(?<!ні\s)(?<!\w)(?:я|є)(?!\s+(?:не|ні)\b)\s+аспірант\w*"),
+  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?<!не\s)(?<!ні\s)(?<!\w)я(?!\s+(?:не|ні)\b)\s+докторант(?:к\w*)?|(?<!не\s)(?<!ні\s)(?<!\w)(?:я|є)(?!\s+(?:не|ні)\b)\s+аспірант\w*|(?<!\w)я(?!\s+(?:не|ні)\b)\s+аспирант\w*"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
   ("II", r"\bii\s*stop|\b2\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|\bmgr\b|magisterk|магістратур|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|магистр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
   ("I", r"\bi\s*stop|\b1\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|1st\s*degre|first\s*degre|bachelor|bachel?or|undergrad|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
@@ -329,6 +329,52 @@ _CLARIFY_TIP_BY_STATUS = {
   "doktorant": "Можна однією фразою, напр. «докторант Школи докторської, 2 рік».",
  },
 }
+
+_QUOTE_SPAN = re.compile(r"[«„“\"][^»”\"]{0,240}[»”\"]|«[^»]{0,240}»")
+_DOCTORAL_ROLE = re.compile(
+    r"(?i)(?<!\w)(?:аспірант\w*|аспирант\w*|докторант\w*|doktorant\w*|"
+    r"doctoral\s+students?|phd(?:\s+students?)?|szko[lł]\w*\s+doktorsk\w*|"
+    r"doctoral\s+school|doktoratu\b|докторантур\w*|школ\w*\s+доктор\w*)"
+)
+_FIRST_PERSON = re.compile(r"(?i)(?<!\w)(?:я|jestem|i'?m|i\s+am)(?!\w)")
+_OTHER_SUBJECT = re.compile(
+    r"(?i)(?<!\w)(?:вона|він|воно|вони|ми|она|он|они|мы|ona|oni|"
+    r"she|he|they|we|her|his|their|"
+    r"(?:мій|моя|мої|мой|мои|mój|moja|my)\s+"
+    r"(?:колег\w*|коллег\w*|koleg\w*|koleżank\w*|colleague|friend|друг\w*|подруг\w*))(?!\w)"
+)
+_SUBJECT_NEGATION = re.compile(r"(?i)(?<!\w)(?:nie|not|no|ні|не|нема)(?!\w)")
+_SHORT_DOCTORAL_SELF = re.compile(
+    r"(?i)^\s*(?:a\s+)?(?:doctoral\s+students?|phd(?:\s+students?)?)\s*[.!]?\s*$"
+)
+
+
+def speaker_claims_doctoral(text: str) -> bool:
+    """True only when the speaker, not somebody else, claims the doctoral role.
+
+    The closest subject before the role decides. First person singular wins.
+    Third person, plural, a quoted example, a negation, or no subject does not
+    write the speaker profile.
+    """
+    visible = _QUOTE_SPAN.sub(" ", text or "")
+    if _SHORT_DOCTORAL_SELF.match(visible.strip()):
+        return True
+    for clause in re.split(r"[.!?;\n]+", visible):
+        for match in _DOCTORAL_ROLE.finditer(clause):
+            prefix = clause[:match.start()]
+            first = list(_FIRST_PERSON.finditer(prefix))
+            other = list(_OTHER_SUBJECT.finditer(prefix))
+            last_first = first[-1].end() if first else -1
+            last_other = other[-1].end() if other else -1
+            if last_first < 0 or last_other > last_first:
+                continue
+            if _SUBJECT_NEGATION.search(prefix[first[-1].start() - 12:first[-1].start()]):
+                continue
+            if _SUBJECT_NEGATION.search(prefix[last_first:]):
+                continue
+            return True
+    return False
+
 
 def _negated_before(text, start, window=28):
     """True if a negation word sits in the few tokens before `start`."""
@@ -471,6 +517,12 @@ def extract_profile(text, conflicts_out=None):
         prof.setdefault("poziom", "SD")
     if prof.get("poziom") == "SD":
         prof.setdefault("status_doktor", True)
+    if (prof.get("status") == "doktorant" or prof.get("poziom") == "SD") and not speaker_claims_doctoral(t):
+        if prof.get("status") == "doktorant":
+            del prof["status"]
+        if prof.get("poziom") == "SD":
+            del prof["poziom"]
+        prof.pop("status_doktor", None)
     if re.search(r"drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(major|program|programme)|double\s*major|друг\w*\s*напрям|хоёр\s*мэргэжил", t, re.I) and \
        re.search(r"czy\s*(mog|moż)|can\s*i|is\s*it\s*possible|чи\s*мож|болох\s*уу", t, re.I):
         prof.setdefault("drugi_kierunek", "pytanie")
