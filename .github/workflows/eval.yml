@@ -6,6 +6,12 @@ on:
   schedule:
     - cron: "0 3 * * *"        # nightly e2e
   workflow_dispatch:
+    inputs:
+      case_ids:
+        description: 'Optional case-id regex. Empty keeps the nightly full e2e. A value runs only those cases once.'
+        required: false
+        type: string
+        default: ''
 jobs:
   eval-unit:
     runs-on: ubuntu-latest
@@ -73,8 +79,27 @@ jobs:
       - name: Critical e2e subset (e2e_pr)
         if: steps.gate.outputs.skip != '1'
         run: python tests/eval_dialogues.py --repo . --layer e2e --e2e-pr --runs 1
+  eval-e2e-cases:
+    # One explicit dispatch. Does not run on pull_request, so a normal push cannot start it.
+    if: github.event_name == 'workflow_dispatch' && inputs.case_ids != ''
+    runs-on: ubuntu-latest
+    env:
+      LLM_PROVIDER: anthropic
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      EMBED_PROVIDER: gemini
+      SESSION_SECRET: ci-only
+      SCENARIO_SOCIAL: "0"
+      CASE_ONLY: ${{ inputs.case_ids }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r requirements.txt pyyaml
+      - name: Targeted e2e cases, one run
+        run: python tests/eval_dialogues.py --repo . --layer e2e --only "$CASE_ONLY" --runs 1
   eval-e2e:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.case_ids == '')
     runs-on: ubuntu-latest
     env:
       LLM_PROVIDER: anthropic

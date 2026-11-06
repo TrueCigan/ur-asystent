@@ -242,6 +242,7 @@ def test_english_tuition_followups_keep_language_and_amount():
     assert second.get("lang") == "en"
     assert second.get("clarify") is False
     assert re.search(r"2[ ,.]?100\s*(EUR|euro)", ans, re.I)
+    assert not re.search(r"[ąćęłńóśźż]", ans, re.I)
     assert (second.get("profile") or {}).get("status") == "cudzoziemiec"
 
     intro = _answer(
@@ -259,6 +260,7 @@ def test_english_tuition_followups_keep_language_and_amount():
     assert follow.get("clarify") is False
     text = follow.get("answer") or ""
     assert re.search(r"2[ ,.]?100", text)
+    assert not re.search(r"[ąćęłńóśźż]", text, re.I)
     assert (follow.get("profile") or {}).get("poziom") == "II"
 
 

@@ -458,7 +458,10 @@ def _fact_entry_lines(f: Fact, i: int, lang: str, *, for_user: bool) -> list[str
     if labeled is not None:
         body = "\n".join(labeled)
     elif f.id == "tuition_english_programmes":
-        body = format_fact_value(f.value, unit="EUR", lang=lang)
+        value = f.value
+        if lang != "pl" and isinstance(value, dict):
+            value = {k: v for k, v in value.items() if k != "note"}
+        body = format_fact_value(value, unit="EUR", lang=lang)
     else:
         body = format_fact_value(f.value, unit=unit if not isinstance(f.value, (dict, list)) else "", lang=lang)
     if isinstance(f.value, (dict, list)):

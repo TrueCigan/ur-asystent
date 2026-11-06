@@ -1417,7 +1417,7 @@ def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_bl
             "en": "- Next: open the Rector’s scholarship page and the rules PDF; apply via the channel listed there.",
             "pl": "- Dalej: strona stypendium rektora i PDF z regulaminem; wniosek według instrukcji na stronie UR.",
         }.get(lang, "- Dalej: strona stypendium rektora i PDF z regulaminem."))
-    else:
+    elif lang != "en":
         # ogólny fallback – krótsze cytaty zamiast ściany tekstu
         for i, h in enumerate(hits[:3], 1):
             snip = re.sub(r"\s+", " ", h.get("text") or "")[:280]
@@ -1615,6 +1615,27 @@ def _apply_scenario_estimate(state, scenario_context) -> None:
             if k in scenario_context and scenario_context[k] is not None:
                 prof[k] = scenario_context[k]
     state.profile = prof
+
+
+def _with_selected_english_tuition(out, lang, selected_facts, question, hist_user):
+    """Keep the verified English-programme amount when that fact was used.
+
+    The model may answer in English and still omit 2100 EUR. The figure stays
+    the fact value, not a new amount.
+    """
+    if lang != "en":
+        return out
+    fact = next((f for f in selected_facts or [] if getattr(f, "id", None) == "tuition_english_programmes"), None)
+    if fact is None:
+        return out
+    blob = f"{hist_user or ''}\n{question or ''}"
+    if not re.search(r"(?i)english|angielsk|business", blob):
+        return out
+    if re.search(r"2[ ,.]?100\s*(EUR|euro)", out or "", re.I):
+        return out
+    from facts import _fact_entry_lines
+    block = "\n".join(_fact_entry_lines(fact, 1, "en", for_user=True))
+    return ((out or "").rstrip() + "\n" + block).strip()
 
 
 def _attach_state(result, state):
@@ -1899,6 +1920,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6, cited_fact_indexes=cited,
         )
         out += deadline_passed_note(out, lang)
+        out = _with_selected_english_tuition(out, lang, selected_facts, question, hist_user)
         state.original_question = None
         official = merge_official_sources(srcs, selected_facts, cited)
         return _attach_state(

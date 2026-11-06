@@ -203,4 +203,8 @@ def output_lang_ok(answer: str, target: str) -> bool:
         cyr = len(re.findall(r"[а-яА-ЯёЁіїєґөүІЇЄҐӨҮ]", body))
         if cyr > 0:
             return False
+    # The e2e detector treats any Polish diacritic as Polish. An English answer
+    # must not keep a Polish fact note or a Polish retrieval quote.
+    if target == "en" and re.search(r"[ąćęłńóśźż]", body, re.I):
+        return False
     return True
