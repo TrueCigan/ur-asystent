@@ -507,12 +507,13 @@
 - id: r7-e2e-no-stripper-sum-hole
   e2e_pr: true
   origin: r7-S1
+  # DS3 alone does not confirm Regulamin §12 conditions, so 1800 must not be required.
   turns:
     - "Cześć, jestem Ola, studia niestacjonarne II stopnia, obywatelka Polski, jeden kierunek. Chcę stypendium socjalne, dochód na osobę 1100 zł."
     - "mieszkam w DS3"
   e2e:
     lang_in: [pl]
-    must_match: ["1400", "400", "1800|1[ .]?800"]
+    must_match: ["1400", "400"]
     must_not_match: ["= miesięcznie", "Kwoty spoza FACTS", "uczelni/w systemie", "FOLLOW-UP", "PYTANIE ORYGINALNE"]
 - id: r7-render-doctoral-total
   origin: r7-S3
@@ -554,10 +555,11 @@
 - id: r7-slot-disability-degree-fills
   e2e_pr: true
   origin: r7-S6
+  # Status is not in the sentence, so a clarify is valid and 1400 is not required yet.
   turns: ["Здравствуйте, у меня значительная степень инвалидности, учусь заочно в магистратуре. Какая стипендия?"]
   per_turn_lang_not: [ru, mn]
   unit: {profile: {niepelnosprawnosc: tak, tryb: niestacjonarne, poziom: II}, missing_not: [niepelnosprawnosc]}
-  e2e: {lang_in: [uk], must_match: ["1400"], must_not_match: ["(?i)посвідчення|orzeczenie|certificate"]}
+  e2e: {lang_in: [uk], must_not_match: ["(?i)посвідчення|orzeczenie|certificate"]}
 - id: r7-slot-ukraine-not-pesel-ukr
   e2e_pr: true
   origin: r7-S2

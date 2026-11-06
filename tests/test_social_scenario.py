@@ -408,8 +408,10 @@ def test_ukraine_citizenship_does_not_attach_pesel_ukr_fact():
 
 
 def test_image_copies_social_scenario_file():
+    """Dockerfile text only. Runtime proof is scripts/ci_docker_smoke.sh in CI."""
     text = (ROOT / "Dockerfile").read_text(encoding="utf-8")
-    assert "data/scenarios" in text
+    assert "COPY data/scenarios" in text
+    assert (ROOT / "scripts" / "ci_docker_smoke.sh").is_file()
     assert (ROOT / "data" / "scenarios" / "social_scholarship.yaml").is_file()
 
 
