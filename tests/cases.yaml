@@ -213,7 +213,7 @@
   e2e: {must_match: ["(?i)III\\s*grup|grup\\w*\\s*III"], must_not_match: ["(?i)IV\\s*grup|grup\\w*\\s*IV"]}
 - id: r5-income-group-boundaries
   origin: r5-S1 (pure function)
-  income_group_table: {cases: [{income: 0, expect: I}, {income: 850.00, expect: I}, {income: 850.01, expect: II}, {income: 1200.00, expect: II}, {income: 1200.01, expect: III}, {income: 1550.00, expect: III}, {income: 1550.01, expect: IV}, {income: 1908.90, expect: IV}]}
+  income_group_table: {cases: [{income: 0, expect: null}, {income: 0.01, expect: I}, {income: 850.00, expect: I}, {income: 850.01, expect: II}, {income: 1200.00, expect: II}, {income: 1200.01, expect: III}, {income: 1550.00, expect: III}, {income: 1550.01, expect: IV}, {income: 1908.90, expect: IV}, {income: 1908.91, expect: null}]}
 - id: r5-single-cap-value
   origin: r5-S1/S4/S9
   turns: ["Mam orzeczenie o umiarkowanym stopniu niepełnosprawności. Jak uzyskać stypendium dla osób niepełnosprawnych i ile wynosi?", "obywatel Polski, zaocznie, 3 rok licencjatu, jeden kierunek"]

@@ -58,9 +58,13 @@ def test_card_i18n_uk_en():
 
 
 def test_group_boundaries_and_zero():
+    """Annex 2025/2026 (Aneks nr 1 z 11.12.2025, ustalenia pkt 2): I starts at 0,01 not 0,00."""
     fact = _income_fact()
+    assert fact.value["groups"]["I"].startswith("0,01")
+    g0, a0 = income_group(Decimal("0.00"), fact.value)
+    assert g0 is None and a0 is None
     cases = [
-        (Decimal("0.00"), "I", 1600.0),
+        (Decimal("0.01"), "I", 1600.0),
         (Decimal("850.00"), "I", 1600.0),
         (Decimal("850.01"), "II", 1400.0),
         (Decimal("1200.00"), "II", 1400.0),
@@ -73,18 +77,35 @@ def test_group_boundaries_and_zero():
         g, amt = income_group(income, fact.value)
         assert g == want_g, f"{income} → {g} want {want_g}"
         assert amt == want_amt
+    g_over, a_over = income_group(Decimal("1908.91"), fact.value)
+    assert g_over is None and a_over is None
 
 
-def test_estimate_zero_ok_dorm_not_in_total():
+def test_estimate_zero_is_not_group_I():
     r = S.estimate("0", academic_year="2025/2026", interested_in_dorm_topup=True, lang="pl")
-    assert r["ok"] is True
-    assert r["result"] == "amount_estimate"
-    assert r["income_group"] == "I"
-    assert r["base_amount"] == "1600.00"
-    assert r["total_display_amount"] == "1600.00"
-    assert r["conditional_dorm_topup"]["amount"] == "400.00"
-    assert r["conditional_dorm_topup"]["included_in_total"] is False
+    assert r["ok"] is False
+    assert r["result"] == "outside_published_band"
+    assert r.get("income_group") is None
+    assert r.get("base_amount") is None
+    assert r.get("total_display_amount") is None
+    assert r.get("conditional_dorm_topup") is None
     assert r["eligibility"] == "unknown"
+    assert "1600" not in (r.get("message") or "")
+    assert "grupę I" in (r.get("message") or "") or "grupy I" in (r.get("message") or "")
+    grosz = S.estimate("0.01", academic_year="2025/2026", interested_in_dorm_topup=True, lang="pl")
+    assert grosz["ok"] is True
+    assert grosz["income_group"] == "I"
+    assert grosz["base_amount"] == "1600.00"
+    assert grosz["total_display_amount"] == "1600.00"
+    assert grosz["conditional_dorm_topup"]["included_in_total"] is False
+    chat = S.format_chat_answer("pl", estimate_result=r)
+    assert "Grupa dochodowa: I" not in chat["answer"]
+    assert "outside_published_band" not in chat["answer"]
+    for lang, needle in (("en", "group I"), ("uk", "групою I")):
+        other = S.estimate("0,00", academic_year="2025/2026", lang=lang)
+        assert other["result"] == "outside_published_band"
+        assert "1600" not in (other.get("message") or "")
+        assert needle in (other.get("message") or "")
 
 
 def test_estimate_input_error_and_over_threshold():
@@ -96,19 +117,52 @@ def test_estimate_input_error_and_over_threshold():
     ny = S.estimate("1000", academic_year="2026/2027")
     assert ny["result"] == "amounts_not_confirmed"
     assert ny["ok"] is False
+    assert ny.get("income_group") is None
+    assert ny.get("base_amount") is None
+    assert ny.get("total_display_amount") is None
+    minus = S.estimate("-10", academic_year="2025/2026")
+    assert minus["result"] == "input_error"
+    assert minus.get("income_group") is None
+
+
+def test_dorm_topup_rule_mentions_spouse_or_child():
+    pl = S.build_card("pl")["dorm_topup"]["rule"]
+    en = S.build_card("en")["dorm_topup"]["rule"]
+    uk = S.build_card("uk")["dorm_topup"]["rule"]
+    assert "małżonkiem" in pl and "dzieckiem" in pl
+    assert "spouse" in en.lower() and "child" in en.lower()
+    assert "дитиною" in uk
+    assert "zamieszkania w domu studenta" not in en
 
 
 def test_estimate_dorm_included_only_when_conditions_true():
+    for cond in (None, False):
+        open_ = S.estimate(
+            "1100",
+            academic_year="2025/2026",
+            interested_in_dorm_topup=True,
+            dorm_conditions_met=cond,
+            lang="pl",
+        )
+        assert open_["ok"] and open_["income_group"] == "II"
+        assert open_["total_display_amount"] == "1400.00"
+        assert open_["conditional_dorm_topup"]["amount"] == "400.00"
+        assert open_["conditional_dorm_topup"]["included_in_total"] is False
+        assert "nie wliczone" in (open_["conditional_dorm_topup"]["label"] or "")
     r = S.estimate(
         "1100",
         academic_year="2025/2026",
         interested_in_dorm_topup=True,
         dorm_conditions_met=True,
+        lang="pl",
     )
     assert r["ok"]
     assert r["income_group"] == "II"
     assert r["dorm_topup_included"] is True
     assert r["total_display_amount"] == "1800.00"
+    assert "wliczone" in (r["conditional_dorm_topup"]["label"] or "")
+    assert "nie wliczone" not in (r["conditional_dorm_topup"]["label"] or "").lower()
+    assert "1800" in (r.get("total_display") or "")
 
 
 def test_chat_answer_no_placeholders():

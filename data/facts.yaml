@@ -13,12 +13,12 @@
   applies_to: {}
   candidates_seen:
   - value: 3560.60
-    note: MNiSW komunikat 2025/2026 — łączny limit socjalne+rektora
+    note: Komunikat MNiSW z 11.09.2025 (rok 2025/2026) podaje 3.560,6 zł. Cytowany URL odpowiedzi to aneks UR, nie strona gov.pl (tej strony nie ma w korpusie źródeł).
   source:
-    url: https://www.gov.pl/web/nauka/swiadczenia-dla-studentow-w-roku-akademickim-2025-2026
-    ordinance: Komunikat MNiSW — łączna miesięczna kwota stypendium socjalnego oraz stypendium rektora ≤ 3560,60 zł (rok akademicki 2025/2026)
-    document_date: '2025-10-01'
-    checked: '2026-11-05'
+    url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf
+    ordinance: Aneks nr 1 z 11.12.2025 do R-41/2025, ustalenia na rok 2025/2026, pkt 4 — łączna miesięczna wysokość stypendium socjalnego i stypendium rektora 3.560,60 zł. To nie jest limit 3667 zł z okna 2026/2027.
+    document_date: '2025-12-11'
+    checked: '2026-11-06'
   status: verified
   i18n_label:
     pl: Limit socjalne+rektora (2025/2026)
@@ -84,7 +84,7 @@
   value:
     max: 1908.9
     groups:
-      I: 0,00-850,00
+      I: 0,01-850,00
       II: 850,01-1200,00
       III: 1200,01-1550,00
       IV: 1550,01-1908,90
@@ -95,15 +95,18 @@
       IV: 1000.0
     zwiekszenie_akademik: 400.0
     zwiekszenie_akademik_rule: >-
-      Zwiększenie przysługuje w szczególnie uzasadnionych przypadkach (Regulamin § 12 / R-32/2024):
-      koszty zamieszkania w domu studenta lub innym obiekcie, gdy codzienny dojazd z miejsca stałego
-      zamieszkania uniemożliwiałby lub znacznie utrudniał studiowanie; wymagany skan umowy o zakwaterowanie/najem.
-      Samo zamieszkanie w DS bez spełnienia tych przesłanek nie wystarcza.
+      Zwiększenie (kwota z tabeli tego roku) przysługuje w szczególnie uzasadnionych przypadkach
+      (Regulamin § 12 / R-32/2024): koszty zamieszkania w domu studenta albo w innym obiekcie,
+      w szczególności gdy brak miejsc w domu studenta, jeżeli codzienny dojazd z miejsca stałego
+      zamieszkania uniemożliwiałby lub w znacznym stopniu utrudniał studiowanie. To samo dotyczy
+      zamieszkania z niepracującym małżonkiem lub dzieckiem studenta, gdy spełniony jest ten warunek
+      dojazdu. Wymagany jest skan umowy o zakwaterowanie w domu studenckim lub umowy najmu.
+      Samo zamieszkanie w domu studenta bez tych przesłanek nie wystarcza.
   unit: PLN/person
   academic_year: 2025/2026
   applies_to: {}
   candidates_seen:
-  - note: Stawki grup i +400 zł — Aneks do R-41/2025 na rok 2025/2026. Na 2026/2027 UR podaje próg ustawowy 2099,70 zł, ale tabeli grup/kwot jeszcze nie potwierdzono w FACTS.
+  - note: Stawki grup i +400 zł — Aneks do R-41/2025, ustalenia 2025/2026, pkt 2-3 i 6. I grupa od 0,01 zł, nie od 0,00 zł. Na 2026/2027 strona UR podaje próg 2099,70 zł, ale tabeli grup i kwot w tym aneeksie nie ma.
   source:
     url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf
     ordinance: Aneks nr 1 z 11.12.2025 do zarządzenia R-41/2025 (Załącznik nr 1), pkt 2-3, 6; warunki zwiększenia — Regulamin R-32/2024 § 12

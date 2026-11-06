@@ -942,6 +942,12 @@ document.getElementById('ss-form')?.addEventListener('submit', async (e) => {
 
 document.getElementById('ss-year')?.addEventListener('change', () => {
   syncSocialYearBanner(document.getElementById('ss-year')?.value);
+  const out = document.getElementById('est-out');
+  if (out) {
+    out.textContent = '';
+    out.hidden = true;
+  }
+  scenarioCtx = null;
 });
 
 fetch('/api/status').then(r => r.json()).then(j => {

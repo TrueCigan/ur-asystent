@@ -41,9 +41,12 @@ i18n:
     dorm_topup_title: Zwiększenie (akademik / inny obiekt)
     dorm_topup_rule: >-
       Zwiększenie przysługuje w szczególnie uzasadnionych przypadkach (Regulamin § 12 / R-32/2024):
-      koszty zamieszkania w domu studenta lub innym obiekcie, gdy codzienny dojazd z miejsca stałego
-      zamieszkania uniemożliwiałby lub znacznie utrudniał studiowanie; wymagany skan umowy o zakwaterowanie/najem.
-      Samo zamieszkanie w DS bez spełnienia tych przesłanek nie wystarcza.
+      koszty zamieszkania w domu studenta albo w innym obiekcie, w szczególności gdy brak miejsc w domu studenta,
+      jeżeli codzienny dojazd z miejsca stałego zamieszkania uniemożliwiałby lub w znacznym stopniu utrudniał studiowanie.
+      To samo dotyczy zamieszkania z niepracującym małżonkiem lub dzieckiem studenta, gdy spełniony jest ten warunek dojazdu.
+      Wymagany jest skan umowy o zakwaterowanie w domu studenckim lub umowy najmu.
+      Samo zamieszkanie w domu studenta bez tych przesłanek nie wystarcza.
+      Wysokość zwiększenia na dany rok podaje tabela kwot tego roku.
     deadlines_title: Terminy składania wniosków
     deadlines_period_label: rok okna wniosków
     deadlines_note: >-
@@ -59,7 +62,7 @@ i18n:
     form_year: Rok akademicki tabeli kwot
     form_dorm: Interesuje mnie zwiększenie z tytułu zakwaterowania
     form_submit: Oblicz szacunek
-    form_hint: 0 zł jest dozwolone. Wynik to grupa i kwota bazowa; zwiększenie pokazujemy osobno, jeśli warunki nie są potwierdzone.
+    form_hint: 0 zł można wpisać, ale tabela 2025/2026 zaczyna się od 0,01 zł — dla 0,00 zł nie podajemy grupy ani stawki. Zwiększenie pokazujemy osobno, jeśli warunki nie są potwierdzone.
     result_base: Kwota bazowa (szacunek)
     result_group: Grupa dochodowa
     result_topup_conditional: Zwiększenie warunkowe (nie wliczone do sumy)
@@ -68,6 +71,7 @@ i18n:
     result_total_with_topup: Suma (baza + zwiększenie)
     result_not_eligibility: To nie jest decyzja o prawie do stypendium.
     err_input: Nieprawidłowa kwota dochodu.
+    err_outside_band: "{income} to poprawny wpis, ale opublikowana tabela na rok {year} nie przypisuje tej kwocie grupy ani stawki (pierwsza kwota w tabeli: {min}). Nie podajemy wypłaty i nie uznajemy tego za grupę I."
     err_over: Dochód przekracza próg tabeli na ten rok — brak kwoty w tej tabeli.
     err_year: Brak potwierdzonej tabeli kwot UR dla wybranego roku — nie podajemy aktualnego wyliczenia.
     err_eligibility: Brakuje danych o prawie do świadczenia (status studenta, kierunek itd.) — kwotę bazową można oszacować osobno, prawa nie stwierdzamy.
@@ -99,9 +103,11 @@ i18n:
     dorm_topup_title: Top-up (dorm / other housing)
     dorm_topup_rule: >-
       The top-up applies in specially justified cases (Regulations § 12 / R-32/2024): housing costs in a
-      student dorm or other facility when daily travel from the permanent residence would prevent or
-      seriously hinder studying; a scan of the housing or rental contract is required. Living in a dorm
-      alone without meeting those conditions is not enough.
+      student dorm or another facility, in particular when there are no dorm places, if daily travel from
+      the permanent residence would prevent or seriously hinder studying. The same applies to living there
+      with a non-working spouse or the student's child when that travel condition is met. A scan of the
+      dorm contract or a lease is required. Living in a dorm alone, without those conditions, is not enough.
+      The top-up amount for a given year comes from that year's amount table.
     deadlines_title: Application window
     deadlines_period_label: application-window year
     deadlines_note: >-
@@ -117,7 +123,7 @@ i18n:
     form_year: Academic year of the amount table
     form_dorm: I am interested in the accommodation top-up
     form_submit: Calculate estimate
-    form_hint: 0 PLN is allowed. Result is the group and base amount; the top-up is shown separately unless conditions are confirmed.
+    form_hint: 0 PLN can be entered, but the 2025/2026 table starts at 0.01 PLN — 0.00 PLN gets no group and no amount. The top-up is shown separately unless conditions are confirmed.
     result_base: Base amount (estimate)
     result_group: Income group
     result_topup_conditional: Conditional top-up (not included in total)
@@ -126,6 +132,7 @@ i18n:
     result_total_with_topup: Total (base + top-up)
     result_not_eligibility: This is not an entitlement decision.
     err_input: Invalid income amount.
+    err_outside_band: "{income} is a valid entry, but the published table for {year} assigns no group and no amount to it (first amount in the table: {min}). We do not state a payout and we do not treat this as group I."
     err_over: Income exceeds the table threshold for this year — no amount in this table.
     err_year: No confirmed UR amount table for the selected year — calculation is not treated as current.
     err_eligibility: Entitlement data is incomplete (student status, programme, etc.) — base amount may be estimated separately; we do not confirm entitlement.
@@ -157,9 +164,12 @@ i18n:
     dorm_topup_title: Надбавка (гуртожиток / інше житло)
     dorm_topup_rule: >-
       Надбавка надається в особливо обґрунтованих випадках (Регламент § 12 / R-32/2024):
-      витрати на проживання в гуртожитку або іншому об'єкті, якщо щоденний проїзд із місця постійного
-      проживання унеможливлював би або суттєво ускладнював навчання; потрібен скан договору про проживання/оренду.
+      витрати на проживання в гуртожитку або іншому об'єкті, зокрема коли немає місць у гуртожитку,
+      якщо щоденний проїзд із місця постійного проживання унеможливлював би або суттєво ускладнював навчання.
+      Те саме стосується проживання з непрацюючим чоловіком чи дружиною або дитиною студента, якщо виконано цю умову проїзду.
+      Потрібен скан договору про проживання в гуртожитку або договору оренди.
       Самого проживання в гуртожитку без цих підстав недостатньо.
+      Суму надбавки на рік дає таблиця сум цього року.
     deadlines_title: Терміни подання заяв
     deadlines_period_label: рік вікна подання
     deadlines_note: >-
@@ -175,7 +185,7 @@ i18n:
     form_year: Навчальний рік таблиці сум
     form_dorm: Цікавить надбавка за проживання
     form_submit: Порахувати оцінку
-    form_hint: 0 злотих дозволено. Результат — група і базова сума; надбавку показуємо окремо, якщо умови не підтверджені.
+    form_hint: 0 злотих можна ввести, але таблиця 2025/2026 починається з 0,01 злотого — для 0,00 злотого немає групи і суми. Надбавку показуємо окремо, якщо умови не підтверджені.
     result_base: Базова сума (оцінка)
     result_group: Група доходу
     result_topup_conditional: Умовна надбавка (не в підсумку)
@@ -184,6 +194,7 @@ i18n:
     result_total_with_topup: Сума (база + надбавка)
     result_not_eligibility: Це не рішення про право на стипендію.
     err_input: Некоректна сума доходу.
+    err_outside_band: "{income} — коректний запис, але опублікована таблиця на рік {year} не призначає цій сумі групи і ставки (перша сума в таблиці: {min}). Виплату не називаємо і не вважаємо це групою I."
     err_over: Дохід перевищує поріг таблиці на цей рік — у цій таблиці немає суми.
     err_year: Немає підтвердженої таблиці сум UR на вибраний рік — розрахунок не вважається актуальним.
     err_eligibility: Бракує даних про право на виплату (статус студента, напрям тощо) — базову суму можна оцінити окремо; право не підтверджуємо.

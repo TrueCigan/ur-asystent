@@ -9,7 +9,7 @@ from typing import Any
 
 import yaml
 
-from facts import Fact, income_group, load_facts
+from facts import Fact, _groups_table, income_group, load_facts
 
 _ROOT = Path(__file__).resolve().parents[2]
 _SCENARIO_PATH = _ROOT / "data" / "scenarios" / "social_scholarship.yaml"
@@ -269,7 +269,8 @@ def estimate(
     if inc is None or inc < 0:
         return {**base, "ok": False, "result": "input_error", "message": t.get("err_input")}
 
-    # Zero is a valid income input (maps into group I when table starts at 0).
+    # 0.00 is a real entry. The 2025/2026 annex starts group I at 0.01 zł, so zero
+    # is not a published band and must not be reported as group I / 1600.
     groups_val = income_f.value if income_f else None
     max_income = _dec((groups_val or {}).get("max")) if isinstance(groups_val, dict) else None
     if max_income is not None and inc > max_income:
@@ -286,7 +287,26 @@ def estimate(
     g, amt = income_group(inc, groups_val)
     base_amt = _dec(amt)
     if not g or base_amt is None:
-        return {**base, "ok": False, "result": "input_error", "message": t.get("err_input")}
+        table = _groups_table(groups_val)
+        first_min = min((row["min"] for row in table), default=None) if table else None
+        tpl = t.get("err_outside_band") or ""
+        try:
+            msg = tpl.format(
+                year=year,
+                income=_fmt_money(inc, lang),
+                min=_fmt_money(first_min, lang) if first_min is not None else "",
+            )
+        except (KeyError, ValueError):
+            msg = tpl or t.get("err_input")
+        return {
+            **base,
+            "ok": False,
+            "result": "outside_published_band",
+            "message": msg,
+            "income": str(inc),
+            "published_min": str(first_min) if first_min is not None else None,
+            "eligibility": "unknown",
+        }
 
     topup = _dec((groups_val or {}).get("zwiekszenie_akademik")) if isinstance(groups_val, dict) else None
     topup_block = None
