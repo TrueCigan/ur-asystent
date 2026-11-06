@@ -126,6 +126,9 @@ def select_facts(
             continue
         if not _profile_matches(f, profile):
             continue
+        # Special-act text names PESEL UKR. Unknown residence is not that status.
+        if f.id == "ukr_special_act" and profile.get("pobyt") != "ukr":
+            continue
         verified = f.status == "verified" and f.value is not None
         if verified or (include_unverified and f.value is not None):
             by_id.setdefault(f.id, []).append(f)

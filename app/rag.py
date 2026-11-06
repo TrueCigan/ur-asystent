@@ -319,7 +319,7 @@ _CLARIFY_TIP_BY_STATUS = {
   "doktorant": "Możesz odpowiedzieć jednym zdaniem, np. „doktorant Szkoły Doktorskiej, 2 rok”.",
  },
  "en": {
-  "pl": "You can reply in one sentence, e.g. “Polish citizen, full-time, bachelor, year 2, one programme”.",
+  "pl": "You can reply in one sentence, e.g. “full-time, bachelor, year 2, one programme”.",
   "cudzoziemiec": "You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.",
   "doktorant": "You can reply in one sentence, e.g. “doctoral student, year 2”.",
  },
@@ -978,7 +978,7 @@ PROF_LABEL = {
 PROF_VAL = {
  "pl": {},
  "en": {
-  "pl": "Polish citizen", "cudzoziemiec": "international student", "doktorant": "doctoral student",
+  "pl": "Polish student", "cudzoziemiec": "international student", "doktorant": "doctoral student",
   "bezpanstwowiec": "stateless", "stacjonarne": "full-time", "niestacjonarne": "part-time",
   "I": "1st cycle", "II": "2nd cycle", "SD": "doctoral school", "jednolite": "long-cycle",
   "tak": "yes", "nie": "no", "pobyt_czasowy": "temporary residence", "pobyt_staly": "permanent residence",
@@ -1423,7 +1423,7 @@ def search_topics(base_q, topics, prof, k_per=4, fac=None):
 _GENERAL_PROFILE_SLOTS = {"status", "poziom", "rok", "tryb", "kierunek", "drugi_kierunek"}
 _SENSITIVE_PROFILE_SLOTS = {"niepelnosprawnosc", "pobyt"}
 
-def merge_state_profile(state, prof, topics, history):
+def merge_state_profile(state, prof, topics, history, question=None):
     """Carry only conversation-scoped slots; never reuse sensitive slots on empty history (R5-1)."""
     prof = dict(prof or {})
     topics = list(topics or [])
@@ -1462,15 +1462,17 @@ def merge_state_profile(state, prof, topics, history):
                 for x in slots:
                     if x not in req:
                         req.append(x)
-    # Use latest user text for amount/cap gating (same rules as needed)
-    latest_q = ""
-    for m in reversed(hist):
-        if isinstance(m, dict) and m.get("role") == "user":
-            latest_q = m.get("content") or ""
-            break
-        if isinstance(m, str):
-            latest_q = m
-            break
+    # Gate on this turn's question. History-only text drops the gate when the
+    # chat has no prior user turn, so a cap/tuition question is clarified again.
+    latest_q = question if question else ""
+    if not latest_q:
+        for m in reversed(hist):
+            if isinstance(m, dict) and m.get("role") == "user":
+                latest_q = m.get("content") or ""
+                break
+            if isinstance(m, str):
+                latest_q = m
+                break
     hist_user = "\n".join(
         (m.get("content") if isinstance(m, dict) else str(m)) or ""
         for m in hist
@@ -1583,7 +1585,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
     extract_profile(question, conflicts_out=turn_conflicts)
     if turn_conflicts:
         state.conflicts.extend(turn_conflicts)
-    prof, missing = merge_state_profile(state, prof, topics, history)
+    prof, missing = merge_state_profile(state, prof, topics, history, question=question)
     state.profile = dict(prof)
     # Accumulate pending intents across clarify + follow-ups (R5-4)
     topics = _accumulate_topics(
@@ -1623,7 +1625,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                 state.conflicts.extend(confs)
                 prof = prof2
                 state.profile = dict(prof)
-                _, missing = merge_state_profile(state, prof, topics, history)
+                _, missing = merge_state_profile(state, prof, topics, history, question=question)
         except Exception:
             pass
         if missing and prev_pending and set(missing) & set(prev_pending):

@@ -334,6 +334,85 @@ def test_signed_session_drops_stale_year_estimate():
             os.environ["SCENARIO_SOCIAL"] = prev
 
 
+def test_cap_question_is_not_a_status_reask():
+    """Amount/cap questions must not be clarified just because history is empty."""
+    prev = os.environ.get("LLM_PROVIDER")
+    os.environ["LLM_PROVIDER"] = ""
+    os.environ.pop("LLM_API_KEY", None)
+    os.environ.pop("SCENARIO_SOCIAL", None)
+    try:
+        import rag
+        r = rag.answer(
+            "Hi, I am a Polish student on a master's with GPA 4.9. "
+            "What is the rector's scholarship and the combined social+rector cap?",
+            [],
+        )
+        ans = r.get("answer") or ""
+        assert r.get("clarify") is False, r.get("mode")
+        assert "Polish citizen" not in ans
+        assert "3667" in ans
+        assert any(x in ans for x in ("1000", "1200", "1400", "1600"))
+    finally:
+        if prev is None:
+            os.environ.pop("LLM_PROVIDER", None)
+        else:
+            os.environ["LLM_PROVIDER"] = prev
+
+
+def test_english_programme_fee_not_blocked_by_empty_history():
+    prev = os.environ.get("LLM_PROVIDER")
+    os.environ["LLM_PROVIDER"] = ""
+    os.environ.pop("LLM_API_KEY", None)
+    os.environ.pop("SCENARIO_SOCIAL", None)
+    try:
+        import rag
+        r = rag.answer(
+            "Hello, I am from India on Mechanical Engineering English programme. How much per semester?",
+            [],
+        )
+        ans = r.get("answer") or ""
+        assert r.get("clarify") is False, ans[:200]
+        assert "2600" in ans
+    finally:
+        if prev is None:
+            os.environ.pop("LLM_PROVIDER", None)
+        else:
+            os.environ["LLM_PROVIDER"] = prev
+
+
+def test_ukraine_citizenship_does_not_attach_pesel_ukr_fact():
+    prev = os.environ.get("LLM_PROVIDER")
+    os.environ["LLM_PROVIDER"] = ""
+    os.environ.pop("LLM_API_KEY", None)
+    os.environ.pop("SCENARIO_SOCIAL", None)
+    try:
+        import rag
+        from facts import load_facts, select_facts
+        plain = select_facts(load_facts(), ["stypendium_socjalne"], {"status": "cudzoziemiec"})
+        assert all(f.id != "ukr_special_act" for f in plain)
+        protected = select_facts(
+            load_facts(), ["stypendium_socjalne"], {"status": "cudzoziemiec", "pobyt": "ukr"},
+        )
+        assert any(f.id == "ukr_special_act" for f in protected)
+        r = rag.answer(
+            "Здравствуйте, я студент из Украины, доход 800 злотых, учусь очно, бакалавриат.",
+            [],
+        )
+        assert "PESEL UKR" not in (r.get("answer") or "")
+        assert (r.get("profile") or {}).get("pobyt") != "ukr"
+    finally:
+        if prev is None:
+            os.environ.pop("LLM_PROVIDER", None)
+        else:
+            os.environ["LLM_PROVIDER"] = prev
+
+
+def test_image_copies_social_scenario_file():
+    text = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    assert "data/scenarios" in text
+    assert (ROOT / "data" / "scenarios" / "social_scholarship.yaml").is_file()
+
+
 def test_chat_followup_not_stuck(monkeypatch=None):
     prev = os.environ.get("SCENARIO_SOCIAL")
     os.environ["SCENARIO_SOCIAL"] = "1"
