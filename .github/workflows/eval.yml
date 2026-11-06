@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       run: ${{ steps.decide.outputs.run }}
+      cases: ${{ steps.decide.outputs.cases }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,6 +49,12 @@ jobs:
             echo "eval-e2e-pr skipped because HEAD contains [skip e2e]. Skipped is not a pass."
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+          if printf '%s\n' "$msg" | grep -q '\[e2e cases\]'; then
+            echo 'cases=^(topic-english-programme-tuition|r5-tuition-en-programme-amount|lang-ru-rector-stays-uk|lang-mn-never-ru)$' >> "$GITHUB_OUTPUT"
+            echo "eval-e2e-cases will run those four ids once. This is not the 15-case job."
+          else
+            echo "cases=" >> "$GITHUB_OUTPUT"
           fi
   eval-e2e-pr:
     # Live model subset. A failure fails this workflow. [skip e2e] skips the job;
@@ -80,8 +87,14 @@ jobs:
         if: steps.gate.outputs.skip != '1'
         run: python tests/eval_dialogues.py --repo . --layer e2e --e2e-pr --runs 1
   eval-e2e-cases:
-    # One explicit dispatch. Does not run on pull_request, so a normal push cannot start it.
-    if: github.event_name == 'workflow_dispatch' && inputs.case_ids != ''
+    # Four fixed ids when the head commit says [e2e cases]. [skip e2e] still skips the 15-case job.
+    # workflow_dispatch with case_ids is the other entry; this token cannot start that dispatch.
+    needs: e2e-pr-gate
+    if: >
+      always() && (
+        (github.event_name == 'workflow_dispatch' && inputs.case_ids != '') ||
+        (github.event_name == 'pull_request' && needs.e2e-pr-gate.outputs.cases != '')
+      )
     runs-on: ubuntu-latest
     env:
       LLM_PROVIDER: anthropic
@@ -90,7 +103,7 @@ jobs:
       EMBED_PROVIDER: gemini
       SESSION_SECRET: ci-only
       SCENARIO_SOCIAL: "0"
-      CASE_ONLY: ${{ inputs.case_ids }}
+      CASE_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.case_ids || needs.e2e-pr-gate.outputs.cases }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
