@@ -83,15 +83,33 @@ def test_ukrainian_doctoral_self_id_variants_and_amounts():
     for text in (
         "я аспірант",
         "я аспірантка",
+        "я аспірантки",
         "я аспіранткою",
         "є аспірантом",
+        "є аспіранткою",
         "Я аспірантці",
     ):
         prof = extract_profile(text)
         assert prof.get("status") == "doktorant", text
         assert prof.get("poziom") == "SD", text
-    bare = extract_profile("Розкажіть про аспірантуру в університеті")
-    assert bare.get("status") != "doktorant"
+    for text in (
+        "Розкажіть про аспірантуру в університеті",
+        "Яка стипендія для аспіранта?",
+        "стипендія для аспірантів",
+        "я не аспірантка",
+        "не є аспірантом",
+        "я не є аспіранткою",
+    ):
+        prof = extract_profile(text)
+        assert prof.get("status") != "doktorant", text
+        assert prof.get("poziom") != "SD", text
+    third = _answer("Яка стипендія для аспірантів?")
+    assert third.get("profile", {}).get("status") != "doktorant"
+    assert third.get("clarify") is True
+    assert "6571" not in (third.get("answer") or "")
+    negated = _answer("Привіт, я не аспірантка. Яка стипендія для аспірантів?")
+    assert negated.get("profile", {}).get("status") != "doktorant"
+    assert negated.get("clarify") is True
     result = _answer(
         "Привіт, я аспірантка 3 року після оцінки середньоперіодичної, маю інвалідність. Яка стипендія?"
     )
@@ -101,8 +119,8 @@ def test_ukrainian_doctoral_self_id_variants_and_amounts():
     assert "5500,50" in ans
     assert "1071,15" in ans
     assert "6571,65" in ans
-    assert "2026/2027" in ans
-    assert "01.01.2026" in ans
+    assert "26.02.2024" in ans
+    assert "не встановлює 2026/2027" in ans
 
 
 def test_doctoral_disability_total_uses_verified_decimals():
@@ -122,9 +140,37 @@ def test_doctoral_disability_total_uses_verified_decimals():
     assert "1071,15" in ans
     assert "5500,50" in ans
     assert "3570,50" in ans
-    assert "2026/2027" in ans
+    assert "26.02.2024" in ans
+    assert "Dz.U. 2026 poz. 525" in ans
+    assert "14.04.2026" in ans
+    assert "nie ustala roku 2026/2027" in ans
+    assert "nie uprawnienia do stypendium" in ans
+    assert "ustawowe minimum od 01.01.2026" not in ans
+    for line in ans.splitlines():
+        if "stypendium doktoranckiego" in line.lower() or line.startswith("Podstawa"):
+            assert "(2026/2027)" not in line, line
     assert "37%" in ans
     assert not re.search(r"(?i)zwiększen\w*[^\.\n]{0,50}37\s*%", ans)
+
+
+def test_doctoral_dates_stay_with_the_source_that_states_them():
+    facts = load_facts()
+    by_id = {f.id: f for f in facts}
+    stipend = by_id["doctoral_stipend_amount"]
+    topup = by_id["doctoral_disability_topup_monthly"]
+    salary = by_id["professor_salary_monthly"]
+    assert stipend.academic_year in (None, "")
+    assert topup.academic_year in (None, "")
+    assert stipend.source["document_date"] == "2024-02-26"
+    assert topup.source["document_date"] == "2024-02-26"
+    assert stipend.source["url"] == "https://www.gov.pl/web/nauka/stypendium-doktoranckie"
+    assert "Nie ustala roku 2026/2027 ani daty 01.01.2026" in stipend.source["ordinance"]
+    assert salary.source["document_date"] == "2026-04-14"
+    assert salary.source.get("url") in (None, "")
+    assert "Dz.U. 2026 poz. 525" in salary.source["ordinance"]
+    assert "01.01.2026" in salary.source["ordinance"]
+    assert "nie o przyznaniu stypendium" in salary.source["ordinance"]
+    assert str(doctoral_components(stipend)["total_po"]) == "6571.65"
 
 
 def test_english_tuition_followups_keep_language_and_amount():

@@ -382,25 +382,27 @@ def doctoral_base_lines(fact: Fact, lang: str) -> list[str] | None:
     c = doctoral_components(fact)
     if not c:
         return None
-    year = c["year"]
     if lang == "en":
         return [
-            f"Period: statutory minimum from 01.01.2026 (fact year {year}). Not the student social-scholarship table.",
             f"Base before the mid-term evaluation: {c['pct_before']}% of the professor salary = {_money(c['przed'], lang)}/month. This percentage is the statutory base, not the disability supplement.",
             f"Base after the mid-term evaluation: {c['pct_after']}% of the professor salary = {_money(c['po'], lang)}/month.",
+            "These amounts are the ones listed on the gov.pl page dated 26.02.2024. That page does not state academic year 2026/2027 or the date 01.01.2026.",
+            "Professor salary 9650 PLN for salaries from 01.01.2026 comes from Dz.U. 2026 poz. 525 of 14.04.2026. That act sets the salary. It is not a decision that the stipend applies from that date.",
             f"Disability supplement: {c['pct_dis']}% of the pre-evaluation base = {_money(c['top'], lang)}/month. It is not {c['pct_before']}% of the professor salary.",
         ]
     if lang == "uk":
         return [
-            f"Період: законний мінімум від 01.01.2026 (рік факту {year}). Це не таблиця студентської соціальної стипендії.",
             f"База до середньострокової оцінки: {c['pct_before']}% зарплати професора = {_money(c['przed'], lang)}/міс. Цей відсоток є законною базою, а не надбавкою за інвалідність.",
             f"База після середньострокової оцінки: {c['pct_after']}% зарплати професора = {_money(c['po'], lang)}/міс.",
+            "Ці суми наведено на сторінці gov.pl від 26.02.2024. Сторінка не встановлює 2026/2027 і не встановлює дату 01.01.2026.",
+            "Зарплата професора 9650 zł для виплат від 01.01.2026: Dz.U. 2026 poz. 525 від 14.04.2026. Це правило про зарплату, а не рішення про стипендію.",
             f"Надбавка за інвалідність: {c['pct_dis']}% бази до оцінки = {_money(c['top'], lang)}/міс. Це не {c['pct_before']}% зарплати професора.",
         ]
     return [
-        f"Okres: ustawowe minimum od 01.01.2026 (rok faktu {year}). To nie jest tabela stypendium socjalnego dla studentów.",
         f"Podstawa przed oceną śródokresową: {c['pct_before']}% wynagrodzenia profesora = {_money(c['przed'], lang)}/mies. Ten procent jest podstawą ustawową, a nie zwiększeniem z tytułu niepełnosprawności.",
         f"Podstawa po ocenie śródokresowej: {c['pct_after']}% wynagrodzenia profesora = {_money(c['po'], lang)}/mies.",
+        "Te kwoty podaje strona gov.pl z 26.02.2024. Ta strona nie ustala roku 2026/2027 ani daty 01.01.2026.",
+        "Wynagrodzenie profesora 9650 zł dla wynagrodzeń od 01.01.2026: Dz.U. 2026 poz. 525 z 14.04.2026. Przepis dotyczy wynagrodzenia, nie uprawnienia do stypendium od tej daty.",
         f"Zwiększenie z tytułu niepełnosprawności: {c['pct_dis']}% podstawy sprzed oceny = {_money(c['top'], lang)}/mies. To nie jest {c['pct_before']}% wynagrodzenia profesora.",
     ]
 
@@ -427,17 +429,20 @@ def doctoral_total_line(fact: Fact, lang: str, *, after_evaluation: bool) -> str
             when = "Przed oceną śródokresową"
     if lang == "en":
         return (
-            f"{when} ({c['year']}): {_money(base, lang)} + disability supplement {_money(c['top'], lang)} "
-            f"= {_money(total, lang)}/month."
+            f"{when}: {_money(base, lang)} + disability supplement {_money(c['top'], lang)} "
+            f"= {_money(total, lang)}/month. This is the sum of the amounts listed on the page dated 26.02.2024. "
+            "These sources do not confirm which period the stipend covers."
         )
     if lang == "uk":
         return (
-            f"{when} ({c['year']}): {_money(base, lang)} + надбавка {_money(c['top'], lang)} "
-            f"= {_money(total, lang)}/міс."
+            f"{when}: {_money(base, lang)} + надбавка {_money(c['top'], lang)} "
+            f"= {_money(total, lang)}/міс. Це сума сум зі сторінки від 26.02.2024. "
+            "Ці джерела не підтверджують, якого періоду стосується стипендія."
         )
     return (
-        f"{when} ({c['year']}): {_money(base, lang)} + zwiększenie {_money(c['top'], lang)} "
-        f"= {_money(total, lang)}/mies."
+        f"{when}: {_money(base, lang)} + zwiększenie {_money(c['top'], lang)} "
+        f"= {_money(total, lang)}/mies. To suma kwot ze strony z 26.02.2024. "
+        "Te źródła nie potwierdzają, jakiego okresu dotyczy stypendium."
     )
 
 

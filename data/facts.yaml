@@ -295,9 +295,9 @@
     base_rate_percent_of_professor_przed: 37
     base_rate_percent_of_professor_po: 57
     disability_topup_percent_of_przed: 30
-    note: 'Statutory BASE, art. 209 PSWN, separate from the disability supplement. Before the mid-term evaluation the base is 37% of the professor salary; after the evaluation it is 57%. The disability supplement is 30% of the pre-evaluation base (1071.15 PLN), not 37% of the professor salary. Figures are the statutory minimum from 01.01.2026 (professor salary 9650 PLN), fact year 2026/2027, not the student social table.'
+    note: 'Amounts listed on gov.pl (page date 26.02.2024): base 37% before the mid-term evaluation and 57% after; disability supplement 30% of the pre-evaluation base (1071.15), not 37% of the professor salary. That page does not state 2026/2027 or 01.01.2026. Professor salary 9650 from 01.01.2026 is Dz.U. 2026 poz. 525 (14.04.2026), a salary rule, not a stipend decision. 6571.65 is 5500.50 + 1071.15. The stipend period is not confirmed.'
   unit: PLN/month
-  academic_year: 2026/2027
+  academic_year: null
   applies_to:
     status:
     - doktorant
@@ -305,8 +305,8 @@
   - note: none found; 2022 page flagged outdated
   source:
     url: https://www.gov.pl/web/nauka/stypendium-doktoranckie
-    ordinance: art. 209 ust. 4 ustawy PSWN + rozp. MNiSW z 14.04.2026 (Dz.U. 2026 poz. 525), wynagrodzenie profesora 9650 zł od 01.01.2026
-    document_date: '2026-04-14'
+    ordinance: Strona gov.pl z 26.02.2024 podaje 3570,50 / 5500,50 / 1071,15. Nie ustala roku 2026/2027 ani daty 01.01.2026.
+    document_date: '2024-02-26'
     checked: '2026-11-05'
   status: verified
   i18n_label:
@@ -320,15 +320,15 @@
   - stypendium_niepeln
   value: 1071.15
   unit: PLN/month
-  academic_year: 2026/2027
+  academic_year: null
   applies_to:
     status:
     - doktorant
   candidates_seen: []
   source:
     url: https://www.gov.pl/web/nauka/stypendium-doktoranckie
-    ordinance: art. 209 PSWN — zwiększenie stypendium doktoranckiego przy orzeczeniu o niepełnosprawności
-    document_date: '2026-04-14'
+    ordinance: Strona gov.pl z 26.02.2024 podaje zwiększenie 1071,15. Nie ustala roku 2026/2027 ani daty 01.01.2026.
+    document_date: '2024-02-26'
     checked: '2026-11-05'
   status: verified
   i18n_label:
@@ -343,12 +343,11 @@
   - doktoranckie
   value: 9650
   unit: PLN/month
-  academic_year: 2026/2027
+  academic_year: null
   applies_to: {}
   candidates_seen: []
   source:
-    url: https://www.gov.pl/web/nauka/stypendium-doktoranckie
-    ordinance: rozp. MNiSW z 14.04.2026 (Dz.U. 2026 poz. 525) — wynagrodzenie profesora od 01.01.2026 (baza ustawowa, nie świadczenie studenckie)
+    ordinance: Dz.U. 2026 poz. 525 z 14.04.2026 — wynagrodzenie profesora 9650 zł od 01.01.2026. Przepis o wynagrodzeniu, nie o przyznaniu stypendium.
     document_date: '2026-04-14'
     checked: '2026-11-05'
   status: verified

@@ -185,7 +185,7 @@ SLOT_Q = {
 SLOT_OPTS = {
  "status": [
   # Self-ID only — bare "doktorant/doktoranckie" as a topic must NOT set status (R6-5)
-  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?:я\s+)докторант(?:к\w*)?|(?:я|є)\s+аспірант\w*|докторантур)"),
+  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?<!не\s)(?<!ні\s)(?<!\w)я(?!\s+(?:не|ні)\b)\s+докторант(?:к\w*)?|(?<!не\s)(?<!ні\s)(?<!\w)(?:я|є)(?!\s+(?:не|ні)\b)\s+аспірант\w*|докторантур)"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
   ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|polish\s*student|i(?:'?m|\s+am)\s+(?:a\s+)?polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|obywatelk\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|dow[oó]d\w*\s+(mam\s+)?polsk|polsk\w*\s+dow[oó]d|polsk\w*\s+paszport|urodzi\w+\s+w\s+(polsce|radomiu)|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|\bforeigner\b|i'?m\s*a?\s*foreign|i\s*am\s*from\s+(?!poland|polsk)|from\s+(india|china|ukraine|belarus|vietnam|nigeria|turkey|georgia)|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
@@ -196,7 +196,7 @@ SLOT_OPTS = {
  ],
  "poziom": [
   # No bare "doktorant/doktoranc" — self-ID or szkoła doktorska only (R6-5)
-  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?:я\s+)докторант(?:к\w*)?|(?:я|є)\s+аспірант\w*"),
+  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?<!не\s)(?<!ні\s)(?<!\w)я(?!\s+(?:не|ні)\b)\s+докторант(?:к\w*)?|(?<!не\s)(?<!ні\s)(?<!\w)(?:я|є)(?!\s+(?:не|ні)\b)\s+аспірант\w*"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
   ("II", r"\bii\s*stop|\b2\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|\bmgr\b|magisterk|магістратур|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|магистр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
   ("I", r"\bi\s*stop|\b1\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|1st\s*degre|first\s*degre|bachelor|bachel?or|undergrad|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
