@@ -47,6 +47,88 @@
     color: var(--blue-deep);
   }
   main.host p { margin: 0; max-width: 46ch; font-size: 17px; line-height: 1.5; color: #3d4d5e; }
+  #scenario-social {
+    display: none;
+    position: relative;
+    z-index: 5; /* above #veil so the verified card stays usable before chat opens */
+    margin-top: 40px;
+    max-width: 640px;
+    padding: 22px 22px 18px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  #scenario-social.on { display: block; }
+  #scenario-social .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--blue-deep);
+    background: #e7f1fa;
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-bottom: 10px;
+  }
+  #scenario-social h2 { margin: 0 0 8px; font-size: 22px; color: var(--blue-deep); }
+  #scenario-social .muted { color: var(--muted); font-size: 14px; line-height: 1.45; }
+  #scenario-social .banner {
+    margin: 12px 0;
+    padding: 10px 12px;
+    background: #f4f7fa;
+    border-left: 3px solid var(--blue);
+    font-size: 13.5px;
+  }
+  #scenario-social .banner.warn { border-left-color: #c4841d; background: #fff8ec; }
+  #scenario-social h3 { margin: 18px 0 6px; font-size: 15px; }
+  #scenario-social ul { margin: 0; padding-left: 1.2rem; font-size: 14px; line-height: 1.45; }
+  #scenario-social .cap-row { font-size: 13.5px; margin: 4px 0; color: #3d4d5e; }
+  #scenario-social form.est {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  #scenario-social form.est label { font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+  #scenario-social form.est input[type=text],
+  #scenario-social form.est select {
+    padding: 9px 10px;
+    border: 1px solid #d3deea;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  #scenario-social form.est .row-check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink); }
+  #scenario-social form.est input[type=checkbox] {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    padding: 0;
+  }
+  #scenario-social form.est button {
+    justify-self: start;
+    background: var(--blue);
+    color: #fff;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  #est-out {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+  }
+  #scenario-social .other-note {
+    margin-top: 16px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  #scenario-social a { color: var(--blue-deep); }
 
   #veil {
     position: fixed;
@@ -275,9 +357,21 @@
   #panel.ready .fold { opacity: 1; transform: none; transition: opacity .35s ease, transform .35s var(--ease); }
 
   @media (max-width: 640px) {
-    main.host { padding-top: 36px; }
+    main.host { padding-top: 36px; padding-bottom: 88px; }
     main.host h1 { font-size: 28px; }
     #panel { right: 8px; bottom: 8px; left: 8px; width: auto; height: min(720px, calc(100dvh - 16px)); }
+    /* Full crest sits in the middle of a 390px screen and covers the amount table. */
+    #launcher {
+      left: auto;
+      right: 12px;
+      top: auto;
+      bottom: 12px;
+      transform: none;
+      width: auto;
+      padding: 0;
+    }
+    #launcher .crest { width: 56px; }
+    #launcher .word, #launcher .hint { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -295,6 +389,39 @@
   <main class="host">
     <h1>Asystent studenta</h1>
     <p>Podgląd osadzenia na stronie uczelni. Odpowiedzi pochodzą z oficjalnych stron UR i zawierają źródło oraz datę aktualizacji.</p>
+    <section id="scenario-social" aria-label="Stypendium socjalne">
+      <span class="badge" id="ss-badge"></span>
+      <h2 id="ss-title"></h2>
+      <p class="muted" id="ss-intro"></p>
+      <div class="banner" id="ss-year-banner"></div>
+      <h3 id="ss-amounts-title"></h3>
+      <ul id="ss-groups"></ul>
+      <p class="muted" id="ss-amounts-note"></p>
+      <h3 id="ss-dorm-title"></h3>
+      <p class="muted" id="ss-dorm-body"></p>
+      <h3 id="ss-deadlines-title"></h3>
+      <p class="muted" id="ss-deadlines-body"></p>
+      <h3 id="ss-docs-title"></h3>
+      <p class="muted" id="ss-docs-body"></p>
+      <h3 id="ss-links-title"></h3>
+      <ul id="ss-links"></ul>
+      <div id="ss-caps"></div>
+      <form class="est" id="ss-form">
+        <strong id="ss-form-title"></strong>
+        <label><span id="ss-lab-income"></span><input type="text" id="ss-income" inputmode="decimal" placeholder="0" autocomplete="off"></label>
+        <label><span id="ss-lab-year"></span>
+          <select id="ss-year">
+            <option value="2025/2026">2025/2026</option>
+            <option value="2026/2027">2026/2027</option>
+          </select>
+        </label>
+        <label class="row-check"><input type="checkbox" id="ss-dorm"> <span id="ss-lab-dorm"></span></label>
+        <p class="muted" id="ss-form-hint"></p>
+        <button type="submit" id="ss-submit"></button>
+        <div id="est-out" hidden></div>
+      </form>
+      <p class="other-note" id="ss-other"></p>
+    </section>
   </main>
 
   <div id="veil"></div>
@@ -566,10 +693,14 @@ function closePanel() {
   setTimeout(() => { busy = false; hide(); }, 280);
 }
 
+let scenarioSocialOn = false;
+let scenarioCtx = null; // {income_per_person, estimate_year, interested_in_dorm_topup}
+
 async function askApiOnce(q, signal) {
   const payload = {question: q, history: H, conv_id: convId};
   if (sessionLang) payload.session_lang = sessionLang;
   if (sessionState) payload.state = sessionState;
+  if (scenarioSocialOn && scenarioCtx) payload.scenario_context = scenarioCtx;
   const r = await fetch('/api/chat', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -693,8 +824,159 @@ document.getElementById('new-chat').onclick = () => {
 };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !chatBusy) closePanel(); });
 
+let socialYearTpl = { confirmedYear: '2025/2026', confirmed: '', unconfirmed: '' };
+
+function syncSocialYearBanner(year) {
+  const banner = document.getElementById('ss-year-banner');
+  if (!banner || !year) return;
+  const ok = year === socialYearTpl.confirmedYear;
+  const tpl = ok ? socialYearTpl.confirmed : socialYearTpl.unconfirmed;
+  banner.textContent = (tpl || '').replace(/\{year\}/g, year);
+  banner.classList.toggle('warn', !ok);
+}
+
+function fillSocialCard(card) {
+  const root = document.getElementById('scenario-social');
+  if (!root || !card) return;
+  root.classList.add('on');
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v || ''; };
+  set('ss-badge', card.badge_verified);
+  set('ss-title', card.title);
+  set('ss-intro', card.intro);
+  const am = card.amounts || {};
+  socialYearTpl = {
+    confirmedYear: am.academic_year || '2025/2026',
+    confirmed: am.year_banner_confirmed_tpl || am.year_banner || '',
+    unconfirmed: am.year_banner_unconfirmed_tpl || ''
+  };
+  const yearSel = document.getElementById('ss-year');
+  syncSocialYearBanner((yearSel && yearSel.value) || socialYearTpl.confirmedYear);
+  set('ss-amounts-title', (card.amounts || {}).title);
+  set('ss-amounts-note', (card.amounts || {}).note);
+  const ul = document.getElementById('ss-groups');
+  if (ul) {
+    ul.innerHTML = '';
+    (card.amounts && card.amounts.groups || []).forEach(g => {
+      const li = document.createElement('li');
+      li.textContent = `${g.group}: ${g.income_range || ''} → ${g.amount_display || g.amount}`;
+      ul.appendChild(li);
+    });
+  }
+  set('ss-dorm-title', (card.dorm_topup || {}).title);
+  const dorm = card.dorm_topup || {};
+  set('ss-dorm-body', `${dorm.amount_display || ''} — ${dorm.rule || ''}`.trim());
+  set('ss-deadlines-title', (card.deadlines || {}).title);
+  const dl = card.deadlines || {};
+  const dlPeriod = dl.period_label ? `${dl.period_label}: ${dl.academic_year || ''}` : (dl.academic_year || '');
+  set('ss-deadlines-body', `${dl.value || ''} (${dlPeriod})${dl.note ? '\n' + dl.note : ''}`);
+  set('ss-docs-title', (card.documents || {}).title);
+  set('ss-docs-body', (card.documents || {}).body);
+  set('ss-links-title', (card.links || {}).title);
+  const links = document.getElementById('ss-links');
+  if (links) {
+    links.innerHTML = '';
+    ((card.links || {}).items || []).forEach(it => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = it.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = it.label || it.url;
+      li.appendChild(a);
+      links.appendChild(li);
+    });
+  }
+  const caps = document.getElementById('ss-caps');
+  if (caps) {
+    caps.innerHTML = '';
+    (card.caps || []).forEach(c => {
+      const d = document.createElement('div');
+      d.className = 'cap-row';
+      d.textContent = `${c.label} (${c.academic_year}): ${c.value} ${c.unit || ''}`;
+      caps.appendChild(d);
+    });
+  }
+  const fl = card.form_labels || {};
+  set('ss-form-title', fl.title);
+  set('ss-lab-income', fl.income);
+  set('ss-lab-year', fl.year);
+  set('ss-lab-dorm', fl.dorm);
+  set('ss-form-hint', fl.hint);
+  set('ss-submit', fl.submit);
+  set('ss-other', 'Inne tematy pozostają w czacie jako wyszukiwanie korpusu — nie oznaczamy ich jako scenariusz sprawdzony.');
+  if (yearSel && card.default_estimate_year) {
+    yearSel.value = card.default_estimate_year;
+    syncSocialYearBanner(yearSel.value);
+  }
+}
+
+async function loadSocialScenario() {
+  const lang = (sessionLang || document.documentElement.lang || 'pl').slice(0, 2);
+  const r = await fetch('/api/scenarios/social-scholarship?lang=' + encodeURIComponent(lang));
+  if (!r.ok) return;
+  const card = await r.json();
+  fillSocialCard(card);
+}
+
+document.getElementById('ss-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const income = document.getElementById('ss-income').value.trim();
+  const year = document.getElementById('ss-year').value;
+  const dorm = document.getElementById('ss-dorm').checked;
+  const out = document.getElementById('est-out');
+  const lang = (sessionLang || 'pl').slice(0, 2);
+  const r = await fetch('/api/scenarios/social-scholarship/estimate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      income,
+      academic_year: year,
+      interested_in_dorm_topup: dorm,
+      dorm_conditions_met: null,
+      lang
+    })
+  });
+  const j = await r.json();
+  scenarioCtx = {
+    income_per_person: income,
+    estimate_year: year,
+    interested_in_dorm_topup: dorm,
+    dorm_conditions_met: null
+  };
+  syncSocialYearBanner(year);
+  if (!out) return;
+  out.hidden = false;
+  if (j.ok) {
+    let t = `${j.labels?.group || 'Group'}: ${j.income_group}\n${j.labels?.base || 'Base'}: ${j.base_amount_display}\n${j.labels?.total || 'Total'}: ${j.total_display}`;
+    if (j.conditional_dorm_topup) {
+      t += `\n${j.conditional_dorm_topup.label}: ${j.conditional_dorm_topup.amount_display}`;
+    }
+    t += `\n${j.message || ''}`;
+    out.textContent = t;
+  } else {
+    // Banner already shows year status — do not duplicate it in the result block
+    out.textContent = j.message || j.result || 'Error';
+  }
+});
+
+document.getElementById('ss-year')?.addEventListener('change', () => {
+  syncSocialYearBanner(document.getElementById('ss-year')?.value);
+  const out = document.getElementById('est-out');
+  if (out) {
+    out.textContent = '';
+    out.hidden = true;
+  }
+  // Signed sessionState cannot be edited here. The server drops estimate fields
+  // (income, year, dorm) unless this request sends scenario_context again.
+  scenarioCtx = null;
+});
+
 fetch('/api/status').then(r => r.json()).then(j => {
-  document.getElementById('st').textContent = `Indeks: ${j.chunks} fragmentów · LLM: ${j.llm ? j.provider : 'wyłączony'}`;
+  const llm = j.llm ? j.provider : 'wyłączony';
+  const sc = j.scenario_social ? ' · scenariusz socjalne: ON' : '';
+  document.getElementById('st').textContent = `Indeks: ${j.chunks} fragmentów · LLM: ${llm}${sc}`;
+  scenarioSocialOn = !!j.scenario_social;
+  if (scenarioSocialOn) loadSocialScenario().catch(() => {});
 }).catch(() => {});
 
 const queued = ['q1', 'q2', 'q3'].map(k => new URLSearchParams(location.search).get(k)).filter(Boolean);

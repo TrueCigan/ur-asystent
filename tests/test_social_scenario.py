@@ -1,0 +1,447 @@
+"""Unit tests for verified social-scholarship scenario (no LLM)."""
+from __future__ import annotations
+
+import os
+import sys
+from decimal import Decimal
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "app"))
+
+os.environ.pop("SCENARIO_SOCIAL", None)  # default off
+os.environ.pop("FACTS_INJECT_UNVERIFIED", None)
+
+from scenarios import social as S  # noqa: E402
+from facts import extract_income, income_group, load_facts  # noqa: E402
+
+S.reload_scenario_cache()
+
+
+def _income_fact():
+    return next(f for f in load_facts() if f.id == "social_income_threshold")
+
+
+def test_flag_default_off():
+    os.environ.pop("SCENARIO_SOCIAL", None)
+    assert S.scenario_social_enabled() is False
+
+
+def test_flag_on():
+    os.environ["SCENARIO_SOCIAL"] = "1"
+    assert S.scenario_social_enabled() is True
+    os.environ.pop("SCENARIO_SOCIAL", None)
+
+
+def test_card_no_llm_and_no_placeholders():
+    card = S.build_card("pl")
+    assert card["title"]
+    assert card["amounts"]["groups"]
+    assert card["amounts"]["academic_year"] == "2025/2026"
+    assert card["dorm_topup"]["auto_included"] is False
+    blob = str(card)
+    assert "{{" not in blob
+    assert "FACTS (" not in blob
+    # Caps are period-separated, not auto-picked
+    years = {c["academic_year"] for c in card["caps"]}
+    assert "2025/2026" in years and "2026/2027" in years
+    vals = {Decimal(str(c["value"])) for c in card["caps"]}
+    assert Decimal("3560.60") in vals
+    assert Decimal("3667.0") in vals or Decimal("3667") in vals
+
+
+def test_card_i18n_uk_en():
+    uk = S.build_card("uk")
+    en = S.build_card("en")
+    assert "Соціальн" in uk["title"] or "соціальн" in uk["title"].lower()
+    assert "Social" in en["title"]
+
+
+def test_group_boundaries_and_zero():
+    """Annex 2025/2026 (Aneks nr 1 z 11.12.2025, ustalenia pkt 2): I starts at 0,01 not 0,00."""
+    fact = _income_fact()
+    assert fact.value["groups"]["I"].startswith("0,01")
+    g0, a0 = income_group(Decimal("0.00"), fact.value)
+    assert g0 is None and a0 is None
+    cases = [
+        (Decimal("0.01"), "I", 1600.0),
+        (Decimal("850.00"), "I", 1600.0),
+        (Decimal("850.01"), "II", 1400.0),
+        (Decimal("1200.00"), "II", 1400.0),
+        (Decimal("1200.01"), "III", 1200.0),
+        (Decimal("1550.00"), "III", 1200.0),
+        (Decimal("1550.01"), "IV", 1000.0),
+        (Decimal("1908.90"), "IV", 1000.0),
+    ]
+    for income, want_g, want_amt in cases:
+        g, amt = income_group(income, fact.value)
+        assert g == want_g, f"{income} → {g} want {want_g}"
+        assert amt == want_amt
+    g_over, a_over = income_group(Decimal("1908.91"), fact.value)
+    assert g_over is None and a_over is None
+
+
+def test_estimate_zero_is_not_group_I():
+    r = S.estimate("0", academic_year="2025/2026", interested_in_dorm_topup=True, lang="pl")
+    assert r["ok"] is False
+    assert r["result"] == "outside_published_band"
+    assert r.get("income_group") is None
+    assert r.get("base_amount") is None
+    assert r.get("total_display_amount") is None
+    assert r.get("conditional_dorm_topup") is None
+    assert r["eligibility"] == "unknown"
+    assert "1600" not in (r.get("message") or "")
+    assert "grupę I" in (r.get("message") or "") or "grupy I" in (r.get("message") or "")
+    grosz = S.estimate("0.01", academic_year="2025/2026", interested_in_dorm_topup=True, lang="pl")
+    assert grosz["ok"] is True
+    assert grosz["income_group"] == "I"
+    assert grosz["base_amount"] == "1600.00"
+    assert grosz["total_display_amount"] == "1600.00"
+    assert grosz["conditional_dorm_topup"]["included_in_total"] is False
+    chat = S.format_chat_answer("pl", estimate_result=r)
+    assert "Grupa dochodowa: I" not in chat["answer"]
+    assert "outside_published_band" not in chat["answer"]
+    for lang, needle in (("en", "group I"), ("uk", "групою I")):
+        other = S.estimate("0,00", academic_year="2025/2026", lang=lang)
+        assert other["result"] == "outside_published_band"
+        assert "1600" not in (other.get("message") or "")
+        assert needle in (other.get("message") or "")
+
+
+def test_estimate_input_error_and_over_threshold():
+    bad = S.estimate("-1", academic_year="2025/2026")
+    assert bad["result"] == "input_error"
+    over = S.estimate("1908.91", academic_year="2025/2026")
+    assert over["result"] == "over_threshold"
+    # 2026/2027 amounts not confirmed in FACTS table
+    ny = S.estimate("1000", academic_year="2026/2027")
+    assert ny["result"] == "amounts_not_confirmed"
+    assert ny["ok"] is False
+    assert ny.get("income_group") is None
+    assert ny.get("base_amount") is None
+    assert ny.get("total_display_amount") is None
+    minus = S.estimate("-10", academic_year="2025/2026")
+    assert minus["result"] == "input_error"
+    assert minus.get("income_group") is None
+
+
+def test_dorm_topup_rule_mentions_spouse_or_child():
+    pl = S.build_card("pl")["dorm_topup"]["rule"]
+    en = S.build_card("en")["dorm_topup"]["rule"]
+    uk = S.build_card("uk")["dorm_topup"]["rule"]
+    assert "małżonkiem" in pl and "dzieckiem" in pl
+    assert "spouse" in en.lower() and "child" in en.lower()
+    assert "дитиною" in uk
+    assert "zamieszkania w domu studenta" not in en
+
+
+def test_estimate_dorm_included_only_when_conditions_true():
+    for cond in (None, False):
+        open_ = S.estimate(
+            "1100",
+            academic_year="2025/2026",
+            interested_in_dorm_topup=True,
+            dorm_conditions_met=cond,
+            lang="pl",
+        )
+        assert open_["ok"] and open_["income_group"] == "II"
+        assert open_["total_display_amount"] == "1400.00"
+        assert open_["conditional_dorm_topup"]["amount"] == "400.00"
+        assert open_["conditional_dorm_topup"]["included_in_total"] is False
+        assert "nie wliczone" in (open_["conditional_dorm_topup"]["label"] or "")
+    r = S.estimate(
+        "1100",
+        academic_year="2025/2026",
+        interested_in_dorm_topup=True,
+        dorm_conditions_met=True,
+        lang="pl",
+    )
+    assert r["ok"]
+    assert r["income_group"] == "II"
+    assert r["dorm_topup_included"] is True
+    assert r["total_display_amount"] == "1800.00"
+    assert "wliczone" in (r["conditional_dorm_topup"]["label"] or "")
+    assert "nie wliczone" not in (r["conditional_dorm_topup"]["label"] or "").lower()
+    assert "1800" in (r.get("total_display") or "")
+
+
+def test_chat_answer_no_placeholders():
+    ans = S.format_chat_answer("uk")
+    assert ans["mode"] == "scenario-social"
+    assert "{{" not in ans["answer"]
+    assert "FACTS (" not in ans["answer"]
+    assert ans["lang"] == "uk"
+
+
+def test_no_amount_duplication_in_scenario_yaml():
+    import yaml
+    raw = (ROOT / "data" / "scenarios" / "social_scholarship.yaml").read_text(encoding="utf-8")
+    # scenario must reference facts, not embed 1600/1400 table
+    data = yaml.safe_load(raw)
+    assert data["fact_refs"]["income_and_amounts"] == "social_income_threshold"
+    assert "1600" not in raw
+    assert "1400" not in raw
+    assert "3560" not in raw
+    assert "3667" not in raw
+
+
+def test_no_facts_jargon_on_card():
+    for lang in ("pl", "en", "uk"):
+        card = S.build_card(lang)
+        blob = str(card)
+        assert "FACTS" not in blob, lang
+        assert "{{" not in blob
+
+
+def test_periods_separated_on_card():
+    card = S.build_card("pl")
+    assert card["amounts"]["academic_year"] == "2025/2026"
+    assert card["deadlines"]["academic_year"] == "2026/2027"
+    assert card["period_map"]["amounts_year"] != card["period_map"]["deadlines_year"]
+    assert card["deadlines"].get("note")
+    # dorm rule localized (not missing for en/uk)
+    assert "§ 12" in (card["dorm_topup"]["rule"] or "")
+    en = S.build_card("en")
+    assert "Regulations" in (en["dorm_topup"]["rule"] or "") or "§ 12" in (en["dorm_topup"]["rule"] or "")
+    assert "zamieszkania w domu studenta" not in (en["dorm_topup"]["rule"] or "")
+
+
+def test_looks_like_social_ignores_sticky_topics():
+    # Follow-ups about dorm/plan must NOT be treated as social just because history had social
+    assert S.looks_like_social_question("Jak dostać stypendium socjalne?") is True
+    assert S.looks_like_social_question("Jaki jest cennik akademika?", ["stypendium_socjalne"]) is False
+    assert S.looks_like_social_question("Plan zajęć WTEiI", ["stypendium_socjalne"]) is False
+
+
+def test_extract_income_preserves_minus():
+    assert extract_income("Stypendium socjalne, dochód -10 zł na osobę") == -10.0
+    assert extract_income("dochód -0,01 zł na osobę") == -0.01
+    assert extract_income("income -5 PLN per person") == -5.0
+    r = S.estimate(-10, academic_year="2025/2026")
+    assert r["result"] == "input_error"
+
+
+def test_topup_label_when_included():
+    r = S.estimate(
+        "1100",
+        academic_year="2025/2026",
+        interested_in_dorm_topup=True,
+        dorm_conditions_met=True,
+        lang="pl",
+    )
+    assert r["ok"]
+    assert r["total_display_amount"] == "1800.00"
+    top = r["conditional_dorm_topup"]
+    assert top["included_in_total"] is True
+    assert "nie wliczone" not in (top["label"] or "").lower()
+    assert "wliczone" in (top["label"] or "").lower()
+    chat = S.format_chat_answer("pl", estimate_result=r)
+    assert "1800" in chat["answer"]
+    assert "≠ total" not in chat["answer"]
+    # Static card block must not contradict the included estimate
+    assert "nie wliczone" not in chat["answer"].lower()
+    assert "wliczone" in chat["answer"].lower()
+
+
+def test_year_rejection_not_duplicated_in_chat():
+    r = S.estimate("1000", academic_year="2026/2027", lang="pl")
+    assert r["result"] == "amounts_not_confirmed"
+    chat = S.format_chat_answer("pl", estimate_result=r)
+    # Message once — not banner + message twice
+    low = chat["answer"].lower()
+    assert low.count("brak potwierdzonej tabeli") == 1
+    assert "szacunek nie jest traktowany" not in low  # unconfirmed banner not also appended
+
+
+def test_signed_session_drops_stale_year_estimate():
+    """Established HMAC state must not replay a 2025/2026 payout after the form
+    stops sending scenario_context (year changed, including back-and-forth)."""
+    prev = os.environ.get("SCENARIO_SOCIAL")
+    os.environ["SCENARIO_SOCIAL"] = "1"
+    try:
+        import rag
+        from session import SessionState, decode, encode
+
+        established = SessionState(
+            profile={
+                "status": "student",
+                "income_per_person": "1100",
+                "estimate_year": "2025/2026",
+                "interested_in_dorm_topup": True,
+                "dorm_conditions_met": None,
+            },
+            conv_id="conv-year-switch",
+            updated_at=10**10,
+        )
+        token = encode(established)
+        hist = [
+            {"role": "user", "content": "Jak dostać stypendium socjalne?"},
+            {"role": "assistant", "content": "Grupa dochodowa: II → 1400.00 zł"},
+        ]
+        q = "Jak dostać stypendium socjalne na wybrany rok?"
+        stale = rag.answer(q, hist, state_token=token, conv_id="conv-year-switch")
+        assert stale.get("mode") == "scenario-social"
+        assert "Grupa dochodowa:" not in (stale.get("answer") or "")
+        est = (stale.get("scenario") or {}).get("estimate")
+        assert not est or est.get("result") != "amount_estimate"
+        kept = decode(stale.get("state"))
+        assert kept.profile.get("status") == "student"
+        for k in ("income_per_person", "estimate_year", "interested_in_dorm_topup", "dorm_conditions_met"):
+            assert k not in kept.profile
+
+        # Toggle back to 2025/2026 without a new calculation must not resurrect 1400.
+        again = rag.answer(q, hist, state_token=stale.get("state"), conv_id="conv-year-switch")
+        assert "Grupa dochodowa:" not in (again.get("answer") or "")
+        assert decode(again.get("state")).profile.get("status") == "student"
+
+        # Current request context still wins, and a year with no table pays nothing.
+        unconfirmed = rag.answer(
+            q, hist, state_token=token, conv_id="conv-year-switch",
+            scenario_context={
+                "income_per_person": "1100",
+                "estimate_year": "2026/2027",
+                "interested_in_dorm_topup": True,
+                "dorm_conditions_met": None,
+            },
+        )
+        uest = (unconfirmed.get("scenario") or {}).get("estimate") or {}
+        assert uest.get("result") == "amounts_not_confirmed"
+        assert uest.get("income_group") is None
+        assert "Grupa dochodowa:" not in (unconfirmed.get("answer") or "")
+        uprof = decode(unconfirmed.get("state")).profile
+        assert uprof.get("status") == "student"
+        assert uprof.get("estimate_year") == "2026/2027"
+
+        # Same signed session still estimates when the form re-sends 2025/2026.
+        fresh = rag.answer(
+            q, hist, state_token=token, conv_id="conv-year-switch",
+            scenario_context={
+                "income_per_person": "1100",
+                "estimate_year": "2025/2026",
+                "interested_in_dorm_topup": True,
+                "dorm_conditions_met": None,
+            },
+        )
+        fest = (fresh.get("scenario") or {}).get("estimate") or {}
+        assert fest.get("result") == "amount_estimate"
+        assert fest.get("income_group") == "II"
+        assert fest.get("total_display_amount") == "1400.00"
+        assert decode(fresh.get("state")).profile.get("status") == "student"
+    finally:
+        if prev is None:
+            os.environ.pop("SCENARIO_SOCIAL", None)
+        else:
+            os.environ["SCENARIO_SOCIAL"] = prev
+
+
+def test_cap_question_is_not_a_status_reask():
+    """Amount/cap questions must not be clarified just because history is empty."""
+    prev = os.environ.get("LLM_PROVIDER")
+    os.environ["LLM_PROVIDER"] = ""
+    os.environ.pop("LLM_API_KEY", None)
+    os.environ.pop("SCENARIO_SOCIAL", None)
+    try:
+        import rag
+        r = rag.answer(
+            "Hi, I am a Polish student on a master's with GPA 4.9. "
+            "What is the rector's scholarship and the combined social+rector cap?",
+            [],
+        )
+        ans = r.get("answer") or ""
+        assert r.get("clarify") is False, r.get("mode")
+        assert "Polish citizen" not in ans
+        assert "3667" in ans
+        assert any(x in ans for x in ("1000", "1200", "1400", "1600"))
+    finally:
+        if prev is None:
+            os.environ.pop("LLM_PROVIDER", None)
+        else:
+            os.environ["LLM_PROVIDER"] = prev
+
+
+def test_english_programme_fee_not_blocked_by_empty_history():
+    prev = os.environ.get("LLM_PROVIDER")
+    os.environ["LLM_PROVIDER"] = ""
+    os.environ.pop("LLM_API_KEY", None)
+    os.environ.pop("SCENARIO_SOCIAL", None)
+    try:
+        import rag
+        r = rag.answer(
+            "Hello, I am from India on Mechanical Engineering English programme. How much per semester?",
+            [],
+        )
+        ans = r.get("answer") or ""
+        assert r.get("clarify") is False, ans[:200]
+        assert "2600" in ans
+    finally:
+        if prev is None:
+            os.environ.pop("LLM_PROVIDER", None)
+        else:
+            os.environ["LLM_PROVIDER"] = prev
+
+
+def test_ukraine_citizenship_does_not_attach_pesel_ukr_fact():
+    prev = os.environ.get("LLM_PROVIDER")
+    os.environ["LLM_PROVIDER"] = ""
+    os.environ.pop("LLM_API_KEY", None)
+    os.environ.pop("SCENARIO_SOCIAL", None)
+    try:
+        import rag
+        from facts import load_facts, select_facts
+        plain = select_facts(load_facts(), ["stypendium_socjalne"], {"status": "cudzoziemiec"})
+        assert all(f.id != "ukr_special_act" for f in plain)
+        protected = select_facts(
+            load_facts(), ["stypendium_socjalne"], {"status": "cudzoziemiec", "pobyt": "ukr"},
+        )
+        assert any(f.id == "ukr_special_act" for f in protected)
+        r = rag.answer(
+            "Здравствуйте, я студент из Украины, доход 800 злотых, учусь очно, бакалавриат.",
+            [],
+        )
+        assert "PESEL UKR" not in (r.get("answer") or "")
+        assert (r.get("profile") or {}).get("pobyt") != "ukr"
+    finally:
+        if prev is None:
+            os.environ.pop("LLM_PROVIDER", None)
+        else:
+            os.environ["LLM_PROVIDER"] = prev
+
+
+def test_image_copies_social_scenario_file():
+    """Dockerfile text only. Runtime proof is scripts/ci_docker_smoke.sh in CI."""
+    text = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    assert "COPY data/scenarios" in text
+    assert (ROOT / "scripts" / "ci_docker_smoke.sh").is_file()
+    assert (ROOT / "data" / "scenarios" / "social_scholarship.yaml").is_file()
+
+
+def test_chat_followup_not_stuck(monkeypatch=None):
+    prev = os.environ.get("SCENARIO_SOCIAL")
+    os.environ["SCENARIO_SOCIAL"] = "1"
+    try:
+        import rag
+        r1 = rag.answer("Jak dostać stypendium socjalne?", [])
+        assert r1.get("mode") == "scenario-social"
+        hist = [{"role": "user", "content": "Jak dostać stypendium socjalne?"},
+                {"role": "assistant", "content": r1.get("answer") or ""}]
+        r2 = rag.answer("Jaki jest cennik akademika?", hist)
+        assert r2.get("mode") != "scenario-social", r2.get("mode")
+    finally:
+        if prev is None:
+            os.environ.pop("SCENARIO_SOCIAL", None)
+        else:
+            os.environ["SCENARIO_SOCIAL"] = prev
+
+
+if __name__ == "__main__":
+    failed = 0
+    for name, fn in list(globals().items()):
+        if name.startswith("test_") and callable(fn):
+            try:
+                fn()
+                print("PASS", name)
+            except Exception as e:
+                failed += 1
+                print("FAIL", name, "—", e)
+    print(f"\n{failed} failed")
+    sys.exit(min(failed, 100))

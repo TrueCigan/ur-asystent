@@ -185,7 +185,7 @@ SLOT_Q = {
 SLOT_OPTS = {
  "status": [
   # Self-ID only — bare "doktorant/doktoranckie" as a topic must NOT set status (R6-5)
-  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?:я\s+)докторант(?:к\w*)?|докторантур)"),
+  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?<!не\s)(?<!ні\s)(?<!\w)я(?!\s+(?:не|ні)\b)\s+докторант(?:к\w*)?|(?<!не\s)(?<!ні\s)(?<!\w)(?:я|є)(?!\s+(?:не|ні)\b)\s+аспірант\w*|(?<!\w)я(?!\s+(?:не|ні)\b)\s+аспирант\w*|докторантур)"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
   ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|polish\s*student|i(?:'?m|\s+am)\s+(?:a\s+)?polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|obywatelk\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|dow[oó]d\w*\s+(mam\s+)?polsk|polsk\w*\s+dow[oó]d|polsk\w*\s+paszport|urodzi\w+\s+w\s+(polsce|radomiu)|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|\bforeigner\b|i'?m\s*a?\s*foreign|i\s*am\s*from\s+(?!poland|polsk)|from\s+(india|china|ukraine|belarus|vietnam|nigeria|turkey|georgia)|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
@@ -196,7 +196,7 @@ SLOT_OPTS = {
  ],
  "poziom": [
   # No bare "doktorant/doktoranc" — self-ID or szkoła doktorska only (R6-5)
-  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?:я\s+)докторант(?:к\w*)?"),
+  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?<!не\s)(?<!ні\s)(?<!\w)я(?!\s+(?:не|ні)\b)\s+докторант(?:к\w*)?|(?<!не\s)(?<!ні\s)(?<!\w)(?:я|є)(?!\s+(?:не|ні)\b)\s+аспірант\w*|(?<!\w)я(?!\s+(?:не|ні)\b)\s+аспирант\w*"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
   ("II", r"\bii\s*stop|\b2\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|\bmgr\b|magisterk|магістратур|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|магистр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
   ("I", r"\bi\s*stop|\b1\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|1st\s*degre|first\s*degre|bachelor|bachel?or|undergrad|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
@@ -280,7 +280,7 @@ TOPICS = [
  ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w*\s*materialn|[sś]wiadcze|social\s*scholarship|\bsocial\b(?=.{0,40}scholarship)|scholarship\s*for\s*foreign|maintenance\s*grant|need[-\s]?based|стипенд\w*\s*соціал|соціальн\w*\s*стипенд|социальн\w*\s*стипенд|стипенд\w*\s*для\s*(иностран|cudzoziem)|матеріальн\w*\s*допомог|тэтгэлэг|нийгмийн\s*тэтгэлэг|амьжиргааны", ["status", "drugi_kierunek", "tryb", "poziom"]),
  ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|\brector\b(?=.{0,40}scholarship)|merit\s*scholarship|academic\s*excellence|науков\w*\s*досягнен|стипенд\w*\s*ректор|ректор|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom"]),
  ("stypendium_niepeln", r"niepe[lł]nospraw|disability\s*scholarship|інвалід|инвалидн|хөгжлийн\s*бэрхшээл", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
- ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|doctoral\s*stipend|докторант|докторантур|докторск\w*\s*стипенд|стипенд\w*\s*доктор", ["status"]),
+ ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|doctoral\s*stipend|докторант|докторантур|аспірант|докторск\w*\s*стипенд|стипенд\w*\s*доктор", ["status"]),
  ("akademik", r"akademik|dom\w*\s*studen|miejsce\s*w\s*akadem|dormitor|student\s*hous|residence\s*hall|общежит|гуртожит|дотуур\s*байр", []),
  ("oplaty", r"op[lł]at|czesne|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?\b|english\s*program|program\w*\s*in\s*english|cost\s*of\s*stud|price\s*of\s*stud|(?:ile\s*kosztuj|how\s*much|скільки|сколько|хэд).{0,40}(?:stud|czesn|tuition|fee|навч|сургалт|програм|opłat|english|business)|оплат|вартіст|кошту|цін[ауи]\s*навч|плата\s*за\s*навч|төлбөр|сургалтын\s*төлбөр", ["status", "tryb", "poziom"]),
  ("erasmus", r"erasmus|wyjazd|wymian|mobilno|exchange\s*program|study\s*abroad|мобільніст|обмін|солилцоо|гадаадад\s*суралц", ["status", "poziom", "rok"]),
@@ -319,7 +319,7 @@ _CLARIFY_TIP_BY_STATUS = {
   "doktorant": "Możesz odpowiedzieć jednym zdaniem, np. „doktorant Szkoły Doktorskiej, 2 rok”.",
  },
  "en": {
-  "pl": "You can reply in one sentence, e.g. “Polish citizen, full-time, bachelor, year 2, one programme”.",
+  "pl": "You can reply in one sentence, e.g. “full-time, bachelor, year 2, one programme”.",
   "cudzoziemiec": "You can reply in one sentence, e.g. “international student with a residence permit, full-time, bachelor, year 2, one programme”.",
   "doktorant": "You can reply in one sentence, e.g. “doctoral student, year 2”.",
  },
@@ -329,6 +329,52 @@ _CLARIFY_TIP_BY_STATUS = {
   "doktorant": "Можна однією фразою, напр. «докторант Школи докторської, 2 рік».",
  },
 }
+
+_QUOTE_SPAN = re.compile(r"[«„“\"][^»”\"]{0,240}[»”\"]|«[^»]{0,240}»")
+_DOCTORAL_ROLE = re.compile(
+    r"(?i)(?<!\w)(?:аспірант\w*|аспирант\w*|докторант\w*|doktorant\w*|"
+    r"doctoral\s+students?|phd(?:\s+students?)?|szko[lł]\w*\s+doktorsk\w*|"
+    r"doctoral\s+school|doktoratu\b|докторантур\w*|школ\w*\s+доктор\w*)"
+)
+_FIRST_PERSON = re.compile(r"(?i)(?<!\w)(?:я|jestem|i'?m|i\s+am)(?!\w)")
+_OTHER_SUBJECT = re.compile(
+    r"(?i)(?<!\w)(?:вона|він|воно|вони|ми|она|он|они|мы|ona|oni|"
+    r"she|he|they|we|her|his|their|"
+    r"(?:мій|моя|мої|мой|мои|mój|moja|my)\s+"
+    r"(?:колег\w*|коллег\w*|koleg\w*|koleżank\w*|colleague|friend|друг\w*|подруг\w*))(?!\w)"
+)
+_SUBJECT_NEGATION = re.compile(r"(?i)(?<!\w)(?:nie|not|no|ні|не|нема)(?!\w)")
+_SHORT_DOCTORAL_SELF = re.compile(
+    r"(?i)^\s*(?:a\s+)?(?:doctoral\s+students?|phd(?:\s+students?)?)\s*[.!]?\s*$"
+)
+
+
+def speaker_claims_doctoral(text: str) -> bool:
+    """True only when the speaker, not somebody else, claims the doctoral role.
+
+    The closest subject before the role decides. First person singular wins.
+    Third person, plural, a quoted example, a negation, or no subject does not
+    write the speaker profile.
+    """
+    visible = _QUOTE_SPAN.sub(" ", text or "")
+    if _SHORT_DOCTORAL_SELF.match(visible.strip()):
+        return True
+    for clause in re.split(r"[.!?;\n]+", visible):
+        for match in _DOCTORAL_ROLE.finditer(clause):
+            prefix = clause[:match.start()]
+            first = list(_FIRST_PERSON.finditer(prefix))
+            other = list(_OTHER_SUBJECT.finditer(prefix))
+            last_first = first[-1].end() if first else -1
+            last_other = other[-1].end() if other else -1
+            if last_first < 0 or last_other > last_first:
+                continue
+            if _SUBJECT_NEGATION.search(prefix[first[-1].start() - 12:first[-1].start()]):
+                continue
+            if _SUBJECT_NEGATION.search(prefix[last_first:]):
+                continue
+            return True
+    return False
+
 
 def _negated_before(text, start, window=28):
     """True if a negation word sits in the few tokens before `start`."""
@@ -471,6 +517,12 @@ def extract_profile(text, conflicts_out=None):
         prof.setdefault("poziom", "SD")
     if prof.get("poziom") == "SD":
         prof.setdefault("status_doktor", True)
+    if (prof.get("status") == "doktorant" or prof.get("poziom") == "SD") and not speaker_claims_doctoral(t):
+        if prof.get("status") == "doktorant":
+            del prof["status"]
+        if prof.get("poziom") == "SD":
+            del prof["poziom"]
+        prof.pop("status_doktor", None)
     if re.search(r"drugi\w*\s*kierun|dw[ao]\w*\s*kierun|r[oó]wnoleg|second\s*(major|program|programme)|double\s*major|друг\w*\s*напрям|хоёр\s*мэргэжил", t, re.I) and \
        re.search(r"czy\s*(mog|moż)|can\s*i|is\s*it\s*possible|чи\s*мож|болох\s*уу", t, re.I):
         prof.setdefault("drugi_kierunek", "pytanie")
@@ -892,6 +944,74 @@ _ANTHROPIC_TIMEOUT = httpx.Timeout(connect=5.0, read=45.0, write=10.0, pool=5.0)
 REQUEST_BUDGET_SEC = 55.0
 
 
+_LLM_ATTEMPTS = []
+
+
+def _reset_llm_attempts():
+    _LLM_ATTEMPTS.clear()
+
+
+def _record_llm_attempt(*, transport, http_status=None, request_id=None):
+    """Transport evidence only. Never store a key, cookie, or response body."""
+    rid = (request_id or "").strip()
+    if re.search(r"(?i)key|bearer|secret|token|cookie", rid):
+        rid = ""
+    _LLM_ATTEMPTS.append({
+        "provider": (os.getenv("LLM_PROVIDER") or "").lower() or None,
+        "transport": transport,
+        "http_status": http_status,
+        "request_id": (rid[:64] or None),
+    })
+
+
+def _typed_path(*, kind, final, model_used, discarded, attempted, transport, http_status, request_id, provider):
+    """Typed reply path. provider_verified is the transport contract, not an external-run claim."""
+    path = {
+        "kind": kind,
+        "final": final,
+        "model_used": bool(model_used),
+        "discarded": discarded,
+        "attempted": bool(attempted),
+        "transport": transport or "not_called",
+        "http_status": http_status,
+        "request_id": request_id,
+        "provider": provider,
+        "external_run": False,
+    }
+    path["provider_verified"] = bool(
+        path["kind"] == "model"
+        and path["model_used"] is True
+        and path["transport"] == "ok"
+        and path["http_status"] == 200
+        and path["request_id"]
+    )
+    return path
+
+
+def closed_path(kind):
+    """Student-facing text that was not a model answer: clarification, refusal, or deterministic."""
+    return _typed_path(
+        kind=kind, final=kind, model_used=False, discarded=None, attempted=False,
+        transport="not_called", http_status=None, request_id=None, provider=None,
+    )
+
+
+def llm_path_from_attempts(*, final, model_used, discarded):
+    last = _LLM_ATTEMPTS[-1] if _LLM_ATTEMPTS else {}
+    if model_used and final == "model":
+        kind = "model"
+    elif discarded == "not_enabled" and not _LLM_ATTEMPTS:
+        kind = "deterministic"
+    else:
+        kind = "fallback"
+    return _typed_path(
+        kind=kind, final=final, model_used=model_used, discarded=discarded,
+        attempted=bool(_LLM_ATTEMPTS), transport=last.get("transport") or "not_called",
+        http_status=last.get("http_status"), request_id=last.get("request_id"),
+        provider=last.get("provider"),
+    )
+
+
 def call_llm(messages, temperature=0.25):
     prov = os.getenv("LLM_PROVIDER", "").lower(); key = os.getenv("LLM_API_KEY", "")
     model = os.getenv("LLM_MODEL", "")
@@ -937,15 +1057,21 @@ def call_llm(messages, temperature=0.25):
                     },
                 )
             except httpx.TimeoutException as e:
+                _record_llm_attempt(transport="error", http_status=None)
                 last = e
                 if att == 0:
                     time.sleep(1.0 + random.random())
                     continue
                 raise RuntimeError("Anthropic timeout") from e
+            except Exception:
+                _record_llm_attempt(transport="error", http_status=None)
+                raise
             rid = r.headers.get("request-id") or r.headers.get("x-request-id") or ""
             log.info("anthropic status=%s latency=%.2fs request-id=%s", r.status_code, time.monotonic() - t0, rid)
             if r.status_code == 200:
+                _record_llm_attempt(transport="ok", http_status=200, request_id=rid)
                 return r.json()["content"][0]["text"]
+            _record_llm_attempt(transport="error", http_status=r.status_code, request_id=rid)
             last = f"HTTP {r.status_code}"
             if r.status_code in (429, 500, 529) and att == 0:
                 time.sleep(1.0 + random.random())
@@ -978,7 +1104,7 @@ PROF_LABEL = {
 PROF_VAL = {
  "pl": {},
  "en": {
-  "pl": "Polish citizen", "cudzoziemiec": "international student", "doktorant": "doctoral student",
+  "pl": "Polish student", "cudzoziemiec": "international student", "doktorant": "doctoral student",
   "bezpanstwowiec": "stateless", "stacjonarne": "full-time", "niestacjonarne": "part-time",
   "I": "1st cycle", "II": "2nd cycle", "SD": "doctoral school", "jednolite": "long-cycle",
   "tak": "yes", "nie": "no", "pobyt_czasowy": "temporary residence", "pobyt_staly": "permanent residence",
@@ -1049,7 +1175,8 @@ _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 def align_citations(body: str, hits, fact_urls=None) -> tuple[str, list, list[str]]:
     """Renumber [n]/[Fk] to cited-only 1..k / F1..; drop dangling markers (R5-6)."""
     hits = dedupe_hits_by_url(hits)
-    fact_urls = [u for u in (fact_urls or []) if u]
+    # Keep indexes aligned with selected_facts. Empty means "no official URL".
+    fact_urls = list(fact_urls or [])
     cited_order, fact_order = [], []
     # Normalize [Fn8] → treat as fact marker; bare [8] as source index
     def _collect(m):
@@ -1073,7 +1200,7 @@ def align_citations(body: str, hits, fact_urls=None) -> tuple[str, list, list[st
     # Rebuild maps old→new
     src_map = {old: i for i, old in enumerate(cited_order, 1)}
     # Fact markers: renumber in order of first appearance among those with urls
-    valid_facts = [n for n in fact_order if 1 <= n <= len(fact_urls)]
+    valid_facts = [n for n in fact_order if 1 <= n <= len(fact_urls) and fact_urls[n - 1]]
     fact_map = {old: i for i, old in enumerate(valid_facts, 1)}
 
     def _rewrite(m):
@@ -1098,10 +1225,69 @@ def align_citations(body: str, hits, fact_urls=None) -> tuple[str, list, list[st
         new_i = fact_map[old]
         u = fact_urls[old - 1]
         fact_entries.append(f"[F{new_i}] {u}")
-    return new_body, cited_hits, fact_entries
+    return new_body, cited_hits, fact_entries, valid_facts
 
 
-def finalize_answer_urls(text, hits, fact_urls=None, lang="pl", hits_blob=""):
+def merge_official_sources(hit_sources, selected_facts, cited_fact_indexes):
+    """Retrieved pages plus verified facts that were actually cited.
+
+    Does not read the answer text. A URL that appears only inside a generated
+    sentence, or only inside a snippet, is not added.
+    """
+    by_url = {}
+    order = []
+
+    def _touch(url, item):
+        key = (url or "").strip().rstrip("/")
+        if not key:
+            return None
+        if key not in by_url:
+            by_url[key] = item
+            order.append(key)
+        return key
+
+    for src in hit_sources or []:
+        url = (src.get("url") or "").strip()
+        key = _touch(url, {
+            "title": src.get("title"),
+            "url": url,
+            "modified": src.get("modified"),
+            "outdated": src.get("outdated"),
+            "snippet": src.get("snippet"),
+            "fact_ids": list(src.get("fact_ids") or []),
+        })
+        if key is None:
+            continue
+    for idx in cited_fact_indexes or []:
+        if not isinstance(idx, int) or idx < 1 or idx > len(selected_facts or []):
+            continue
+        fact = selected_facts[idx - 1]
+        if getattr(fact, "status", None) != "verified":
+            continue
+        url = ((getattr(fact, "source", None) or {}).get("url") or "").strip()
+        key = _touch(url, {
+            "title": (getattr(fact, "i18n_label", None) or {}).get("pl") or getattr(fact, "id", ""),
+            "url": url,
+            "modified": (getattr(fact, "source", None) or {}).get("document_date"),
+            "outdated": False,
+            "snippet": None,
+            "fact_ids": [],
+        })
+        if key is None:
+            continue
+        ids = by_url[key].setdefault("fact_ids", [])
+        fid = getattr(fact, "id", None)
+        if fid and fid not in ids:
+            ids.append(fid)
+    out = []
+    for n, key in enumerate(order, 1):
+        item = by_url[key]
+        item["n"] = n
+        out.append(item)
+    return out
+
+
+def finalize_answer_urls(text, hits, fact_urls=None, lang="pl", hits_blob="", cited_fact_indexes=None):
     """Strip LLM sources section + unknown URLs; align citations; append sources."""
     if not text:
         text = ""
@@ -1120,15 +1306,16 @@ def finalize_answer_urls(text, hits, fact_urls=None, lang="pl", hits_blob=""):
             return e
         return ""
     body = _EMAIL_RE.sub(_email, body)
-    allowed = {(h.get("url") or "").rstrip("/") for h in (hits or []) if h.get("url")}
-    for u in fact_urls or []:
-        if u:
-            allowed.add(u.rstrip("/"))
+    # Retrieved page URLs may stay inline. A fact URL is added later from the
+    # citation marker, not because the model pasted it. Anything else is dropped.
+    allowed = {(h.get("url") or "").strip().rstrip("/") for h in (hits or []) if h.get("url")}
     def _keep(m):
         u = m.group(0).rstrip(".,;)")
         return u if u.rstrip("/") in allowed or u in allowed else ""
     body = _URL_RE.sub(_keep, body)
-    body, cited_hits, fact_entries = align_citations(body, hits, fact_urls=fact_urls)
+    body, cited_hits, fact_entries, cited = align_citations(body, hits, fact_urls=fact_urls)
+    if cited_fact_indexes is not None:
+        cited_fact_indexes.extend(cited)
     body = cleanup_answer_artifacts(body)
     body = re.sub(r"[ \t]{2,}", " ", body)
     body = re.sub(r"\n{3,}", "\n\n", body).rstrip()
@@ -1304,7 +1491,7 @@ def compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_bl
             "en": "- Next: open the Rector’s scholarship page and the rules PDF; apply via the channel listed there.",
             "pl": "- Dalej: strona stypendium rektora i PDF z regulaminem; wniosek według instrukcji na stronie UR.",
         }.get(lang, "- Dalej: strona stypendium rektora i PDF z regulaminem."))
-    else:
+    elif lang != "en":
         # ogólny fallback – krótsze cytaty zamiast ściany tekstu
         for i, h in enumerate(hits[:3], 1):
             snip = re.sub(r"\s+", " ", h.get("text") or "")[:280]
@@ -1423,7 +1610,7 @@ def search_topics(base_q, topics, prof, k_per=4, fac=None):
 _GENERAL_PROFILE_SLOTS = {"status", "poziom", "rok", "tryb", "kierunek", "drugi_kierunek"}
 _SENSITIVE_PROFILE_SLOTS = {"niepelnosprawnosc", "pobyt"}
 
-def merge_state_profile(state, prof, topics, history):
+def merge_state_profile(state, prof, topics, history, question=None):
     """Carry only conversation-scoped slots; never reuse sensitive slots on empty history (R5-1)."""
     prof = dict(prof or {})
     topics = list(topics or [])
@@ -1462,15 +1649,17 @@ def merge_state_profile(state, prof, topics, history):
                 for x in slots:
                     if x not in req:
                         req.append(x)
-    # Use latest user text for amount/cap gating (same rules as needed)
-    latest_q = ""
-    for m in reversed(hist):
-        if isinstance(m, dict) and m.get("role") == "user":
-            latest_q = m.get("content") or ""
-            break
-        if isinstance(m, str):
-            latest_q = m
-            break
+    # Gate on this turn's question. History-only text drops the gate when the
+    # chat has no prior user turn, so a cap/tuition question is clarified again.
+    latest_q = question if question else ""
+    if not latest_q:
+        for m in reversed(hist):
+            if isinstance(m, dict) and m.get("role") == "user":
+                latest_q = m.get("content") or ""
+                break
+            if isinstance(m, str):
+                latest_q = m
+                break
     hist_user = "\n".join(
         (m.get("content") if isinstance(m, dict) else str(m)) or ""
         for m in hist
@@ -1480,6 +1669,125 @@ def merge_state_profile(state, prof, topics, history):
     missing = [x for x in req if x not in merged]
     return merged, missing
 
+# Form estimate inputs are not durable student profile. A signed token may still
+# carry them after the user changes academic year (client cannot rewrite the HMAC).
+# They apply only when THIS request re-sends scenario_context.
+_SCENARIO_ESTIMATE_KEYS = (
+    "income_per_person",
+    "estimate_year",
+    "interested_in_dorm_topup",
+    "dorm_conditions_met",
+)
+
+
+def _apply_scenario_estimate(state, scenario_context) -> None:
+    prof = dict(getattr(state, "profile", None) or {})
+    for k in _SCENARIO_ESTIMATE_KEYS:
+        prof.pop(k, None)
+    if isinstance(scenario_context, dict):
+        for k in _SCENARIO_ESTIMATE_KEYS:
+            if k in scenario_context and scenario_context[k] is not None:
+                prof[k] = scenario_context[k]
+    state.profile = prof
+
+
+_ME_NAME = re.compile(r"mechanical\s+engineering", re.I)
+_IB_NAME = re.compile(r"international\s+business|business\s*&\s*finance|\bIB\s*&?\s*F\b|\bbusiness\b", re.I)
+def _verified_fee_lines(fact):
+    """Programme label and amount come from the verified fact, not a second table."""
+    value = getattr(fact, "value", None)
+    if not isinstance(value, dict):
+        return {}
+    lines = {}
+    for key, amount in value.items():
+        try:
+            shown = str(int(amount))
+        except (TypeError, ValueError):
+            continue
+        label = f"{key}: {shown} EUR"
+        if _ME_NAME.search(str(key)):
+            lines["me"] = label
+        elif re.search(r"international\s+business|business\s*&\s*finance", str(key), re.I):
+            lines["ib"] = label
+    return lines
+
+
+def _programme_focus(question):
+    """Which English programme this turn is asking about. History does not decide."""
+    q = question or ""
+    me = bool(_ME_NAME.search(q))
+    ib = bool(_IB_NAME.search(q))
+    if me and not ib:
+        return "me"
+    if ib and not me:
+        return "ib"
+    return "any"
+
+
+def _fee_amount(line):
+    return (line or "").partition(":")[2].strip()
+
+
+def _wrong_programme_fee(sentence, lines):
+    me = bool(_ME_NAME.search(sentence))
+    ib = bool(_IB_NAME.search(sentence or ""))
+    me_amt = _fee_amount(lines.get("me"))
+    ib_amt = _fee_amount(lines.get("ib"))
+    if me and ib_amt and ib_amt in (sentence or "") and me_amt not in (sentence or ""):
+        return "me"
+    if ib and not me and me_amt and me_amt in (sentence or "") and ib_amt not in (sentence or ""):
+        return "ib"
+    return None
+
+
+def _with_selected_english_tuition(out, lang, selected_facts, question, hist_user):
+    """Align a named programme with its verified fee. Do not append 2100 beside a wrong binding."""
+    if lang != "en":
+        return out, False
+    fact = next((f for f in selected_facts or [] if getattr(f, "id", None) == "tuition_english_programmes"), None)
+    if fact is None:
+        return out, False
+    blob = f"{question or ''}\n{hist_user or ''}"
+    if not re.search(r"(?i)english|angielsk|mechanical|business", blob):
+        return out, False
+    lines = _verified_fee_lines(fact)
+    if not lines:
+        return out, False
+    changed = False
+    kept = []
+    for sent in re.split(r"\n+|(?<=[.!?])\s+", out or ""):
+        sent = sent.strip()
+        if not sent:
+            continue
+        bad = _wrong_programme_fee(sent, lines)
+        if bad and lines.get(bad):
+            kept.append(lines[bad])
+            changed = True
+        else:
+            kept.append(sent)
+    text = "\n".join(kept).strip()
+    focus = _programme_focus(question)
+
+    def _has(kind):
+        line = lines.get(kind) or ""
+        name = line.partition(":")[0].split("(")[0].strip()
+        amount = _fee_amount(line)
+        return bool(name and amount and name.lower() in text.lower() and amount in text)
+
+    needed = []
+    if focus == "me":
+        needed = ["me"]
+    elif focus == "ib":
+        needed = ["ib"]
+    elif re.search(r"(?i)english|angielsk", f"{question or ''}\n{hist_user or ''}"):
+        needed = ["ib", "me"]
+    for kind in needed:
+        if lines.get(kind) and not _has(kind):
+            text = (text + "\n" + lines[kind]).strip()
+            changed = True
+    return text, changed
+
+
 def _attach_state(result, state):
     try:
         from session import encode
@@ -1488,8 +1796,9 @@ def _attach_state(result, state):
         pass
     return result
 
-def answer(question, history, session_lang=None, state_token=None, conv_id=None):
+def answer(question, history, session_lang=None, state_token=None, conv_id=None, scenario_context=None):
     """history: lista {'role','content'}; zwraca dict(answer, sources, mode, clarify, lang, state)"""
+    _reset_llm_attempts()
     import time as _time
     _t_deadline = _time.monotonic() + REQUEST_BUDGET_SEC
     from session import resolve_state
@@ -1500,6 +1809,9 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         if isinstance(m, dict) and m.get("role") in ("user", "assistant")
     ]
     state = resolve_state(state_token, history, conv_id=conv_id)
+    # Drop stale form estimate from the signed token; keep status/tryb/etc.
+    # Re-apply only keys this request sent (null does not revive the old year).
+    _apply_scenario_estimate(state, scenario_context)
     hist_user = "\n".join(m["content"] for m in history if m["role"] == "user")
     user_turns = [m["content"] for m in history if m["role"] == "user"]
     seed_lang = session_lang or state.lang
@@ -1510,15 +1822,58 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
     state.lang = lang
     # Deterministyczna bramka: klucze API, konta wykładowców, jailbreak – bez wywołania LLM
     if is_security_probe(question) or is_security_probe(hist_user[-500:], question):
-        return _attach_state(dict(clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
-                    answer=refuse_message(lang)), state)
+        return _attach_state(dict(
+            clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
+            answer=refuse_message(lang), llm_path=closed_path("refusal"),
+        ), state)
+    # Verified social-scholarship scenario (no LLM) — reversible via SCENARIO_SOCIAL
+    try:
+        from scenarios.social import (
+            scenario_social_enabled, looks_like_social_question, format_chat_answer, estimate as social_estimate,
+        )
+        if scenario_social_enabled():
+            # Intercept only when *this* turn is about social scholarship (ignore sticky history topics)
+            if looks_like_social_question(question):
+                topics0, prof0, _ = needed(question, hist_user)
+                est = None
+                used_form = False
+                # Prefer form/profile; else parse *current* message first (keeps minus sign; avoids stale history)
+                income_hint = None
+                if isinstance(getattr(state, "profile", None), dict):
+                    income_hint = state.profile.get("income_per_person")
+                    if income_hint is not None:
+                        used_form = True
+                if income_hint is None:
+                    income_hint = extract_income(question)
+                if income_hint is None:
+                    # Follow-up without repeating income: allow prior user turns only if still on social
+                    income_hint = extract_income(hist_user) if hist_user else None
+                if income_hint is not None:
+                    year = None
+                    if isinstance(getattr(state, "profile", None), dict):
+                        year = state.profile.get("estimate_year")
+                    est = social_estimate(
+                        income_hint,
+                        academic_year=year,
+                        interested_in_dorm_topup=bool((state.profile or {}).get("interested_in_dorm_topup")),
+                        dorm_conditions_met=(state.profile or {}).get("dorm_conditions_met"),
+                        profile=dict(prof0 or {}),
+                        lang=lang,
+                    )
+                payload = format_chat_answer(lang, estimate_result=est, used_form_income=used_form)
+                payload["profile"] = dict(prof0 or {})
+                payload["topics"] = ["stypendium_socjalne"]
+                payload["llm_path"] = closed_path("deterministic")
+                return _attach_state(payload, state)
+    except Exception:
+        pass  # fall through to legacy path if scenario module fails
     turn_conflicts = []
     topics, prof, missing = needed(question, hist_user)
     # Re-parse latest turn with conflict logging (needed() already merged regex profile)
     extract_profile(question, conflicts_out=turn_conflicts)
     if turn_conflicts:
         state.conflicts.extend(turn_conflicts)
-    prof, missing = merge_state_profile(state, prof, topics, history)
+    prof, missing = merge_state_profile(state, prof, topics, history, question=question)
     state.profile = dict(prof)
     # Accumulate pending intents across clarify + follow-ups (R5-4)
     topics = _accumulate_topics(
@@ -1558,7 +1913,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                 state.conflicts.extend(confs)
                 prof = prof2
                 state.profile = dict(prof)
-                _, missing = merge_state_profile(state, prof, topics, history)
+                _, missing = merge_state_profile(state, prof, topics, history, question=question)
         except Exception:
             pass
         if missing and prev_pending and set(missing) & set(prev_pending):
@@ -1570,7 +1925,10 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
             state.original_question = question
         text, mode = clarify_answer(lang, missing, question, history, topics, prof)
         state.pending_question = text
-        return _attach_state(dict(clarify=True, mode=mode, sources=[], profile=prof, topics=topics, lang=lang, answer=text), state)
+        return _attach_state(dict(
+            clarify=True, mode=mode, sources=[], profile=prof, topics=topics, lang=lang,
+            answer=text, llm_path=closed_path("clarification"),
+        ), state)
     state.pending_slots = []
     state.pending_question = None
     base_q = question
@@ -1677,24 +2035,64 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
         )
         if line:
             computed_lines.append(line)
+    if prof.get("niepelnosprawnosc") == "tak" and any(
+        getattr(f, "id", None) == "doctoral_stipend_amount" for f in selected_facts
+    ):
+        from decimal import Decimal as _Dec
+        from facts import doctoral_components, doctoral_total_line
+        stipend = next(f for f in selected_facts if f.id == "doctoral_stipend_amount")
+        topup_f = next((f for f in selected_facts if f.id == "doctoral_disability_topup_monthly"), None)
+        parts = doctoral_components(stipend)
+        listed = None
+        if topup_f is not None and not isinstance(topup_f.value, (dict, list)):
+            try:
+                listed = _Dec(str(topup_f.value)).quantize(_Dec("0.01"))
+            except Exception:
+                listed = None
+        after = bool(re.search(
+            r"(?i)po ocenie|після оцінки|после оценки|after (the )?mid-?term|середньоперіод",
+            question or "",
+        ))
+        if parts and (listed is None or listed == parts["top"]):
+            line = doctoral_total_line(stipend, lang, after_evaluation=after)
+            if line:
+                computed_lines.append(line)
     facts_block = render_facts_block(selected_facts, lang, computed_lines=computed_lines)
     facts_for_user = render_facts_for_user(selected_facts, lang, computed_lines=computed_lines)
 
     blob6 = _hit_blob(hits[:6])
-    fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
+    # Parallel to selected_facts. Only a verified fact contributes an official URL.
+    fact_urls = []
+    for f in selected_facts:
+        url = ""
+        if getattr(f, "status", None) == "verified":
+            url = ((getattr(f, "source", None) or {}).get("url") or "").strip()
+        fact_urls.append(url)
 
-    def _finalize(out: str, mode: str):
+    def _finalize(out: str, mode: str, llm_path: dict):
         # No amount/channel scrub — figures come from render.py; channel from FACTS (P2)
         out = strip_llm_deadline_notes(out)
-        out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
+        cited = []
+        out = finalize_answer_urls(
+            out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6, cited_fact_indexes=cited,
+        )
         out += deadline_passed_note(out, lang)
+        out, fee_corrected = _with_selected_english_tuition(out, lang, selected_facts, question, hist_user)
+        if fee_corrected:
+            llm_path = dict(llm_path)
+            llm_path["fee_corrected"] = True
         state.original_question = None
+        official = merge_official_sources(srcs, selected_facts, cited)
         return _attach_state(
-            dict(clarify=False, mode=mode, sources=srcs, profile=prof, topics=topics, lang=lang, answer=out),
+            dict(
+                clarify=False, mode=mode, sources=official, profile=prof, topics=topics,
+                lang=lang, answer=out, llm_path=llm_path,
+            ),
             state,
         )
 
     if llm_enabled():
+        _reset_llm_attempts()
         import datetime
         import json as _json
         from render import (
@@ -1768,7 +2166,9 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                                 lang=lang,
                             )
                     if out and output_lang_ok(out, lang):
-                        return _finalize(out, "llm-structured")
+                        return _finalize(out, "llm-structured", llm_path_from_attempts(
+                            final="model", model_used=True, discarded=None,
+                        ))
             # JSON failed → free-text legacy once, then fallback
             sys_ft = (SYSTEM_FREE_TEXT.replace("{today}", datetime.date.today().isoformat())
                                       .replace("{lang}", lang)
@@ -1785,15 +2185,29 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None)
                     + "\n\nAnswer per system rules. Prefer amounts from FACTS only."
                 ),
             }]
-            out = strip_untrusted_wrappers(redact_secrets(call_llm(msgs_ft, temperature=0.3)))
-            if not out or not output_lang_ok(out, lang):
+            model_text = strip_untrusted_wrappers(redact_secrets(call_llm(msgs_ft, temperature=0.3)))
+            if not model_text or not output_lang_ok(model_text, lang):
                 out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
-            return _finalize(out, "llm")
+                return _finalize(out, "wyszukiwanie", llm_path_from_attempts(
+                    final="fallback", model_used=False,
+                    discarded="empty" if not model_text else "lang",
+                ))
+            return _finalize(model_text, "llm", llm_path_from_attempts(
+                final="model", model_used=True, discarded=None,
+            ))
         except Exception:
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
+            ans = strip_untrusted_wrappers(redact_secrets(
+                compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
+            ))
+            return _finalize(ans, "wyszukiwanie", llm_path_from_attempts(
+                final="fallback", model_used=False, discarded="exception",
+            ))
     else:
         err = ""
     ans = strip_untrusted_wrappers(redact_secrets(
         compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
     ))
-    return _finalize(ans, "wyszukiwanie")
+    return _finalize(ans, "wyszukiwanie", llm_path_from_attempts(
+        final="fallback", model_used=False, discarded="not_enabled",
+    ))

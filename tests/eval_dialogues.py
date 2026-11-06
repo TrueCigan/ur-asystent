@@ -352,6 +352,90 @@ def check_answer(r, exp, elapsed=None):
     return f
 
 
+_NON_MODEL_KINDS = {"clarification", "refusal", "deterministic"}
+_SECRET_TRACE = re.compile(
+    r"(?i)(api[_-]?key|bearer|cookie|set-cookie|session(?:_secret|_token)?|x-api-key)\s*[:=]\s*\S+"
+    r"|\bsk-[A-Za-z0-9_-]{8,}\b"
+    r"|\b(?:eyJ|sess_)[A-Za-z0-9._-]{12,}\b"
+)
+
+
+def redact_trace_text(text):
+    return _SECRET_TRACE.sub("[redacted]", text or "")
+
+
+def provider_verified(path):
+    """Typed transport acceptance. This is not a claim that a live provider was called."""
+    path = path or {}
+    return bool(
+        path.get("kind") == "model"
+        and path.get("provider_verified") is True
+        and path.get("model_used") is True
+        and path.get("transport") == "ok"
+        and path.get("http_status") == 200
+        and path.get("request_id")
+        and path.get("external_run") is False
+    )
+
+
+def path_failure(case, r):
+    """Product pass and provider verification are separate.
+
+    Clarification, refusal, and deterministic replies may satisfy the case text
+    without a model call. A transport error or a discarded model reply is not
+    one of those kinds. A case with requires_model fails unless the typed
+    transport was accepted.
+    """
+    path = r.get("llm_path") or {}
+    requires = bool((case.get("e2e") or {}).get("requires_model"))
+    if provider_verified(path):
+        return None
+    if (
+        not requires
+        and path.get("kind") in _NON_MODEL_KINDS
+        and path.get("transport") == "not_called"
+        and path.get("model_used") is False
+        and path.get("provider_verified") is False
+    ):
+        return None
+    return (
+        "provider path not verified: kind=%s transport=%s http_status=%s model_used=%s discarded=%s"
+        % (
+            path.get("kind"),
+            path.get("transport"),
+            path.get("http_status"),
+            path.get("model_used"),
+            path.get("discarded"),
+        )
+    )
+
+
+def model_path_unconfirmed(r):
+    """Required-model view of one result. Kept for tests that do not carry a case."""
+    return path_failure({"e2e": {"requires_model": True}}, r)
+
+
+def sanitized_turn_trace(r):
+    path = r.get("llm_path") or {}
+    return {
+        "mode": r.get("mode"),
+        "provider": path.get("provider"),
+        "kind": path.get("kind"),
+        "provider_verified": path.get("provider_verified") is True,
+        "external_run": False,
+        "transport": path.get("transport"),
+        "http_status": path.get("http_status"),
+        "request_id": path.get("request_id"),
+        "model_used": path.get("model_used"),
+        "discarded": path.get("discarded"),
+        "answer": redact_trace_text(r.get("answer") or ""),
+    }
+
+
+def sanitized_path_record(r):
+    return sanitized_turn_trace(r)
+
+
 def run_e2e(ctx, case, url, runs):
     import time
     exp = case.get("e2e") or {}
@@ -377,6 +461,11 @@ def run_e2e(ctx, case, url, runs):
                 elapsed = time.monotonic() - t0
                 if exp.get("every_turn") or i == len(case["turns"]) - 1:
                     fails += [f"turn{i+1}: {x}" for x in check_answer(r, exp or {}, elapsed=elapsed)]
+                    if not url and not fault:
+                        gap = path_failure(case, r)
+                        if gap:
+                            fails.append(f"turn{i+1}: {gap}")
+                        print("TRACE " + json.dumps(sanitized_turn_trace(r), ensure_ascii=False), flush=True)
                 hist += [{"role": "user", "content": q}, {"role": "assistant", "content": r.get("answer", "")}]
             for rx in (exp or {}).get("stable_across_runs", []):
                 m = re.search(rx, r.get("answer", ""), re.I | re.S)

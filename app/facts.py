@@ -126,6 +126,9 @@ def select_facts(
             continue
         if not _profile_matches(f, profile):
             continue
+        # Special-act text names PESEL UKR. Unknown residence is not that status.
+        if f.id == "ukr_special_act" and profile.get("pobyt") != "ukr":
+            continue
         verified = f.status == "verified" and f.value is not None
         if verified or (include_unverified and f.value is not None):
             by_id.setdefault(f.id, []).append(f)
@@ -184,6 +187,11 @@ def _ensure_tuition_facts(
 
 
 def _parse_pl_num(s: str) -> float | None:
+    d = _parse_pl_decimal(s)
+    return float(d) if d is not None else None
+
+
+def _parse_pl_decimal(s: str) -> Decimal | None:
     raw = (s or "").strip().replace(" ", "").replace("\u00a0", "")
     if not raw:
         return None
@@ -192,13 +200,13 @@ def _parse_pl_num(s: str) -> float | None:
     elif "," in raw:
         raw = raw.replace(",", ".")
     try:
-        return float(raw)
-    except ValueError:
+        return Decimal(raw)
+    except (InvalidOperation, ValueError):
         return None
 
 
 def _groups_table(groups: Any) -> list[dict]:
-    """Normalize groups to list of {group, min, max, amount?}."""
+    """Normalize groups to list of {group, min, max, amount?} with Decimal bounds."""
     if not groups:
         return []
     if isinstance(groups, list):
@@ -206,10 +214,15 @@ def _groups_table(groups: Any) -> list[dict]:
         for row in groups:
             if not isinstance(row, dict):
                 continue
+            try:
+                lo = Decimal(str(row.get("min", 0)))
+                hi = Decimal(str(row.get("max", 0)))
+            except (InvalidOperation, ValueError):
+                continue
             out.append({
                 "group": str(row.get("group") or row.get("id") or ""),
-                "min": float(row.get("min", 0)),
-                "max": float(row.get("max", 0)),
+                "min": lo,
+                "max": hi,
                 "amount": row.get("amount"),
             })
         return out
@@ -223,7 +236,7 @@ def _groups_table(groups: Any) -> list[dict]:
                 if not isinstance(span, str) or "-" not in span:
                     continue
                 a, b = span.split("-", 1)
-                lo, hi = _parse_pl_num(a), _parse_pl_num(b)
+                lo, hi = _parse_pl_decimal(a), _parse_pl_decimal(b)
                 if lo is None or hi is None:
                     continue
                 out.append({"group": str(g), "min": lo, "max": hi, "amount": amounts.get(g)})
@@ -231,11 +244,14 @@ def _groups_table(groups: Any) -> list[dict]:
     return []
 
 
-def income_group(income_per_person: float, groups: Any) -> tuple[str | None, float | None]:
-    """Deterministic income → (group, amount). Upper bound inclusive."""
+def income_group(income_per_person: float | Decimal | str, groups: Any) -> tuple[str | None, float | None]:
+    """Deterministic income → (group, amount). Bounds inclusive; Decimal comparisons."""
     try:
-        income = float(income_per_person)
-    except (TypeError, ValueError):
+        if isinstance(income_per_person, Decimal):
+            income = income_per_person
+        else:
+            income = Decimal(str(income_per_person))
+    except (InvalidOperation, ValueError, TypeError):
         return None, None
     table = _groups_table(groups)
     if not table:
@@ -243,23 +259,29 @@ def income_group(income_per_person: float, groups: Any) -> tuple[str | None, flo
     for row in sorted(table, key=lambda r: r["min"]):
         if row["min"] <= income <= row["max"]:
             amt = row.get("amount")
-            return row["group"], (float(amt) if amt is not None else None)
+            if amt is None:
+                return row["group"], None
+            try:
+                return row["group"], float(Decimal(str(amt)))
+            except (InvalidOperation, ValueError):
+                return row["group"], None
     return None, None
 
 
 _INCOME_RE = re.compile(
-    r"(?i)(\d[\d\s.,]*)\s*(?:zł|zl|pln)?\s*"
+    r"(?i)(-?\d[\d\s.,]*)\s*(?:zł|zl|pln)?\s*"
     r"(?:na\s*osob\w*|per\s*person|/os\b|на\s*особ\w*|на\s*человека|нэг\s*хүнд)",
 )
 
 
 def extract_income(text: str) -> float | None:
+    """Parse income amount from free text. Preserves a leading minus (invalid for estimate)."""
     m = _INCOME_RE.search(text or "")
     if not m:
-        # softer: "dochod ... 1500" / "income ... 1500"
+        # softer: "dochod ... 1500" / "income ... -10"
         m = re.search(
             r"(?i)(?:doch[oó]d|income|доход|дохід|орлого).{0,40}?"
-            r"(\d[\d\s.,]*)\s*(?:zł|zl|pln)?",
+            r"(-?\d[\d\s.,]*)\s*(?:zł|zl|pln)?",
             text or "",
         )
     if not m:
@@ -316,6 +338,114 @@ def format_fact_value(val: Any, unit: str = "", lang: str = "pl", indent: str = 
     return f"{val}{u}"
 
 
+def _money(d: Decimal, lang: str) -> str:
+    """Two decimal places. pl/uk use a comma; en uses a dot. No rounding to a whole złoty."""
+    q = d.quantize(Decimal("0.01"))
+    num = f"{q:.2f}"
+    if lang == "en":
+        return f"{num} PLN"
+    return f"{num.replace('.', ',')} zł"
+
+
+def doctoral_components(fact: Fact) -> dict | None:
+    """Verified doctoral base and disability supplement. None if the pieces disagree."""
+    v = fact.value if isinstance(fact.value, dict) else None
+    if not v:
+        return None
+    try:
+        przed = Decimal(str(v["przed_ocena_srodokresowa"]))
+        po = Decimal(str(v["po_ocenie_srodokresowej"]))
+        pct_before = Decimal(str(v["base_rate_percent_of_professor_przed"]))
+        pct_after = Decimal(str(v["base_rate_percent_of_professor_po"]))
+        pct_dis = Decimal(str(v["disability_topup_percent_of_przed"]))
+        verified_top = Decimal(str(v["zwiekszenie_niepelnosprawnosc"]))
+    except (KeyError, InvalidOperation, ValueError):
+        return None
+    derived = (przed * pct_dis / Decimal("100")).quantize(Decimal("0.01"))
+    if derived != verified_top.quantize(Decimal("0.01")):
+        return None
+    return {
+        "przed": przed.quantize(Decimal("0.01")),
+        "po": po.quantize(Decimal("0.01")),
+        "pct_before": pct_before,
+        "pct_after": pct_after,
+        "pct_dis": pct_dis,
+        "top": verified_top.quantize(Decimal("0.01")),
+        "total_przed": (przed + verified_top).quantize(Decimal("0.01")),
+        "total_po": (po + verified_top).quantize(Decimal("0.01")),
+        "year": fact.academic_year or "",
+    }
+
+
+def doctoral_base_lines(fact: Fact, lang: str) -> list[str] | None:
+    """Label the statutory base (37%/57% of the professor salary) apart from the supplement."""
+    c = doctoral_components(fact)
+    if not c:
+        return None
+    if lang == "en":
+        return [
+            f"Base before the mid-term evaluation: {c['pct_before']}% of the professor salary = {_money(c['przed'], lang)}/month. This percentage is the statutory base, not the disability supplement.",
+            f"Base after the mid-term evaluation: {c['pct_after']}% of the professor salary = {_money(c['po'], lang)}/month.",
+            "These amounts are the ones listed on the gov.pl page dated 26.02.2024. That page does not state academic year 2026/2027 or the date 01.01.2026.",
+            "Professor salary 9650 PLN for salaries from 01.01.2026 comes from Dz.U. 2026 poz. 525 of 14.04.2026. That act sets the salary. It is not a decision that the stipend applies from that date.",
+            f"Disability supplement: {c['pct_dis']}% of the pre-evaluation base = {_money(c['top'], lang)}/month. It is not {c['pct_before']}% of the professor salary.",
+        ]
+    if lang == "uk":
+        return [
+            f"База до середньострокової оцінки: {c['pct_before']}% зарплати професора = {_money(c['przed'], lang)}/міс. Цей відсоток є законною базою, а не надбавкою за інвалідність.",
+            f"База після середньострокової оцінки: {c['pct_after']}% зарплати професора = {_money(c['po'], lang)}/міс.",
+            "Ці суми наведено на сторінці gov.pl від 26.02.2024. Сторінка не встановлює 2026/2027 і не встановлює дату 01.01.2026.",
+            "Зарплата професора 9650 zł для виплат від 01.01.2026: Dz.U. 2026 poz. 525 від 14.04.2026. Це правило про зарплату, а не рішення про стипендію.",
+            f"Надбавка за інвалідність: {c['pct_dis']}% бази до оцінки = {_money(c['top'], lang)}/міс. Це не {c['pct_before']}% зарплати професора.",
+        ]
+    return [
+        f"Podstawa przed oceną śródokresową: {c['pct_before']}% wynagrodzenia profesora = {_money(c['przed'], lang)}/mies. Ten procent jest podstawą ustawową, a nie zwiększeniem z tytułu niepełnosprawności.",
+        f"Podstawa po ocenie śródokresowej: {c['pct_after']}% wynagrodzenia profesora = {_money(c['po'], lang)}/mies.",
+        "Te kwoty podaje strona gov.pl z 26.02.2024. Ta strona nie ustala roku 2026/2027 ani daty 01.01.2026.",
+        "Wynagrodzenie profesora 9650 zł dla wynagrodzeń od 01.01.2026: Dz.U. 2026 poz. 525 z 14.04.2026. Przepis dotyczy wynagrodzenia, nie uprawnienia do stypendium od tej daty.",
+        f"Zwiększenie z tytułu niepełnosprawności: {c['pct_dis']}% podstawy sprzed oceny = {_money(c['top'], lang)}/mies. To nie jest {c['pct_before']}% wynagrodzenia profesora.",
+    ]
+
+
+def doctoral_total_line(fact: Fact, lang: str, *, after_evaluation: bool) -> str | None:
+    c = doctoral_components(fact)
+    if not c:
+        return None
+    if after_evaluation:
+        total, base = c["total_po"], c["po"]
+        if lang == "en":
+            when = "After the mid-term evaluation"
+        elif lang == "uk":
+            when = "Після середньострокової оцінки"
+        else:
+            when = "Po ocenie śródokresowej"
+    else:
+        total, base = c["total_przed"], c["przed"]
+        if lang == "en":
+            when = "Before the mid-term evaluation"
+        elif lang == "uk":
+            when = "До середньострокової оцінки"
+        else:
+            when = "Przed oceną śródokresową"
+    if lang == "en":
+        return (
+            f"{when}: {_money(base, lang)} + disability supplement {_money(c['top'], lang)} "
+            f"= {_money(total, lang)}/month. This is the sum of the amounts listed on the page dated 26.02.2024. "
+            "These sources do not confirm which period the stipend covers."
+        )
+    if lang == "uk":
+        return (
+            f"{when}: {_money(base, lang)} + надбавка {_money(c['top'], lang)} "
+            f"= {_money(total, lang)}/міс. Це сума сум зі сторінки від 26.02.2024. "
+            "Ці джерела не підтверджують, якого періоду стосується стипендія."
+        )
+    return (
+        f"{when}: {_money(base, lang)} + zwiększenie {_money(c['top'], lang)} "
+        f"= {_money(total, lang)}/mies. To suma kwot ze strony z 26.02.2024. "
+        "Te źródła nie potwierdzają, jakiego okresu dotyczy stypendium."
+    )
+
+
 def _fact_entry_lines(f: Fact, i: int, lang: str, *, for_user: bool) -> list[str]:
     label = f.i18n_label.get(lang) or f.i18n_label.get("pl") or f.id
     unit = f.unit or ""
@@ -324,7 +454,16 @@ def _fact_entry_lines(f: Fact, i: int, lang: str, *, for_user: bool) -> list[str
     src = ""
     if not for_user and f.source.get("url"):
         src = f" | source: {f.source['url']}"
-    body = format_fact_value(f.value, unit=unit if not isinstance(f.value, (dict, list)) else "", lang=lang)
+    labeled = doctoral_base_lines(f, lang) if f.id == "doctoral_stipend_amount" else None
+    if labeled is not None:
+        body = "\n".join(labeled)
+    elif f.id == "tuition_english_programmes":
+        value = f.value
+        if lang != "pl" and isinstance(value, dict):
+            value = {k: v for k, v in value.items() if k != "note"}
+        body = format_fact_value(value, unit="EUR", lang=lang)
+    else:
+        body = format_fact_value(f.value, unit=unit if not isinstance(f.value, (dict, list)) else "", lang=lang)
     if isinstance(f.value, (dict, list)):
         head_unit = f" {unit}" if unit else ""
         head = f"[F{i}] {label}{head_unit}{year}{unver}{src}:"

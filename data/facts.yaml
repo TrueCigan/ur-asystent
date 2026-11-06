@@ -1,8 +1,29 @@
 # Canonical UR facts. Every value must be confirmed by the owner from an official document.
 # status: verified | TODO(verify)
 # Records with TODO(verify) are injected ONLY when FACTS_INJECT_UNVERIFIED=1 (default: off).
-# Filled 2026-11-05 from official UR documents; conflicts resolved by choosing the highest official figure.
+# Period-specific figures are separate records — do not auto-pick higher/lower across years.
 
+- id: rector_social_cap_monthly_2025_2026
+  topic:
+  - stypendium_rektora
+  - stypendium_socjalne
+  value: 3560.60
+  unit: PLN/month
+  academic_year: 2025/2026
+  applies_to: {}
+  candidates_seen:
+  - value: 3560.60
+    note: Komunikat MNiSW z 11.09.2025 (rok 2025/2026) podaje 3.560,6 zł. Cytowany URL odpowiedzi to aneks UR, nie strona gov.pl (tej strony nie ma w korpusie źródeł).
+  source:
+    url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf
+    ordinance: Aneks nr 1 z 11.12.2025 do R-41/2025, ustalenia na rok 2025/2026, pkt 4 — łączna miesięczna wysokość stypendium socjalnego i stypendium rektora 3.560,60 zł. To nie jest limit 3667 zł z okna 2026/2027.
+    document_date: '2025-12-11'
+    checked: '2026-11-06'
+  status: verified
+  i18n_label:
+    pl: Limit socjalne+rektora (2025/2026)
+    en: Combined social+rector cap (2025/2026)
+    uk: Ліміт соц.+ректор (2025/2026)
 - id: rector_social_cap_monthly
   topic:
   - stypendium_rektora
@@ -20,20 +41,18 @@
     - jednolite
   candidates_seen:
   - value: 3667.0
-    url: https://student.uniwersytetradom.pl/stypendium-rektora/
-    doc_modified: 2026-08-24
+    url: https://student.uniwersytetradom.pl/stypendia-socjalne/
   source:
     url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
-    ordinance: Strona 'Świadczenia dla studentów' (38% wynagrodzenia profesora 9650 zł od 01.01.2026); konflikt z Aneks nr 1 z 11.12.2025 do zarządzenia R-41/2025 (Załącznik nr 1 do Regulaminu świadczeń,
-      rok 2025/2026) = 3560,60 zł → wybrano wyższą
+    ordinance: Strona UR 'Świadczenia' + MNiSW 2026/2027 — 38% wynagrodzenia profesora 9650 zł = 3667,00 zł (od 01.01.2026). Kwota 3560,60 zł dotyczy roku 2025/2026 (osobny fakt rector_social_cap_monthly_2025_2026), nie jest konfliktem.
     document_date: '2026-09-08'
     checked: '2026-11-05'
   status: verified
   i18n_label:
-    pl: Maksymalna łączna kwota stypendium socjalnego i rektora
-    en: Maximum combined social + rector's scholarship
-    uk: Максимальна сукупна сума соціальної та ректорської стипендій
-    mn: Нийгмийн болон ректорын тэтгэлгийн дээд хэмжээ
+    pl: Limit socjalne+rektora (2026/2027)
+    en: Combined social+rector cap (2026/2027)
+    uk: Ліміт соц.+ректор (2026/2027)
+
 - id: rector_points_table
   topic:
   - stypendium_rektora
@@ -75,21 +94,29 @@
       III: 1200.0
       IV: 1000.0
     zwiekszenie_akademik: 400.0
+    zwiekszenie_akademik_rule: >-
+      Zwiększenie (kwota z tabeli tego roku) przysługuje w szczególnie uzasadnionych przypadkach
+      (Regulamin § 12 / R-32/2024): koszty zamieszkania w domu studenta albo w innym obiekcie,
+      w szczególności gdy brak miejsc w domu studenta, jeżeli codzienny dojazd z miejsca stałego
+      zamieszkania uniemożliwiałby lub w znacznym stopniu utrudniał studiowanie. To samo dotyczy
+      zamieszkania z niepracującym małżonkiem lub dzieckiem studenta, gdy spełniony jest ten warunek
+      dojazdu. Wymagany jest skan umowy o zakwaterowanie w domu studenckim lub umowy najmu.
+      Samo zamieszkanie w domu studenta bez tych przesłanek nie wystarcza.
   unit: PLN/person
   academic_year: 2025/2026
   applies_to: {}
-  candidates_seen: []
+  candidates_seen:
+  - note: Stawki grup i +400 zł — Aneks do R-41/2025, ustalenia 2025/2026, pkt 2-3 i 6. I grupa od 0,01 zł, nie od 0,00 zł. Na 2026/2027 strona UR podaje próg 2099,70 zł, ale tabeli grup i kwot w tym aneeksie nie ma.
   source:
     url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf
-    ordinance: Aneks nr 1 z 11.12.2025 do zarządzenia R-41/2025 (Załącznik nr 1 do Regulaminu świadczeń, rok 2025/2026), pkt 2-3, 6
+    ordinance: Aneks nr 1 z 11.12.2025 do zarządzenia R-41/2025 (Załącznik nr 1), pkt 2-3, 6; warunki zwiększenia — Regulamin R-32/2024 § 12
     document_date: '2025-12-11'
     checked: '2026-11-05'
   status: verified
   i18n_label:
-    pl: Próg dochodu na stypendium socjalne
-    en: Income threshold for social scholarship
-    uk: Поріг доходу для соціальної стипендії
-    mn: Нийгмийн тэтгэлгийн орлогын босго
+    pl: Próg i grupy dochodu — stypendium socjalne (2025/2026)
+    en: Income threshold and groups — social scholarship (2025/2026)
+    uk: Поріг і групи доходу — соціальна стипендія (2025/2026)
 - id: disability_amounts
   topic:
   - stypendium_niepeln
@@ -268,9 +295,9 @@
     base_rate_percent_of_professor_przed: 37
     base_rate_percent_of_professor_po: 57
     disability_topup_percent_of_przed: 30
-    note: 'ustawowe MINIMUM brutto art. 209 PSWN; base rates 37%/57% of professor salary; disability top-up +30% of pre-evaluation amount (=1071.15). Do not quote 37% as the disability top-up.'
+    note: 'Amounts listed on gov.pl (page date 26.02.2024): base 37% before the mid-term evaluation and 57% after; disability supplement 30% of the pre-evaluation base (1071.15), not 37% of the professor salary. That page does not state 2026/2027 or 01.01.2026. Professor salary 9650 from 01.01.2026 is Dz.U. 2026 poz. 525 (14.04.2026), a salary rule, not a stipend decision. 6571.65 is 5500.50 + 1071.15. The stipend period is not confirmed.'
   unit: PLN/month
-  academic_year: 2026/2027
+  academic_year: null
   applies_to:
     status:
     - doktorant
@@ -278,8 +305,8 @@
   - note: none found; 2022 page flagged outdated
   source:
     url: https://www.gov.pl/web/nauka/stypendium-doktoranckie
-    ordinance: art. 209 ust. 4 ustawy PSWN + rozp. MNiSW z 14.04.2026 (Dz.U. 2026 poz. 525), wynagrodzenie profesora 9650 zł od 01.01.2026
-    document_date: '2026-04-14'
+    ordinance: Strona gov.pl z 26.02.2024 podaje 3570,50 / 5500,50 / 1071,15. Nie ustala roku 2026/2027 ani daty 01.01.2026.
+    document_date: '2024-02-26'
     checked: '2026-11-05'
   status: verified
   i18n_label:
@@ -293,15 +320,15 @@
   - stypendium_niepeln
   value: 1071.15
   unit: PLN/month
-  academic_year: 2026/2027
+  academic_year: null
   applies_to:
     status:
     - doktorant
   candidates_seen: []
   source:
     url: https://www.gov.pl/web/nauka/stypendium-doktoranckie
-    ordinance: art. 209 PSWN — zwiększenie stypendium doktoranckiego przy orzeczeniu o niepełnosprawności
-    document_date: '2026-04-14'
+    ordinance: Strona gov.pl z 26.02.2024 podaje zwiększenie 1071,15. Nie ustala roku 2026/2027 ani daty 01.01.2026.
+    document_date: '2024-02-26'
     checked: '2026-11-05'
   status: verified
   i18n_label:
@@ -316,12 +343,12 @@
   - doktoranckie
   value: 9650
   unit: PLN/month
-  academic_year: 2026/2027
+  academic_year: null
   applies_to: {}
   candidates_seen: []
   source:
-    url: https://www.gov.pl/web/nauka/stypendium-doktoranckie
-    ordinance: rozp. MNiSW z 14.04.2026 (Dz.U. 2026 poz. 525) — wynagrodzenie profesora od 01.01.2026 (baza ustawowa, nie świadczenie studenckie)
+    url: https://dziennikustaw.gov.pl/DU/2026/525
+    ordinance: Dz.U. 2026 poz. 525 z 14.04.2026 — wynagrodzenie profesora 9650 zł należne od 01.01.2026. To przepis o wynagrodzeniu. Nie ustala okresu stypendium doktoranckiego.
     document_date: '2026-04-14'
     checked: '2026-11-05'
   status: verified
