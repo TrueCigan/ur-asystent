@@ -217,8 +217,12 @@ def output_lang_ok(answer: str, target: str) -> bool:
         cyr = len(re.findall(r"[а-яА-ЯёЁіїєґөүІЇЄҐӨҮ]", body))
         if cyr > 0:
             return False
-    # The e2e detector treats any Polish diacritic as Polish. An English answer
-    # must not keep a Polish fact note or a Polish retrieval quote.
-    if target == "en" and re.search(r"[ąćęłńóśźż]", body, re.I):
-        return False
+    if target == "en":
+        prose = re.sub(r"«[^»]*»|\"[^\"]{0,240}\"|„[^“]{0,240}“", " ", body)
+        polish = bool(re.search(r"\b(koszt|wynosi|programu|opłata|oplata|jest|dla|studia|czesne)\b", prose, re.I))
+        english = bool(re.search(r"\b(the|is|are|for|about|costs|fee|programme|program)\b", prose, re.I))
+        if polish and not english:
+            return False
+        if re.search(r"[ąćęłńóśźż]", prose, re.I) and not english:
+            return False
     return True

@@ -964,18 +964,52 @@ def _record_llm_attempt(*, transport, http_status=None, request_id=None):
     })
 
 
-def llm_path_from_attempts(*, final, model_used, discarded):
-    last = _LLM_ATTEMPTS[-1] if _LLM_ATTEMPTS else {}
-    return {
+def _typed_path(*, kind, final, model_used, discarded, attempted, transport, http_status, request_id, provider):
+    """Typed reply path. provider_verified is the transport contract, not an external-run claim."""
+    path = {
+        "kind": kind,
         "final": final,
         "model_used": bool(model_used),
         "discarded": discarded,
-        "attempted": bool(_LLM_ATTEMPTS),
-        "transport": last.get("transport") or "not_called",
-        "http_status": last.get("http_status"),
-        "request_id": last.get("request_id"),
-        "provider": last.get("provider"),
+        "attempted": bool(attempted),
+        "transport": transport or "not_called",
+        "http_status": http_status,
+        "request_id": request_id,
+        "provider": provider,
+        "external_run": False,
     }
+    path["provider_verified"] = bool(
+        path["kind"] == "model"
+        and path["model_used"] is True
+        and path["transport"] == "ok"
+        and path["http_status"] == 200
+        and path["request_id"]
+    )
+    return path
+
+
+def closed_path(kind):
+    """Student-facing text that was not a model answer: clarification, refusal, or deterministic."""
+    return _typed_path(
+        kind=kind, final=kind, model_used=False, discarded=None, attempted=False,
+        transport="not_called", http_status=None, request_id=None, provider=None,
+    )
+
+
+def llm_path_from_attempts(*, final, model_used, discarded):
+    last = _LLM_ATTEMPTS[-1] if _LLM_ATTEMPTS else {}
+    if model_used and final == "model":
+        kind = "model"
+    elif discarded == "not_enabled" and not _LLM_ATTEMPTS:
+        kind = "deterministic"
+    else:
+        kind = "fallback"
+    return _typed_path(
+        kind=kind, final=final, model_used=model_used, discarded=discarded,
+        attempted=bool(_LLM_ATTEMPTS), transport=last.get("transport") or "not_called",
+        http_status=last.get("http_status"), request_id=last.get("request_id"),
+        provider=last.get("provider"),
+    )
 
 
 def call_llm(messages, temperature=0.25):
@@ -1788,8 +1822,10 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
     state.lang = lang
     # Deterministyczna bramka: klucze API, konta wykładowców, jailbreak – bez wywołania LLM
     if is_security_probe(question) or is_security_probe(hist_user[-500:], question):
-        return _attach_state(dict(clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
-                    answer=refuse_message(lang)), state)
+        return _attach_state(dict(
+            clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
+            answer=refuse_message(lang), llm_path=closed_path("refusal"),
+        ), state)
     # Verified social-scholarship scenario (no LLM) — reversible via SCENARIO_SOCIAL
     try:
         from scenarios.social import (
@@ -1827,6 +1863,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                 payload = format_chat_answer(lang, estimate_result=est, used_form_income=used_form)
                 payload["profile"] = dict(prof0 or {})
                 payload["topics"] = ["stypendium_socjalne"]
+                payload["llm_path"] = closed_path("deterministic")
                 return _attach_state(payload, state)
     except Exception:
         pass  # fall through to legacy path if scenario module fails
@@ -1888,7 +1925,10 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             state.original_question = question
         text, mode = clarify_answer(lang, missing, question, history, topics, prof)
         state.pending_question = text
-        return _attach_state(dict(clarify=True, mode=mode, sources=[], profile=prof, topics=topics, lang=lang, answer=text), state)
+        return _attach_state(dict(
+            clarify=True, mode=mode, sources=[], profile=prof, topics=topics, lang=lang,
+            answer=text, llm_path=closed_path("clarification"),
+        ), state)
     state.pending_slots = []
     state.pending_question = None
     base_q = question

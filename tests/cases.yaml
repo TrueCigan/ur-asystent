@@ -86,7 +86,7 @@
   origin: r2-S6
   turns: ["foreign student, residence permit, full-time, 1st degree", "how much for english programs? business"]
   unit: {topics_include: [oplaty]}
-  e2e: {must_match: ["2[ ,.]?100\\s*(EUR|euro)"], must_not_match: ["Dormitory Fees"]}
+  e2e: {must_match: ["2[ ,.]?100\\s*(EUR|euro)"], must_not_match: ["Dormitory Fees"], requires_model: true}
 
 # ---------- facts consistency ----------
 - id: fact-rector-cap-consistent-pl
@@ -228,7 +228,7 @@
   origin: r5-S5
   turns: ["Hi, I am a foreign student from India. How much is the tuition fee for English-language study programmes at Radom University?", "I want to do a masters, the 2nd cycle, and I will study on weekends only because I also work in the city."]
   unit: {lang: en, profile: {status: cudzoziemiec, poziom: II, tryb: niestacjonarne}}
-  e2e: {lang_in: [en], must_match: ["(€|eur|euro|zł|PLN)\\s*\\d|\\d[\\d ,.]*\\s*(€|eur|euro|zł|PLN)|not (yet )?(available|verified)"]}
+  e2e: {lang_in: [en], must_match: ["(€|eur|euro|zł|PLN)\\s*\\d|\\d[\\d ,.]*\\s*(€|eur|euro|zł|PLN)|not (yet )?(available|verified)"], requires_model: true}
 - id: r5-tuition-pl-no-status-question
   origin: r5-S6
   turns: ["Ile wynosi czesne na studiach niestacjonarnych w języku polskim?"]
@@ -609,4 +609,4 @@
   unit:
     topics_include: [oplaty]
     retrieval: {must_not_match_urls: ["oplaty-za-uslugi-edukacyjne-2018", "2019-2020", "R-38-2020"]}
-  e2e: {must_match: ["2600"], must_not_match: ["oplaty-za-uslugi-edukacyjne-2018", "university system system"]}
+  e2e: {must_match: ["2600"], must_not_match: ["oplaty-za-uslugi-edukacyjne-2018", "university system system"], requires_model: true}
