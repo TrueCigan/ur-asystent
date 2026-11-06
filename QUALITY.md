@@ -38,6 +38,31 @@ Asserts: `expect_url` / `expect_host`, `forbid_url_family`, `forbid_bos_only`, `
 2. Doprecyzuj `TOPIC_POLICY` (boost / force / penalize) – nie „podkręcaj” promptu LLM jako pierwszego kroku.
 3. Uruchom ponownie `sim_student.py` do PASS.
 
+## Method for the next verified topic
+
+Use this for dormitory prices, the rector's scholarship, Erasmus+, and tuition. The steps transfer. The amounts, years, and eligibility rules do not: each topic needs its own checked sources. Do not copy a social-scholarship figure into another topic.
+
+Record one row per defect: symptom, the smallest repro, the root cause, the fix, the regression, and the evidence SHA. Independent QA checks that exact SHA. The author of the fix does not call that check a pass.
+
+Order of proof, and stop when the next step needs a paid model: offline test, then one HTTP or browser repro with the model off, then the Docker smoke in `eval-unit`, then at most one `eval-e2e-pr` run. A green workflow with `eval-e2e-pr` skipped or `continue-on-error` is not a green e2e. `[skip e2e]` in the HEAD commit skips only that live job. `[skip ci]` would also skip the unit tests and the Docker smoke, so do not use it for this.
+
+What held up on the social-scholarship work (`3133929` and the commits under it):
+
+- A signed session keeps income and year after the form drops `scenario_context`. Fix: those estimate fields apply only when this request sends them again. Other profile slots stay.
+- Empty history was sent into slot gating, so a cap or English-fee question was clarified instead of answered.
+- `pobyt=ukr` / PESEL UKR is not inferred from Ukrainian citizenship alone.
+- Group I in the 2025/2026 annex starts at 0,01 zł. Zero is a valid input and is outside the published band.
+- Saying “I live in DS3” does not meet the dorm supplement conditions. 1400 and a separate 400 are not an 1800 total.
+- A disability question that never states status may ask for status. It must not ask again for a degree the person already gave.
+- The image must contain `data/scenarios`. A COPY line is not a runtime pass. `scripts/ci_docker_smoke.sh` is.
+- Fact URLs in the answer have to be cited verified facts or retrieved pages, with fact id on the source. Do not harvest URLs out of the generated sentence. A made-up URL stays untrusted.
+- Doctoral self-identification includes `я/є аспірант`, `аспірантка`, `аспіранткою`, `аспірантом`. A bare mention of аспірантура is a topic, not a status.
+- Doctoral money has two layers. 37% and 57% of the professor salary are the statutory base before and after the mid-term evaluation (3570,50 and 5500,50). The disability supplement is 30% of the pre-evaluation base, 1071,15, not 37% of the professor salary. After the evaluation the sum of the verified figures is 6571,65. Year on the fact: 2026/2027, in force from 01.01.2026. That is not the student social table.
+
+What did not work: clearing only the visible form, treating 0,00 as group I, mixing the 3560,60 and 3667 caps, calling the workflow green while the advisory e2e job was red, and rounding 6571,65 to 6571.
+
+Still open after the offline fixes, until one later live run: English tuition turn 2 missing 2100 EUR, and the same kind of follow-up answered in Polish. The no-LLM path keeps English and 2100. `SCENARIO_SOCIAL` is not on in the deployed service. Whether 3667 replaces 3560,60 inside the 2025/2026 academic year after 01.01.2026 is unresolved; do not merge those figures.
+
 ## Verified scenario: social scholarship
 
 Product switch: `SCENARIO_SOCIAL=1` (default **off**).

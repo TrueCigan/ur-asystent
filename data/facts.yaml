@@ -295,7 +295,7 @@
     base_rate_percent_of_professor_przed: 37
     base_rate_percent_of_professor_po: 57
     disability_topup_percent_of_przed: 30
-    note: 'ustawowe MINIMUM brutto art. 209 PSWN; base rates 37%/57% of professor salary; disability top-up +30% of pre-evaluation amount (=1071.15). Do not quote 37% as the disability top-up.'
+    note: 'Statutory BASE, art. 209 PSWN, separate from the disability supplement. Before the mid-term evaluation the base is 37% of the professor salary; after the evaluation it is 57%. The disability supplement is 30% of the pre-evaluation base (1071.15 PLN), not 37% of the professor salary. Figures are the statutory minimum from 01.01.2026 (professor salary 9650 PLN), fact year 2026/2027, not the student social table.'
   unit: PLN/month
   academic_year: 2026/2027
   applies_to:

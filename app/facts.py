@@ -338,6 +338,109 @@ def format_fact_value(val: Any, unit: str = "", lang: str = "pl", indent: str = 
     return f"{val}{u}"
 
 
+def _money(d: Decimal, lang: str) -> str:
+    """Two decimal places. pl/uk use a comma; en uses a dot. No rounding to a whole złoty."""
+    q = d.quantize(Decimal("0.01"))
+    num = f"{q:.2f}"
+    if lang == "en":
+        return f"{num} PLN"
+    return f"{num.replace('.', ',')} zł"
+
+
+def doctoral_components(fact: Fact) -> dict | None:
+    """Verified doctoral base and disability supplement. None if the pieces disagree."""
+    v = fact.value if isinstance(fact.value, dict) else None
+    if not v:
+        return None
+    try:
+        przed = Decimal(str(v["przed_ocena_srodokresowa"]))
+        po = Decimal(str(v["po_ocenie_srodokresowej"]))
+        pct_before = Decimal(str(v["base_rate_percent_of_professor_przed"]))
+        pct_after = Decimal(str(v["base_rate_percent_of_professor_po"]))
+        pct_dis = Decimal(str(v["disability_topup_percent_of_przed"]))
+        verified_top = Decimal(str(v["zwiekszenie_niepelnosprawnosc"]))
+    except (KeyError, InvalidOperation, ValueError):
+        return None
+    derived = (przed * pct_dis / Decimal("100")).quantize(Decimal("0.01"))
+    if derived != verified_top.quantize(Decimal("0.01")):
+        return None
+    return {
+        "przed": przed.quantize(Decimal("0.01")),
+        "po": po.quantize(Decimal("0.01")),
+        "pct_before": pct_before,
+        "pct_after": pct_after,
+        "pct_dis": pct_dis,
+        "top": verified_top.quantize(Decimal("0.01")),
+        "total_przed": (przed + verified_top).quantize(Decimal("0.01")),
+        "total_po": (po + verified_top).quantize(Decimal("0.01")),
+        "year": fact.academic_year or "",
+    }
+
+
+def doctoral_base_lines(fact: Fact, lang: str) -> list[str] | None:
+    """Label the statutory base (37%/57% of the professor salary) apart from the supplement."""
+    c = doctoral_components(fact)
+    if not c:
+        return None
+    year = c["year"]
+    if lang == "en":
+        return [
+            f"Period: statutory minimum from 01.01.2026 (fact year {year}). Not the student social-scholarship table.",
+            f"Base before the mid-term evaluation: {c['pct_before']}% of the professor salary = {_money(c['przed'], lang)}/month. This percentage is the statutory base, not the disability supplement.",
+            f"Base after the mid-term evaluation: {c['pct_after']}% of the professor salary = {_money(c['po'], lang)}/month.",
+            f"Disability supplement: {c['pct_dis']}% of the pre-evaluation base = {_money(c['top'], lang)}/month. It is not {c['pct_before']}% of the professor salary.",
+        ]
+    if lang == "uk":
+        return [
+            f"Період: законний мінімум від 01.01.2026 (рік факту {year}). Це не таблиця студентської соціальної стипендії.",
+            f"База до середньострокової оцінки: {c['pct_before']}% зарплати професора = {_money(c['przed'], lang)}/міс. Цей відсоток є законною базою, а не надбавкою за інвалідність.",
+            f"База після середньострокової оцінки: {c['pct_after']}% зарплати професора = {_money(c['po'], lang)}/міс.",
+            f"Надбавка за інвалідність: {c['pct_dis']}% бази до оцінки = {_money(c['top'], lang)}/міс. Це не {c['pct_before']}% зарплати професора.",
+        ]
+    return [
+        f"Okres: ustawowe minimum od 01.01.2026 (rok faktu {year}). To nie jest tabela stypendium socjalnego dla studentów.",
+        f"Podstawa przed oceną śródokresową: {c['pct_before']}% wynagrodzenia profesora = {_money(c['przed'], lang)}/mies. Ten procent jest podstawą ustawową, a nie zwiększeniem z tytułu niepełnosprawności.",
+        f"Podstawa po ocenie śródokresowej: {c['pct_after']}% wynagrodzenia profesora = {_money(c['po'], lang)}/mies.",
+        f"Zwiększenie z tytułu niepełnosprawności: {c['pct_dis']}% podstawy sprzed oceny = {_money(c['top'], lang)}/mies. To nie jest {c['pct_before']}% wynagrodzenia profesora.",
+    ]
+
+
+def doctoral_total_line(fact: Fact, lang: str, *, after_evaluation: bool) -> str | None:
+    c = doctoral_components(fact)
+    if not c:
+        return None
+    if after_evaluation:
+        total, base = c["total_po"], c["po"]
+        if lang == "en":
+            when = "After the mid-term evaluation"
+        elif lang == "uk":
+            when = "Після середньострокової оцінки"
+        else:
+            when = "Po ocenie śródokresowej"
+    else:
+        total, base = c["total_przed"], c["przed"]
+        if lang == "en":
+            when = "Before the mid-term evaluation"
+        elif lang == "uk":
+            when = "До середньострокової оцінки"
+        else:
+            when = "Przed oceną śródokresową"
+    if lang == "en":
+        return (
+            f"{when} ({c['year']}): {_money(base, lang)} + disability supplement {_money(c['top'], lang)} "
+            f"= {_money(total, lang)}/month."
+        )
+    if lang == "uk":
+        return (
+            f"{when} ({c['year']}): {_money(base, lang)} + надбавка {_money(c['top'], lang)} "
+            f"= {_money(total, lang)}/міс."
+        )
+    return (
+        f"{when} ({c['year']}): {_money(base, lang)} + zwiększenie {_money(c['top'], lang)} "
+        f"= {_money(total, lang)}/mies."
+    )
+
+
 def _fact_entry_lines(f: Fact, i: int, lang: str, *, for_user: bool) -> list[str]:
     label = f.i18n_label.get(lang) or f.i18n_label.get("pl") or f.id
     unit = f.unit or ""
@@ -346,7 +449,13 @@ def _fact_entry_lines(f: Fact, i: int, lang: str, *, for_user: bool) -> list[str
     src = ""
     if not for_user and f.source.get("url"):
         src = f" | source: {f.source['url']}"
-    body = format_fact_value(f.value, unit=unit if not isinstance(f.value, (dict, list)) else "", lang=lang)
+    labeled = doctoral_base_lines(f, lang) if f.id == "doctoral_stipend_amount" else None
+    if labeled is not None:
+        body = "\n".join(labeled)
+    elif f.id == "tuition_english_programmes":
+        body = format_fact_value(f.value, unit="EUR", lang=lang)
+    else:
+        body = format_fact_value(f.value, unit=unit if not isinstance(f.value, (dict, list)) else "", lang=lang)
     if isinstance(f.value, (dict, list)):
         head_unit = f" {unit}" if unit else ""
         head = f"[F{i}] {label}{head_unit}{year}{unver}{src}:"

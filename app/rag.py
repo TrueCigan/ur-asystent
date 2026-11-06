@@ -185,7 +185,7 @@ SLOT_Q = {
 SLOT_OPTS = {
  "status": [
   # Self-ID only — bare "doktorant/doktoranckie" as a topic must NOT set status (R6-5)
-  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?:я\s+)докторант(?:к\w*)?|докторантур)"),
+  ("doktorant", r"(?:(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu|phd(?:\s+student)?|doctoral\s+student|szkole\s+doktorsk)|(?:doctoral\s+student|phd\s+student)\b|szko[lł]\w*\s*doktorsk|w\s+szkole\s+doktorsk|школ\w*\s*доктор|(?:я\s+)докторант(?:к\w*)?|(?:я|є)\s+аспірант\w*|докторантур)"),
   ("bezpanstwowiec", r"bezpa[nń]stw|bez obywatel|stateless|без\s*громадян|апатрид|харьяалалгүй|иргэншилгүй"),
   ("pl", r"\b(a\s+pole\b|i\s*am\s*(a\s*)?pole\b|\bpole\b|polak|polk[aąi]|\bpola[kc]\b|polish\s*citizen|polish\s*student|i(?:'?m|\s+am)\s+(?:a\s+)?polish|we\s+are\s+polish|citizen\s+of\s+poland|nationality\s+polish|from\s+poland|obywatel\w*\s*polsk|obywatelk\w*\s*polsk|polskie\s*obywatel|jestem\s+z\s+polski|z\s+polski\s+jestem|dow[oó]d\w*\s+(mam\s+)?polsk|polsk\w*\s+dow[oó]d|polsk\w*\s+paszport|urodzi\w+\s+w\s+(polsce|radomiu)|громадянин\w*\s*польщ|я\s+поляк|польськ\w*\s*громадян|гражданин\w*\s*польш|из\s*польш|\bполяк\b|\bполька\b|польш\s*иргэн|би\s+польш|польш\s*улсын\s*иргэн)"),
   ("cudzoziemiec", r"cudzozie|obcokraj|zagranicz|international\s*student|foreign\s*student|\bforeigner\b|i'?m\s*a?\s*foreign|i\s*am\s*from\s+(?!poland|polsk)|from\s+(india|china|ukraine|belarus|vietnam|nigeria|turkey|georgia)|non[- ]polish|residence\s*permit|pole'?s?\s*card|temporary\s*protection|ukrai|ukraine|belarus|bia[lł]oru|karta\s*polaka|kart\w*\s*pobytu|ochron\w*\s*czasow|uchod[zź]|інозем|громадян\w*\s*украї|з\s*україн|карта\s*поляка|карт\w*\s*побут\w*|тимчасов\w*\s*захист|біжен|иностранец|карт\w*\s*побыт\w*|временн\w*\s*защит|гадаад\s*оюутан|гадаадын\s*иргэн|оршин\s*суух|польшийн\s*карт|дүрвэгч|украин"),
@@ -196,7 +196,7 @@ SLOT_OPTS = {
  ],
  "poziom": [
   # No bare "doktorant/doktoranc" — self-ID or szkoła doktorska only (R6-5)
-  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?:я\s+)докторант(?:к\w*)?"),
+  ("SD", r"szko[lł]\w*\s*doktorsk|doctoral\s*school|\bphd\b|(?:jestem|i'?m|i\s+am).{0,48}(?:doktorant\w*|doktoratu)|doktoratu\b|докторантур|(?:я\s+)докторант(?:к\w*)?|(?:я|є)\s+аспірант\w*"),
   ("jednolite", r"jednolit|long[-\s]?cycle|undivided\s*master|єдин\w*\s*магістер|нэгдсэн\s*магистр"),
   ("II", r"\bii\s*stop|\b2\s*stop|drugi\w*\s*stop|second[-\s]?cycle|master'?s?\b|\bmgr\b|magisterk|магістратур|graduate\s*program|magist(?!.*jednolit)|uzupe[lł]niaj|іі\s*ступ|\b2\s*ступ|другого\s*ступ|магістр(?:атур)?|магистр(?:атур)?|ii\s*зэрэг|2\s*зэрэг"),
   ("I", r"\bi\s*stop|\b1\s*stop|pierwsz\w*\s*stop|first[-\s]?cycle|1st\s*degre|first\s*degre|bachelor|bachel?or|undergrad|licencj|in[zż]ynier|і\s*ступ|\b1\s*ступ|перш\w*\s*ступ|бакалавр\w*|інженер|i\s*зэрэг|1\s*зэрэг"),
@@ -280,7 +280,7 @@ TOPICS = [
  ("stypendium_socjalne", r"socjaln|zapomog|dochod|pomoc\w*\s*materialn|[sś]wiadcze|social\s*scholarship|\bsocial\b(?=.{0,40}scholarship)|scholarship\s*for\s*foreign|maintenance\s*grant|need[-\s]?based|стипенд\w*\s*соціал|соціальн\w*\s*стипенд|социальн\w*\s*стипенд|стипенд\w*\s*для\s*(иностран|cudzoziem)|матеріальн\w*\s*допомог|тэтгэлэг|нийгмийн\s*тэтгэлэг|амьжиргааны", ["status", "drugi_kierunek", "tryb", "poziom"]),
  ("stypendium_rektora", r"rektor|najlepsz|[sś]redni\w*\s*ocen|rector'?s?\s*scholarship|\brector\b(?=.{0,40}scholarship)|merit\s*scholarship|academic\s*excellence|науков\w*\s*досягнен|стипенд\w*\s*ректор|ректор|гол\s*тэтгэлэг|ректорын\s*тэтгэлэг", ["status", "drugi_kierunek", "poziom"]),
  ("stypendium_niepeln", r"niepe[lł]nospraw|disability\s*scholarship|інвалід|инвалидн|хөгжлийн\s*бэрхшээл", ["status", "niepelnosprawnosc", "drugi_kierunek"]),
- ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|doctoral\s*stipend|докторант|докторантур|докторск\w*\s*стипенд|стипенд\w*\s*доктор", ["status"]),
+ ("doktoranckie", r"doktorant|doktorsk|doktoranck|phd\b|doctoral|doctoral\s*stipend|докторант|докторантур|аспірант|докторск\w*\s*стипенд|стипенд\w*\s*доктор", ["status"]),
  ("akademik", r"akademik|dom\w*\s*studen|miejsce\s*w\s*akadem|dormitor|student\s*hous|residence\s*hall|общежит|гуртожит|дотуур\s*байр", []),
  ("oplaty", r"op[lł]at|czesne|p[lł]aci[cć]|bezp[lł]atn|tuition|fees?\b|english\s*program|program\w*\s*in\s*english|cost\s*of\s*stud|price\s*of\s*stud|(?:ile\s*kosztuj|how\s*much|скільки|сколько|хэд).{0,40}(?:stud|czesn|tuition|fee|навч|сургалт|програм|opłat|english|business)|оплат|вартіст|кошту|цін[ауи]\s*навч|плата\s*за\s*навч|төлбөр|сургалтын\s*төлбөр", ["status", "tryb", "poziom"]),
  ("erasmus", r"erasmus|wyjazd|wymian|mobilno|exchange\s*program|study\s*abroad|мобільніст|обмін|солилцоо|гадаадад\s*суралц", ["status", "poziom", "rok"]),
@@ -1049,7 +1049,8 @@ _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 def align_citations(body: str, hits, fact_urls=None) -> tuple[str, list, list[str]]:
     """Renumber [n]/[Fk] to cited-only 1..k / F1..; drop dangling markers (R5-6)."""
     hits = dedupe_hits_by_url(hits)
-    fact_urls = [u for u in (fact_urls or []) if u]
+    # Keep indexes aligned with selected_facts. Empty means "no official URL".
+    fact_urls = list(fact_urls or [])
     cited_order, fact_order = [], []
     # Normalize [Fn8] → treat as fact marker; bare [8] as source index
     def _collect(m):
@@ -1073,7 +1074,7 @@ def align_citations(body: str, hits, fact_urls=None) -> tuple[str, list, list[st
     # Rebuild maps old→new
     src_map = {old: i for i, old in enumerate(cited_order, 1)}
     # Fact markers: renumber in order of first appearance among those with urls
-    valid_facts = [n for n in fact_order if 1 <= n <= len(fact_urls)]
+    valid_facts = [n for n in fact_order if 1 <= n <= len(fact_urls) and fact_urls[n - 1]]
     fact_map = {old: i for i, old in enumerate(valid_facts, 1)}
 
     def _rewrite(m):
@@ -1098,10 +1099,69 @@ def align_citations(body: str, hits, fact_urls=None) -> tuple[str, list, list[st
         new_i = fact_map[old]
         u = fact_urls[old - 1]
         fact_entries.append(f"[F{new_i}] {u}")
-    return new_body, cited_hits, fact_entries
+    return new_body, cited_hits, fact_entries, valid_facts
 
 
-def finalize_answer_urls(text, hits, fact_urls=None, lang="pl", hits_blob=""):
+def merge_official_sources(hit_sources, selected_facts, cited_fact_indexes):
+    """Retrieved pages plus verified facts that were actually cited.
+
+    Does not read the answer text. A URL that appears only inside a generated
+    sentence, or only inside a snippet, is not added.
+    """
+    by_url = {}
+    order = []
+
+    def _touch(url, item):
+        key = (url or "").strip().rstrip("/")
+        if not key:
+            return None
+        if key not in by_url:
+            by_url[key] = item
+            order.append(key)
+        return key
+
+    for src in hit_sources or []:
+        url = (src.get("url") or "").strip()
+        key = _touch(url, {
+            "title": src.get("title"),
+            "url": url,
+            "modified": src.get("modified"),
+            "outdated": src.get("outdated"),
+            "snippet": src.get("snippet"),
+            "fact_ids": list(src.get("fact_ids") or []),
+        })
+        if key is None:
+            continue
+    for idx in cited_fact_indexes or []:
+        if not isinstance(idx, int) or idx < 1 or idx > len(selected_facts or []):
+            continue
+        fact = selected_facts[idx - 1]
+        if getattr(fact, "status", None) != "verified":
+            continue
+        url = ((getattr(fact, "source", None) or {}).get("url") or "").strip()
+        key = _touch(url, {
+            "title": (getattr(fact, "i18n_label", None) or {}).get("pl") or getattr(fact, "id", ""),
+            "url": url,
+            "modified": (getattr(fact, "source", None) or {}).get("document_date"),
+            "outdated": False,
+            "snippet": None,
+            "fact_ids": [],
+        })
+        if key is None:
+            continue
+        ids = by_url[key].setdefault("fact_ids", [])
+        fid = getattr(fact, "id", None)
+        if fid and fid not in ids:
+            ids.append(fid)
+    out = []
+    for n, key in enumerate(order, 1):
+        item = by_url[key]
+        item["n"] = n
+        out.append(item)
+    return out
+
+
+def finalize_answer_urls(text, hits, fact_urls=None, lang="pl", hits_blob="", cited_fact_indexes=None):
     """Strip LLM sources section + unknown URLs; align citations; append sources."""
     if not text:
         text = ""
@@ -1120,15 +1180,16 @@ def finalize_answer_urls(text, hits, fact_urls=None, lang="pl", hits_blob=""):
             return e
         return ""
     body = _EMAIL_RE.sub(_email, body)
-    allowed = {(h.get("url") or "").rstrip("/") for h in (hits or []) if h.get("url")}
-    for u in fact_urls or []:
-        if u:
-            allowed.add(u.rstrip("/"))
+    # Retrieved page URLs may stay inline. A fact URL is added later from the
+    # citation marker, not because the model pasted it. Anything else is dropped.
+    allowed = {(h.get("url") or "").strip().rstrip("/") for h in (hits or []) if h.get("url")}
     def _keep(m):
         u = m.group(0).rstrip(".,;)")
         return u if u.rstrip("/") in allowed or u in allowed else ""
     body = _URL_RE.sub(_keep, body)
-    body, cited_hits, fact_entries = align_citations(body, hits, fact_urls=fact_urls)
+    body, cited_hits, fact_entries, cited = align_citations(body, hits, fact_urls=fact_urls)
+    if cited_fact_indexes is not None:
+        cited_fact_indexes.extend(cited)
     body = cleanup_answer_artifacts(body)
     body = re.sub(r"[ \t]{2,}", " ", body)
     body = re.sub(r"\n{3,}", "\n\n", body).rstrip()
@@ -1744,20 +1805,52 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
         )
         if line:
             computed_lines.append(line)
+    if prof.get("niepelnosprawnosc") == "tak" and any(
+        getattr(f, "id", None) == "doctoral_stipend_amount" for f in selected_facts
+    ):
+        from decimal import Decimal as _Dec
+        from facts import doctoral_components, doctoral_total_line
+        stipend = next(f for f in selected_facts if f.id == "doctoral_stipend_amount")
+        topup_f = next((f for f in selected_facts if f.id == "doctoral_disability_topup_monthly"), None)
+        parts = doctoral_components(stipend)
+        listed = None
+        if topup_f is not None and not isinstance(topup_f.value, (dict, list)):
+            try:
+                listed = _Dec(str(topup_f.value)).quantize(_Dec("0.01"))
+            except Exception:
+                listed = None
+        after = bool(re.search(
+            r"(?i)po ocenie|після оцінки|после оценки|after (the )?mid-?term|середньоперіод",
+            question or "",
+        ))
+        if parts and (listed is None or listed == parts["top"]):
+            line = doctoral_total_line(stipend, lang, after_evaluation=after)
+            if line:
+                computed_lines.append(line)
     facts_block = render_facts_block(selected_facts, lang, computed_lines=computed_lines)
     facts_for_user = render_facts_for_user(selected_facts, lang, computed_lines=computed_lines)
 
     blob6 = _hit_blob(hits[:6])
-    fact_urls = [f.source.get("url") for f in selected_facts if f.source.get("url")]
+    # Parallel to selected_facts. Only a verified fact contributes an official URL.
+    fact_urls = []
+    for f in selected_facts:
+        url = ""
+        if getattr(f, "status", None) == "verified":
+            url = ((getattr(f, "source", None) or {}).get("url") or "").strip()
+        fact_urls.append(url)
 
     def _finalize(out: str, mode: str):
         # No amount/channel scrub — figures come from render.py; channel from FACTS (P2)
         out = strip_llm_deadline_notes(out)
-        out = finalize_answer_urls(out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6)
+        cited = []
+        out = finalize_answer_urls(
+            out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6, cited_fact_indexes=cited,
+        )
         out += deadline_passed_note(out, lang)
         state.original_question = None
+        official = merge_official_sources(srcs, selected_facts, cited)
         return _attach_state(
-            dict(clarify=False, mode=mode, sources=srcs, profile=prof, topics=topics, lang=lang, answer=out),
+            dict(clarify=False, mode=mode, sources=official, profile=prof, topics=topics, lang=lang, answer=out),
             state,
         )
 

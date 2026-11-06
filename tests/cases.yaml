@@ -576,8 +576,12 @@
   turns: ["Jestem doktorantką po ocenie śródokresowej z orzeczeniem o niepełnosprawności. Ile dostanę?"]
   unit: {profile: {status: doktorant, niepelnosprawnosc: tak}, missing: []}
   e2e:
-    must_match: ["5500", "1071", "6571|6[ .]?571"]
-    must_not_match: ["37%.*profesor", "37%.*професор"]
+    must_match: ["5500", "1071", "6571[.,]65"]
+    # 37% of the professor salary may be named as the statutory base. It must not be the supplement.
+    must_not_match:
+      - "(?i)zwiększen\\w*[^.\\n]{0,50}37\\s*%"
+      - "(?i)надбавк\\w*[^.\\n]{0,50}37\\s*%"
+      - "(?i)supplement[^.\\n]{0,50}37\\s*%"
 - id: r7-derived-cap-matches-facts
   origin: redesign-p4
   turns: ["limit socjalne rektor"]
