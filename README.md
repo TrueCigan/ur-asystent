@@ -26,4 +26,13 @@ cd app && python crawl.py plans && python index.py   # plany + indeks → commit
 # pełny korpus: python crawl.py && python index.py
 ```
 
-Zmienne: `GEMINI_API_KEY` (wymagany), `LLM_PROVIDER=gemini`, opcjonalnie `LLM_MODEL`.
+Zmienne: `GEMINI_API_KEY` (wymagany na żywym czacie), `LLM_PROVIDER=gemini`, opcjonalnie `LLM_MODEL`.
+Lokalny szablon bez sekretów: `.env.example` (`LLM_PROVIDER=fake`, `EVAL_REAL=0`). To nie jest szablon produkcji Render.
+Phase 0 (karta, fakes, 40 przypadków, baseline): `docs/phase0/README.md`.
+
+```bash
+python3 tests/eval_dialogues.py --repo . --layer unit
+python3 tests/test_social_scenario.py
+python3 tests/test_answer_contract.py
+python3 tests/test_phase0.py
+```
