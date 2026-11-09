@@ -50,10 +50,22 @@ def test_allowlist_enables_only_existing_crawl_seeds():
     assert "student.uniwersytetradom.pl" in enabled
     assert "dwz.uniwersytetradom.pl" in enabled
     assert "bip.uniwersytetradom.pl" in enabled
-    assert "static1.squarespace.com" not in enabled
-    assert "isap.sejm.gov.pl" not in enabled
-    assert "www.gov.pl" not in enabled
-    assert "sjo.uniwersytetradom.pl" not in enabled
+    for host in (
+        "euczelnia.uniwersytetradom.pl",
+        "sjo.uniwersytetradom.pl",
+        "www.erasmusplus.org.pl",
+        "www.gov.pl",
+        "dziennikustaw.gov.pl",
+    ):
+        assert host in enabled
+    for host in (
+        "kn.uniwersytetradom.pl",
+        "wicit.uniwersytetradom.pl",
+        "static1.squarespace.com",
+        "isap.sejm.gov.pl",
+        "odyseusz.msz.gov.pl",
+    ):
+        assert host not in enabled
     data = allowlist.load_allowlist()
     hosts = {row["host"] for row in data["crawl"]}
     assert "static1.squarespace.com" in hosts

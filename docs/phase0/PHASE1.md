@@ -11,15 +11,13 @@ Owner review: Kostya Prochan, chat review 2026-11-09. Render was not changed. No
 - Confirmed facts are in `data/facts.yaml`. The 2025/2026 cap value remains 3560.60. The owner’s 3556 is only a note. 3667 stays the 2026/2027 cap. English-programme tuition amounts were not signed.
 - Crawl hosts move to `data/allowlist.yaml`. `app/crawl.py` no longer keeps an open redirecting client.
 
-## Allowlist still waiting for an owner OK
+## Allowlist after the 2026-11-09 owner decision
 
-Enabled now, because they were already crawl seeds or the university apex:
+Kostya Prochan approved only the official fact domains. Five hosts that were off are now enabled: `euczelnia.uniwersytetradom.pl`, `sjo.uniwersytetradom.pl`, `www.erasmusplus.org.pl`, `www.gov.pl`, `dziennikustaw.gov.pl`.
 
-`uniwersytetradom.pl`, `student.uniwersytetradom.pl`, `dwz.uniwersytetradom.pl`, `rekrutacja.uniwersytetradom.pl`, `bip.uniwersytetradom.pl`, `wteii.uniwersytetradom.pl`, `weif.uniwersytetradom.pl`, `wm.uniwersytetradom.pl`, `wpia.uniwersytetradom.pl`, `wnminoz.uniwersytetradom.pl`, `wfp.uniwersytetradom.pl`.
+The eleven hosts that were already enabled stay enabled: `uniwersytetradom.pl`, `student.uniwersytetradom.pl`, `dwz.uniwersytetradom.pl`, `rekrutacja.uniwersytetradom.pl`, `bip.uniwersytetradom.pl`, `wteii.uniwersytetradom.pl`, `weif.uniwersytetradom.pl`, `wm.uniwersytetradom.pl`, `wpia.uniwersytetradom.pl`, `wnminoz.uniwersytetradom.pl`, `wfp.uniwersytetradom.pl`.
 
-Present and not enabled:
-
-`wicit.uniwersytetradom.pl`, `euczelnia.uniwersytetradom.pl`, `kn.uniwersytetradom.pl`, `static1.squarespace.com`, `isap.sejm.gov.pl`, `sjo.uniwersytetradom.pl`, `www.erasmusplus.org.pl`, `odyseusz.msz.gov.pl`, `www.gov.pl`, `dziennikustaw.gov.pl`.
+Still disabled: `kn.uniwersytetradom.pl`, `wicit.uniwersytetradom.pl`, `static1.squarespace.com`, `isap.sejm.gov.pl`, `odyseusz.msz.gov.pl`.
 
 ## Still not Phase 2–6
 

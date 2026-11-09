@@ -1,8 +1,9 @@
 # Admin-controlled crawl allowlist. Phase 1 draft, 2026-11-09.
 # Hosts are only those already used as crawl seeds, corpus URLs, or cited fact URLs.
 # There is no function that appends a host from application code.
-# enabled: true is what the crawler may fetch. Everything else stays documented
-# until the content owner approves a change to this file.
+# enabled: true is what the crawler may fetch.
+# On 2026-11-09 Kostya Prochan approved only the official fact domains listed below
+# that were still off. kn, wicit, squarespace, isap.sejm.gov.pl, and odyseusz stay off.
 schema_version: 1
 crawl:
   - host: uniwersytetradom.pl
@@ -44,38 +45,38 @@ crawl:
     source: wicit
     note: Listed in the plan map. Crawl skipped it because the host returned 404.
   - host: euczelnia.uniwersytetradom.pl
-    enabled: false
+    enabled: true
     source: corpus
-    note: Present in the committed corpus. Not a crawl seed. Needs an owner OK before enabling.
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.
   - host: kn.uniwersytetradom.pl
     enabled: false
     source: corpus
-    note: Present in the committed corpus. Not a crawl seed. Needs an owner OK before enabling.
+    note: Owner Kostya Prochan, 2026-11-09, left this host disabled.
   - host: static1.squarespace.com
     enabled: false
     source: corpus
-    note: Extra host already inside the committed corpus. Not an official university host. Do not enable without an explicit owner decision.
+    note: Owner Kostya Prochan, 2026-11-09, left this host disabled. Not an official fact domain.
   - host: isap.sejm.gov.pl
     enabled: false
     source: corpus
-    note: Extra host already inside the committed corpus. Not an official university host. Do not enable without an explicit owner decision.
+    note: Owner Kostya Prochan, 2026-11-09, left this host disabled. Not an official fact domain.
   - host: sjo.uniwersytetradom.pl
-    enabled: false
+    enabled: true
     source: erasmus-facts
-    note: Named in the owner-approved Erasmus exam note as the place to check a room change. Not previously crawled.
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.
   - host: www.erasmusplus.org.pl
-    enabled: false
+    enabled: true
     source: erasmus-facts
-    note: Cited by the owner-approved Erasmus rules. Not a crawl seed.
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.
   - host: odyseusz.msz.gov.pl
     enabled: false
     source: erasmus-facts
-    note: Cited by the owner-approved Erasmus rules as the MSZ registration system. Not a crawl seed.
+    note: Owner Kostya Prochan, 2026-11-09, left this host disabled.
   - host: www.gov.pl
-    enabled: false
+    enabled: true
     source: fact-url
-    note: Doctoral stipend fact URL. Citation only, not a crawl seed.
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.
   - host: dziennikustaw.gov.pl
-    enabled: false
+    enabled: true
     source: fact-url
-    note: Professor-salary fact URL. Citation only, not a crawl seed.
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.
