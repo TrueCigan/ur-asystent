@@ -4,11 +4,12 @@
 
 ## Фаза 1 — ingestion
 
-- Allowlist хостов, который меняет только администратор. Сейчас хосты зашиты в `app/crawl.py`, в корпусе есть единичные `static1.squarespace.com` и `isap.sejm.gov.pl`.
-- Проверка DNS, IP и каждого редиректа. Запрет private, loopback, link-local и metadata.
-- Лимиты PDF 20 МБ / 200 страниц и HTML 5 МБ, robots, timeout 15 с, два повтора с jitter.
-- Ревизии индекса, идемпотентный импорт, atomic publish и rollback. Сейчас индекс — файл в git, сервер его не собирает.
-- Postgres в эту фазу не добавлять, пока отдельно не согласуют смену стека. Файловый индекс остаётся.
+Сделано в коде, без Postgres и без пересборки боевого `data/index.npz`. Подробности: `docs/phase0/PHASE1.md`.
+
+- Черновик allowlist: `data/allowlist.yaml`. Краулер читает его и не добавляет хосты из кода. `static1.squarespace.com` и `isap.sejm.gov.pl` записаны и выключены. Включение этих и прочих выключенных хостов ждёт OK владельца.
+- DNS, IP и каждый редирект проверяются. Private, loopback, link-local и metadata отклоняются (`app/fetch_public.py`).
+- HTML 5 МБ, PDF 20 МБ / 200 страниц, robots, timeout 15 с, два повтора с jitter.
+- Ревизии файлового индекса: идемпотентный импорт, атомарный указатель CURRENT, rollback (`app/index_revision.py`). Сервер по-прежнему отдаёт уже собранный `data/index.npz` и сам его не строит.
 
 ## Фаза 2 — retrieval
 

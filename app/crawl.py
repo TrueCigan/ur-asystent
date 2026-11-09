@@ -1,19 +1,23 @@
 """Uprzejmy crawler korpusu Uniwersytetu Radomskiego (tylko publiczne strony)."""
 import re, json, time, html, hashlib, subprocess, tempfile, os, sys
 from urllib.parse import urljoin, unquote
-import httpx
 from bs4 import BeautifulSoup
 
 UA = "UR-Assistant-Prototype/0.1 (student project; polite crawler)"
 DELAY = float(os.getenv("CRAWL_DELAY", "1.0"))
 OUT = os.path.join(os.path.dirname(__file__), "..", "data", "docs.jsonl")
-cli = httpx.Client(headers={"User-Agent": UA}, timeout=40, follow_redirects=True)
 seen = set(); docs = []
 
 def get(url):
+    """Fetch one allowlisted URL. Redirects, DNS, and size limits are checked."""
     time.sleep(DELAY)
     try:
-        r = cli.get(url); r.raise_for_status(); return r
+        from allowlist import assert_enabled
+        from fetch_public import public_get
+        assert_enabled(url)
+        response = public_get(url)
+        response.raise_for_status()
+        return response
     except Exception as e:
         print("ERR", url, e, file=sys.stderr); return None
 

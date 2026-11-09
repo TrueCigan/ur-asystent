@@ -36,6 +36,8 @@ jobs:
           PY
       - name: Phase 0 skeleton and fakes (no network)
         run: python tests/test_phase0.py
+      - name: Phase 1 ingestion guards (no network)
+        run: python tests/test_phase1_ingestion.py
       - name: Docker image build and container smoke
         run: |
           docker build -t ur-asystent-ci .
