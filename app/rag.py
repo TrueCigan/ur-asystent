@@ -1108,6 +1108,18 @@ def llm_enabled():
     if p == "gemini": return bool(os.getenv("GEMINI_API_KEY") or os.getenv("LLM_API_KEY"))
     return bool(p) and (bool(os.getenv("LLM_API_KEY")) or p == "ollama")
 
+def _generation_block_reason() -> str | None:
+    """Pause generation after a provider burst, or when a configured daily budget is spent."""
+    try:
+        from phase4 import BREAKER, budget_open
+    except Exception:
+        return None
+    if BREAKER.is_open():
+        return "provider_pause"
+    if not budget_open():
+        return "budget"
+    return None
+
 PROF_LABEL = {
  "pl": {"status": "status", "tryb": "tryb", "poziom": "poziom", "rok": "rok", "drugi_kierunek": "drugi kierunek / dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek/grupa", "pobyt": "pobyt"},
  "en": {"status": "status", "tryb": "mode", "poziom": "level", "rok": "year", "drugi_kierunek": "second programme / diploma", "niepelnosprawnosc": "disability certificate", "kierunek": "programme/group", "pobyt": "residence"},
@@ -2115,7 +2127,8 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             state,
         )
 
-    if llm_enabled():
+    generation_block = _generation_block_reason() if llm_enabled() else None
+    if llm_enabled() and not generation_block:
         _reset_llm_attempts()
         import datetime
         import json as _json
@@ -2221,6 +2234,11 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             done["contract"] = degraded
             return done
         except Exception as exc:
+            try:
+                from phase4 import note_provider_error
+                note_provider_error()
+            except Exception:
+                pass
             from answer_contract import provider_failure_reason
             reason = provider_failure_reason(exc)
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
@@ -2237,5 +2255,6 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
         compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
     ))
     return _finalize(ans, "wyszukiwanie", llm_path_from_attempts(
-        final="fallback", model_used=False, discarded="not_enabled",
+        final="fallback", model_used=False,
+        discarded=generation_block or "not_enabled",
     ))

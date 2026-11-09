@@ -12,6 +12,7 @@
 | [BASELINE.md](BASELINE.md) | Замер текущего кода без платного API |
 | [PHASE1.md](PHASE1.md) | Что вошло в Phase 1 и какой allowlist ещё не подписан |
 | [PHASE2.md](PHASE2.md) | FAQ-путь и фильтры Phase 2 |
-| [PHASE3.md](PHASE3.md) | Схема ответа и буферизованный SSE; фазы 4–6 не начаты |
+| [PHASE3.md](PHASE3.md) | Схема ответа и буферизованный SSE |
+| [PHASE4.md](PHASE4.md) | Кэш, лимит и стоимость; фазы 5–6 не начаты |
 
 Кейсы скелета: `tests/phase0_cases.yaml`. Старые диалоги: `tests/cases.yaml` (не заменяются).
