@@ -1,0 +1,102 @@
+# Approved FAQ entries. Answers are rendered from data/facts.yaml.
+# No English-tuition amounts, no disability amounts, no owner-recollection cap, no invented internship rate.
+version: 1
+approved_by: "Kostya Prochan, chat review 2026-11-09"
+active_revision: "2026-11-09"
+entries:
+  - id: faq-submission-channel
+    topic: submission_channel
+    fact_ids: [submission_channel]
+    academic_year: null
+    revision: "2026-11-09"
+    active: true
+    valid_from: null
+    valid_to: null
+    lead:
+      pl: "Wniosek o świadczenia składa się w kanale z zatwierdzonego faktu."
+      en: "The application uses the channel in the approved fact."
+      uk: "Заяву подають каналом із затвердженого факту."
+  - id: faq-dorm-deadline-2026-2027
+    topic: akademik
+    fact_ids: [dorm_application_deadline]
+    academic_year: "2026/2027"
+    revision: "2026-11-09"
+    active: true
+    valid_from: null
+    valid_to: null
+    lead:
+      pl: "Termin dotyczy tylko podanego roku. Dzień kwaterowania nie jest terminem wniosku."
+      en: "The deadline is only for the stated year. Check-in is not the application deadline."
+  - id: faq-income-group-2025-2026
+    topic: stypendium_socjalne
+    fact_ids: [social_income_threshold]
+    academic_year: "2025/2026"
+    revision: "2026-11-09"
+    active: true
+    valid_from: null
+    valid_to: null
+    lead:
+      pl: "Grupa stypendium socjalnego zależy od dochodu na osobę w rodzinie w podanym roku."
+  - id: faq-rector-who-2026-2027
+    topic: stypendium_rektora
+    fact_ids: [doctoral_rector_eligible, rector_cycle_eligibility]
+    academic_year: "2026/2027"
+    revision: "2026-11-09"
+    active: true
+    valid_from: null
+    valid_to: null
+    lead:
+      pl: "Doktorant szkoły doktorskiej nie otrzymuje stypendium rektora. Studia I i II stopnia mogą. Warunku wieku poniżej dwudziestu sześciu lat nie ma."
+      en: "A doctoral student cannot receive the rector's scholarship. First-cycle and second-cycle students can. There is no under-twenty-six age condition."
+  - id: faq-doctoral-period
+    topic: doktoranckie
+    fact_ids: [doctoral_stipend_period]
+    academic_year: null
+    revision: "2026-11-09"
+    active: true
+    valid_from: null
+    valid_to: null
+    lead:
+      pl: "Stypendium doktoranckie obowiązuje w tym roku akademickim, w którym przyjęto wniosek. Data przepisu o wynagrodzeniu profesora tego okresu nie wyznacza."
+  - id: faq-cap-2026-2027
+    topic: stypendium_socjalne
+    fact_ids: [rector_social_cap_monthly]
+    academic_year: "2026/2027"
+    revision: "2026-11-09"
+    active: true
+    valid_from: null
+    valid_to: null
+    lead:
+      pl: "To limit tylko roku dwa tysiące dwudziestego szóstego na dwudziesty siódmy. Limitu poprzedniego roku nie podstawiamy."
+  - id: faq-cap-2025-2026
+    topic: stypendium_socjalne
+    fact_ids: [rector_social_cap_monthly_2025_2026]
+    academic_year: "2025/2026"
+    revision: "2026-11-09"
+    active: true
+    valid_from: null
+    valid_to: null
+    lead:
+      pl: "To limit tylko roku dwa tysiące dwudziestego piątego na dwudziesty szósty. Kwoty ze wspomnienia właściciela nie używamy."
+  - id: faq-erasmus-application-2026-2027
+    topic: erasmus
+    fact_ids: [erasmus_application_2026_2027]
+    academic_year: "2026/2027"
+    revision: "2026-11-09"
+    active: true
+    valid_from: null
+    valid_to: null
+    lead:
+      pl: "Najpierw zgoda koordynatora wydziałowego i dziekana, potem w DWZ Podanie do Prorektora i Formularz Studenta. Motywacja jest ustna na rozmowie. Pisemnego listu motywacyjnego do dziekana przepisy nie wymagają."
+      en: "First the faculty coordinator and the dean approve, then DWZ receives the application to the vice-rector and the student form. Motivation is oral at the interview. The rules do not require a written motivation letter to the dean."
+  - id: faq-erasmus-study-rates-2026-2027
+    topic: erasmus
+    fact_ids: [erasmus_rates_2026_2027]
+    academic_year: "2026/2027"
+    revision: "2026-11-09"
+    active: true
+    valid_from: null
+    valid_to: null
+    lead:
+      pl: "Poniżej tylko opublikowana tabela wyjazdów na studia. Osobnej miesięcznej tabeli długiej praktyki nie było i jej tu nie ma."
+      en: "Below is only the published study-mobility table. No separate long-term traineeship monthly table was published, and none is added here."

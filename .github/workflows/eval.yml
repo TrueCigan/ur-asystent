@@ -38,6 +38,8 @@ jobs:
         run: python tests/test_phase0.py
       - name: Phase 1 ingestion guards (no network)
         run: python tests/test_phase1_ingestion.py
+      - name: Phase 2 retrieval guards (no network)
+        run: python tests/test_phase2_retrieval.py
       - name: Docker image build and container smoke
         run: |
           docker build -t ur-asystent-ci .

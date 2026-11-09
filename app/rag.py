@@ -83,6 +83,9 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
                 sc[i] *= 0.15
     out, per_url = [], {}
     tset = set(topics or [])
+    hard = (profile or {}).get("hard_filters") if isinstance(profile, dict) else None
+    # Filters run before the result limit. Without filters the old stop-at-k stays.
+    pool_limit = 200 if hard else k
     for i in np.argsort(-sc):
         if sc[i] <= 0:
             continue
@@ -95,8 +98,11 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
         per_url[u] = per_url.get(u, 0) + 1
         hit = dict(c, score=float(sc[i]), url=u)
         out.append(hit)
-        if len(out) >= k:
+        if len(out) >= pool_limit:
             break
+    if hard:
+        from hard_filter import limit_after_filters
+        return limit_after_filters(out, k, hard).rows
     return out
 
 
@@ -1833,6 +1839,16 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
             answer=refuse_message(lang), llm_path=closed_path("refusal"),
         ), state)
+    # Approved FAQ only. Any miss, compound, negation, or unknown id falls through.
+    try:
+        from faq_fast import try_fast_path
+        fast = try_fast_path(question, lang)
+    except Exception:
+        fast = None
+    if fast is not None:
+        fast["lang"] = lang
+        fast["llm_path"] = closed_path("deterministic")
+        return _attach_state(fast, state)
     # Verified social-scholarship scenario (no LLM) — reversible via SCENARIO_SOCIAL
     try:
         from scenarios.social import (

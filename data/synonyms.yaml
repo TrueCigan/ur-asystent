@@ -1,0 +1,73 @@
+# Exact aliases for approved FAQ entries.
+# One (language, normalized alias) may point at only one topic.
+# Strings come from signed Phase 0 questions or restate that same signed fact.
+# Holdout wording is not copied here and is not used to set the threshold.
+version: 1
+approved_by: "Kostya Prochan, chat review 2026-11-09"
+aliases:
+  - entry: faq-submission-channel
+    lang: pl
+    text: "Gdzie student składa wniosek o stypendium?"
+  - entry: faq-submission-channel
+    lang: pl
+    text: "Jak nazywa się kanał elektroniczny wniosków o świadczenia?"
+  - entry: faq-submission-channel
+    lang: pl
+    text: "stypendjum socjalne gdzie zlozyc wniosekk"
+  - entry: faq-submission-channel
+    lang: pl
+    text: "Szukaj tylko w polskich materiałach, gdzie złożyć wniosek."
+  - entry: faq-submission-channel
+    lang: en
+    text: "Where do I submit a scholarship application?"
+  - entry: faq-submission-channel
+    lang: en
+    text: "Please answer in English about where to submit the application."
+  - entry: faq-submission-channel
+    lang: uk
+    text: "Куди подавати заяву на стипендію?"
+  - entry: faq-submission-channel
+    lang: uk
+    text: "Відповідай українською. Куди подавати заяву на стипендію?"
+  - entry: faq-dorm-deadline-2026-2027
+    lang: pl
+    text: "Do kiedy składa się wniosek o akademik?"
+  - entry: faq-dorm-deadline-2026-2027
+    lang: pl
+    text: "Do kiedy składa się wniosek o akademik w roku akademickim 2026/2027?"
+  - entry: faq-dorm-deadline-2026-2027
+    lang: pl
+    text: "akademik termin wnioseku o miejsce"
+  - entry: faq-dorm-deadline-2026-2027
+    lang: en
+    text: "What is the dorm application deadline for academic year 2026/2027?"
+  - entry: faq-income-group-2025-2026
+    lang: pl
+    text: "Od czego zależy grupa stypendium socjalnego w roku 2025/2026?"
+  - entry: faq-rector-who-2026-2027
+    lang: pl
+    text: "Czy doktorant szkoły doktorskiej może dostać stypendium rektora?"
+  - entry: faq-rector-who-2026-2027
+    lang: pl
+    text: "Czy doktorant szkoły doktorskiej może dostać stypendium rektora w roku 2026/2027?"
+  - entry: faq-rector-who-2026-2027
+    lang: en
+    text: "rectors scholaship for a doctoral studnet"
+  - entry: faq-doctoral-period
+    lang: pl
+    text: "Na jaki okres obowiązuje stypendium doktoranckie?"
+  - entry: faq-cap-2026-2027
+    lang: pl
+    text: "Jaki jest łączny limit stypendium socjalnego i rektora w roku 2026/2027?"
+  - entry: faq-cap-2025-2026
+    lang: pl
+    text: "Jaki jest łączny limit stypendium socjalnego i rektora w roku 2025/2026?"
+  - entry: faq-erasmus-application-2026-2027
+    lang: pl
+    text: "Jak złożyć wniosek Erasmus+ 2026/2027?"
+  - entry: faq-erasmus-application-2026-2027
+    lang: en
+    text: "How do I apply for Erasmus+ 2026/2027, and is a motivation letter to the dean required?"
+  - entry: faq-erasmus-study-rates-2026-2027
+    lang: pl
+    text: "Jakie są miesięczne stawki Erasmus+ na studia w roku 2026/2027?"
