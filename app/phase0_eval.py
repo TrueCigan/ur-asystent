@@ -8,6 +8,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 CASES_PATH = ROOT / "tests" / "phase0_cases.yaml"
 
+OWNER_REVIEW = "Kostya Prochan, chat review 2026-11-09"
 EXPECTED_STATUS = {"answered", "partial", "clarification", "no_answer"}
 CATEGORY_COUNTS = {
     "faq_programs_contacts": 8,
@@ -76,13 +77,11 @@ def assert_allowed_for_tuning(case_ids, cases: list[dict] | None = None) -> None
 
 
 def score_label(cases: list[dict] | None = None) -> str:
-    """The skeleton is not a pass and not a zero. Facts are unapproved."""
-    rows = cases if cases is not None else load_cases()
-    for row in rows:
-        if not str(row.get("approved_by") or "").strip():
-            return "not measured"
-        if row.get("facts_approved") is not True:
-            return "not measured"
+    """Phase 1 records the owner review and still does not score 0–4.
+
+    A signed case is not a pass. Live scoring stays in a later phase.
+    """
+    del cases
     return "not measured"
 
 
@@ -116,10 +115,12 @@ def validate(cases: list[dict] | None = None, fact_ids: set[str] | None = None) 
             raise ValueError(f"{row['id']}: bad expected_status")
         if not isinstance(row["query"], str) or not (1 <= len(row["query"]) <= 1000):
             raise ValueError(f"{row['id']}: query length")
-        if row["approved_by"] not in ("", None):
-            raise ValueError(f"{row['id']}: approved_by must stay empty")
-        if row["facts_approved"] is not False:
-            raise ValueError(f"{row['id']}: facts_approved must stay false")
+        if row["approved_by"] != OWNER_REVIEW:
+            raise ValueError(f"{row['id']}: approved_by is not the 2026-11-09 owner review")
+        if "UNCONFIRMED" in row["required_facts"] and row["facts_approved"] is not False:
+            raise ValueError(f"{row['id']}: UNCONFIRMED facts cannot be marked approved")
+        if row["facts_approved"] not in (True, False):
+            raise ValueError(f"{row['id']}: facts_approved")
         if row["active"] is not True or row["version"] != 1:
             raise ValueError(f"{row['id']}: active/version")
         if row["expected_document_ids"] != []:
@@ -154,4 +155,4 @@ def validate(cases: list[dict] | None = None, fact_ids: set[str] | None = None) 
     if compound < 2:
         raise ValueError(f"compound cases {compound} < 2")
     if score_label(rows) != "not measured":
-        raise ValueError("unapproved skeleton must score as not measured")
+        raise ValueError("40-case score must stay not measured until a later phase")
