@@ -19,6 +19,23 @@ jobs:
         run: python tests/test_social_scenario.py
       - name: Answer contract without a live model
         run: python tests/test_answer_contract.py
+      - name: EVAL_REAL must stay off in the free gate
+        run: |
+          python - <<'PY'
+          import os, sys
+          val = os.environ.get("EVAL_REAL", "0").strip()
+          if val == "1":
+              sys.exit("EVAL_REAL=1 is forbidden in eval-unit")
+          sys.path.insert(0, "app")
+          os.environ.pop("LLM_API_KEY", None)
+          os.environ.pop("GEMINI_API_KEY", None)
+          from adapters import eval_real_enabled
+          if eval_real_enabled():
+              sys.exit("eval_real_enabled")
+          print("eval_real_off")
+          PY
+      - name: Phase 0 skeleton and fakes (no network)
+        run: python tests/test_phase0.py
       - name: Docker image build and container smoke
         run: |
           docker build -t ur-asystent-ci .

@@ -1014,6 +1014,10 @@ def llm_path_from_attempts(*, final, model_used, discarded):
 
 def call_llm(messages, temperature=0.25):
     prov = os.getenv("LLM_PROVIDER", "").lower(); key = os.getenv("LLM_API_KEY", "")
+    # Explicit fake provider: fixed string, no HTTP. A real provider below is unchanged.
+    if prov == "fake":
+        from adapters import fake_llm_complete
+        return fake_llm_complete()
     model = os.getenv("LLM_MODEL", "")
     if prov == "gemini":
         import time
@@ -1091,6 +1095,9 @@ def call_llm(messages, temperature=0.25):
 
 def llm_enabled():
     p = os.getenv("LLM_PROVIDER", "").lower()
+    # fake/off must not look like a live model on /api/status
+    if p in ("", "fake", "off", "disabled"):
+        return False
     if p == "gemini": return bool(os.getenv("GEMINI_API_KEY") or os.getenv("LLM_API_KEY"))
     return bool(p) and (bool(os.getenv("LLM_API_KEY")) or p == "ollama")
 
