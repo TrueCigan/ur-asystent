@@ -1018,7 +1018,7 @@ def llm_path_from_attempts(*, final, model_used, discarded):
     )
 
 
-def call_llm(messages, temperature=0.25):
+def call_llm(messages, temperature=0.25, timeout=None, max_tokens=None, retries=None):
     prov = os.getenv("LLM_PROVIDER", "").lower(); key = os.getenv("LLM_API_KEY", "")
     # Explicit fake provider: fixed string, no HTTP. A real provider below is unchanged.
     if prov == "fake":
@@ -1051,16 +1051,17 @@ def call_llm(messages, temperature=0.25):
         import time, random, logging
         log = logging.getLogger("ur.llm")
         last = None
-        for att in range(2):
+        attempts = 1 if retries == 0 else 2
+        for att in range(attempts):
             t0 = time.monotonic()
             try:
                 r = httpx.post(
                     "https://api.anthropic.com/v1/messages",
-                    timeout=_ANTHROPIC_TIMEOUT,
+                    timeout=timeout or _ANTHROPIC_TIMEOUT,
                     headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
                     json={
                         "model": model or "claude-sonnet-4-5",
-                        "max_tokens": 1400,
+                        "max_tokens": max_tokens or 1400,
                         "system": messages[0]["content"],
                         "messages": messages[1:],
                         "temperature": temperature,
@@ -1069,7 +1070,7 @@ def call_llm(messages, temperature=0.25):
             except httpx.TimeoutException as e:
                 _record_llm_attempt(transport="error", http_status=None)
                 last = e
-                if att == 0:
+                if retries != 0 and att == 0:
                     time.sleep(1.0 + random.random())
                     continue
                 raise RuntimeError("Anthropic timeout") from e
@@ -1083,7 +1084,7 @@ def call_llm(messages, temperature=0.25):
                 return r.json()["content"][0]["text"]
             _record_llm_attempt(transport="error", http_status=r.status_code, request_id=rid)
             last = f"HTTP {r.status_code}"
-            if r.status_code in (429, 500, 529) and att == 0:
+            if retries != 0 and r.status_code in (429, 500, 529) and att == 0:
                 time.sleep(1.0 + random.random())
                 continue
             raise RuntimeError(f"Anthropic niedostępny (HTTP {r.status_code})")
@@ -2150,19 +2151,32 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             {"role": "system", "content": sys},
             {"role": "user", "content": user_payload + "\n\nReturn JSON only."},
         ]
+        from answer_contract import (
+            accept_model_answer, fallback_contract, load_prompt_settings, looks_like_json,
+        )
+        prompt_settings = load_prompt_settings()
+        msgs[0]["content"] = prompt_settings["answer_prompt"]
+        manifest = []
+        for i, hit in enumerate(hits[:5], 1):
+            manifest.append({
+                "n": i,
+                "chunk_id": (hit.get("chunk_id") or hit.get("url") or f"hit-{i}"),
+                "title": hit.get("title") or "",
+                "url": hit.get("url") or "",
+                "page": hit.get("page"),
+                "text": (hit.get("text") or "")[:800],
+            })
         try:
-            raw = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
+            # One generation. Invalid schema, bad citations, and wrong language do not call again.
+            raw = strip_untrusted_wrappers(redact_secrets(call_llm(
+                msgs,
+                temperature=prompt_settings["temperature"],
+                timeout=prompt_settings["answer_timeout_s"],
+                max_tokens=prompt_settings["answer_max_tokens"],
+                retries=0,
+            )))
             data = parse_model_json(raw)
-            if data and template_has_raw_money(data.get("template") or ""):
-                # one repair: strip money instruction
-                repair = msgs + [{"role": "user", "content":
-                    "INVALID: template contains raw monetary digits. Rewrite JSON using only {{F:…}} / {{C:…}} placeholders."}]
-                raw = strip_untrusted_wrappers(redact_secrets(call_llm(repair, temperature=0.1)))
-                data = parse_model_json(raw)
-                if data and template_has_raw_money(data.get("template") or ""):
-                    data = None
-            if data:
-                # Facts-first: force tuition fact_ids into structured answers (P5)
+            if data and not template_has_raw_money(data.get("template") or ""):
                 fids = list(data.get("fact_ids") or [])
                 if "oplaty" in topics:
                     for fid in ("tuition_english_programmes", "tuition_polish_part_time_I"):
@@ -2172,59 +2186,50 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                 need = list(data.get("computed_need") or [])
                 computed = build_computed(selected_facts, need, profile=prof)
                 out = render_answer(data["template"], selected_facts, computed=computed, lang=lang)
-                # Drop out-of-range citations (never show [4] when only 2 sources)
                 from render import validate_citations
                 for bad in validate_citations(out, len(srcs)):
                     out = out.replace(bad, "")
-                if out:
-                    if not output_lang_ok(out, lang) and _time.monotonic() + 20 < _t_deadline:
-                        repair = msgs + [{"role": "user", "content":
-                            f"CRITICAL: template language must be {LANG_NAME.get(lang, 'polski')} (lang={lang}). Rewrite JSON."}]
-                        raw2 = strip_untrusted_wrappers(redact_secrets(call_llm(repair, temperature=0.1)))
-                        data2 = parse_model_json(raw2)
-                        if data2 and not template_has_raw_money(data2.get("template") or ""):
-                            out = render_answer(
-                                data2["template"], selected_facts,
-                                computed=build_computed(selected_facts, data2.get("computed_need") or [], profile=prof),
-                                lang=lang,
-                            )
-                    if out and output_lang_ok(out, lang):
-                        return _finalize(out, "llm-structured", llm_path_from_attempts(
-                            final="model", model_used=True, discarded=None,
-                        ))
-            # JSON failed → free-text legacy once, then fallback
-            sys_ft = (SYSTEM_FREE_TEXT.replace("{today}", datetime.date.today().isoformat())
-                                      .replace("{lang}", lang)
-                                      .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
-                                      .replace("{security_rules}", SECURITY_RULES))
-            facts_section = (facts_block + "\n\n") if facts_block else ""
-            msgs_ft = [{"role": "system", "content": sys_ft}] + _safe_history(history, 8) + [{
-                "role": "user",
-                "content": (
-                    f"PROFILE: {prof_txt}\nLANG: {lang}\nTOPICS: {', '.join(topics) or '—'}\n\n"
-                    + facts_section
-                    + f"SOURCES:\n{fmt_sources(hits)}\n\n"
-                    + wrap_untrusted("USER_QUESTION", llm_q)
-                    + "\n\nAnswer per system rules. Prefer amounts from FACTS only."
-                ),
-            }]
-            model_text = strip_untrusted_wrappers(redact_secrets(call_llm(msgs_ft, temperature=0.3)))
-            if not model_text or not output_lang_ok(model_text, lang):
+                if out and output_lang_ok(out, lang):
+                    return _finalize(out, "llm-structured", llm_path_from_attempts(
+                        final="model", model_used=True, discarded=None,
+                    ))
+                if out and not output_lang_ok(out, lang):
+                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
+                    return _finalize(out, "wyszukiwanie", llm_path_from_attempts(
+                        final="fallback", model_used=False, discarded="lang",
+                    ))
+            accepted, reason = accept_model_answer(raw, manifest, lang)
+            if accepted:
+                done = _finalize(accepted["answer"], "answer-contract", llm_path_from_attempts(
+                    final="model", model_used=True, discarded=None,
+                ))
+                done["contract"] = accepted
+                return done
+            if reason == "lang" or (raw and not looks_like_json(raw) and not output_lang_ok(raw, lang)):
                 out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
                 return _finalize(out, "wyszukiwanie", llm_path_from_attempts(
-                    final="fallback", model_used=False,
-                    discarded="empty" if not model_text else "lang",
+                    final="fallback", model_used=False, discarded="lang",
                 ))
-            return _finalize(model_text, "llm", llm_path_from_attempts(
-                final="model", model_used=True, discarded=None,
+            if raw and not looks_like_json(raw) and output_lang_ok(raw, lang):
+                return _finalize(raw, "llm", llm_path_from_attempts(
+                    final="model", model_used=True, discarded=None,
+                ))
+            degraded = fallback_contract(lang, manifest, reason or "invalid_schema")
+            done = _finalize(degraded["answer"], "wyszukiwanie", llm_path_from_attempts(
+                final="fallback", model_used=False, discarded=reason or "invalid_schema",
             ))
-        except Exception:
+            done["contract"] = degraded
+            return done
+        except Exception as exc:
+            from answer_contract import provider_failure_reason
+            reason = provider_failure_reason(exc)
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
             ans = strip_untrusted_wrappers(redact_secrets(
                 compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
             ))
             return _finalize(ans, "wyszukiwanie", llm_path_from_attempts(
-                final="fallback", model_used=False, discarded="exception",
+                final="fallback", model_used=False,
+                discarded=reason if reason in ("timeout", "rate_limit") else "exception",
             ))
     else:
         err = ""

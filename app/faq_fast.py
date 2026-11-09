@@ -148,15 +148,18 @@ def _answer(entry: dict, lang: str, score: float) -> dict:
         url = (fact.source or {}).get("url") or ""
         if url and url not in {item["url"] for item in sources}:
             sources.append({"title": (fact.i18n_label or {}).get(lang) or fact.id, "url": url, "fact_ids": [fact.id]})
+    from answer_contract import faq_contract
+    contract = faq_contract(lang, text, sources)
     return {
         "clarify": False,
         "mode": "faq",
         "sources": sources,
         "profile": {},
         "topics": [entry["topic"]],
-        "answer": text,
+        "answer": contract["answer"],
         "faq_id": entry["id"],
         "faq_score": score,
+        "contract": contract,
     }
 
 

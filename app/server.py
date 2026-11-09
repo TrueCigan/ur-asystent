@@ -1,7 +1,7 @@
 import os, sys, time, collections, threading, ipaddress
 sys.path.insert(0, os.path.dirname(__file__))
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import rag
@@ -76,8 +76,7 @@ def home():
     with open(path, encoding="utf-8") as f:
         return f.read()
 
-@app.post("/api/chat")
-def chat(q: Q, r: Request):
+def _answer_request(q: Q, r: Request):
     question = q.question.strip()
     if not question or len(question) > MAXQ:
         raise HTTPException(400, f"Pytanie musi mieć od 1 do {MAXQ} znaków.")
@@ -149,6 +148,39 @@ def chat(q: Q, r: Request):
             logging.getLogger("ur.api").info("chat done in %.2fs ip=%s", time.time() - t0, k)
         except Exception:
             pass
+
+@app.post("/api/chat")
+def chat(q: Q, r: Request):
+    return _answer_request(q, r)
+
+@app.post("/api/chat/stream")
+def chat_stream(q: Q, r: Request):
+    """Buffered SSE. The model text is validated before any answer event."""
+    from answer_contract import buffered_events, error_event, format_sse
+    request_id = uuid_request()
+    try:
+        result = _answer_request(q, r)
+    except HTTPException as exc:
+        detail = exc.detail if isinstance(exc.detail, str) else "error"
+        return StreamingResponse(
+            iter([error_event(detail, request_id)]),
+            media_type="text/event-stream",
+            status_code=exc.status_code,
+        )
+    except Exception:
+        return StreamingResponse(
+            iter([error_event("error", request_id)]),
+            media_type="text/event-stream",
+            status_code=500,
+        )
+    return StreamingResponse(
+        iter([format_sse(buffered_events(result, request_id))]),
+        media_type="text/event-stream",
+    )
+
+def uuid_request():
+    import uuid
+    return uuid.uuid4().hex
 
 @app.get("/healthz")
 def healthz():

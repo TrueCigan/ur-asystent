@@ -1,0 +1,11 @@
+version: v1
+parse: parse_v1.txt
+answer: answer_v1.txt
+temperature: 0
+allow_two_calls: false
+parse_max_tokens: 300
+answer_max_tokens: 700
+context_max_tokens: 4500
+parse_timeout_s: 1
+answer_timeout_s: 4
+budget_s: 6
