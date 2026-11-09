@@ -44,6 +44,8 @@ jobs:
         run: python tests/test_phase3_answer.py
       - name: Phase 4 cache and cost (no network)
         run: python tests/test_phase4_speed.py
+      - name: Phase 5 admin guards (no network)
+        run: python tests/test_phase5_admin.py
       - name: Docker image build and container smoke
         run: |
           docker build -t ur-asystent-ci .

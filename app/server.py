@@ -5,9 +5,11 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import rag
+from admin_ai import router as admin_router
 from security import redact_secrets, strip_untrusted_wrappers
 
 app = FastAPI(title="Asystent UR", docs_url=None, redoc_url=None, openapi_url=None)
+app.include_router(admin_router)
 
 @app.on_event("startup")
 def _warm():
@@ -139,6 +141,12 @@ def _answer_request(q: Q, r: Request):
         result = _cached_or_compute(question, q.session_lang, lang, now, compute, private)
         if isinstance(result, dict) and not result.get("state"):
             result["state"] = q.state
+        try:
+            from phase4 import note_chat
+            if isinstance(result, dict):
+                note_chat(result, (time.time() - t0) * 1000)
+        except Exception:
+            pass
         return result
     except Overloaded:
         raise HTTPException(503, busy)

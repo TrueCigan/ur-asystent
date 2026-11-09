@@ -77,15 +77,15 @@ def ttl_seconds(
     relative_date: bool = False,
 ) -> int:
     if kind == "no_answer":
-        ttl = NO_ANSWER_TTL
+        ttl = _capped("no_answer_ttl_s", NO_ANSWER_TTL)
     elif kind == "intent":
-        ttl = INTENT_TTL
+        ttl = _capped("intent_ttl_s", INTENT_TTL)
     elif kind == "faq":
-        ttl = FAQ_TTL
+        ttl = _capped("faq_ttl_s", FAQ_TTL)
     else:
-        ttl = RESPONSE_TTL
+        ttl = _capped("response_ttl_s", RESPONSE_TTL)
     if contains_deadline:
-        ttl = min(ttl, DEADLINE_TTL)
+        ttl = min(ttl, _capped("deadline_ttl_s", DEADLINE_TTL))
     if kind == "faq":
         ttl = min(ttl, FAQ_TTL)
     if valid_to is not None:
@@ -188,11 +188,12 @@ class Limiter:
             recent = [stamp for stamp in bucket if now - stamp <= MINUTE]
             while self._global and now - self._global[0] > MINUTE:
                 self._global.popleft()
-            if len(self._global) >= 60:
+            per_minute, per_day, global_minute = _limit_caps()
+            if len(self._global) >= global_minute:
                 return False, max(1, int(MINUTE - (now - self._global[0])) + 1), "global"
-            if len(recent) >= 20:
+            if len(recent) >= per_minute:
                 return False, max(1, int(MINUTE - (now - recent[0])) + 1), "minute"
-            if len(bucket) >= 200:
+            if len(bucket) >= per_day:
                 return False, max(1, int(DAY - (now - bucket[0])) + 1), "day"
             bucket.append(now)
             self._global.append(now)
@@ -269,6 +270,16 @@ def load_prices() -> dict:
         text = (os.getenv(env) or "").strip()
         if text:
             per[name] = float(text)
+    saved = OVERRIDES.get("prices")
+    if isinstance(saved, dict):
+        for name in ("input", "output", "cached_input", "embedding"):
+            if name in saved and os.getenv({
+                "input": "PRICE_INPUT_PER_1M",
+                "output": "PRICE_OUTPUT_PER_1M",
+                "cached_input": "PRICE_CACHED_INPUT_PER_1M",
+                "embedding": "PRICE_EMBEDDING_PER_1M",
+            }[name]) in (None, ""):
+                per[name] = saved[name]
     return per
 
 
@@ -345,6 +356,96 @@ INTENT_CACHE = ResponseCache()
 LIMITER = Limiter()
 BREAKER = Breaker()
 LEDGER = Ledger()
+# Operator overrides stay empty until an admin save. Defaults above do not change.
+OVERRIDES: dict = {}
+
+
+def _capped(name: str, default: int) -> int:
+    raw = OVERRIDES.get(name)
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    if value < 1:
+        return default
+    return min(value, default)
+
+
+def _limit_caps() -> tuple[int, int, int]:
+    return (
+        _capped("limit_per_minute", 20),
+        _capped("limit_per_day", 200),
+        _capped("global_per_minute", 60),
+    )
+
+
+class RequestNotes:
+    """Redacted in-process samples. Raw question text, IP, session, and user id are not fields."""
+
+    def __init__(self):
+        self.samples: deque = deque(maxlen=50)
+
+    def clear(self) -> None:
+        self.samples.clear()
+
+    def add(self, sample: dict) -> None:
+        self.samples.append(dict(sample))
+
+
+NOTES = RequestNotes()
+
+
+def note_chat(result: dict, total_ms: float) -> None:
+    """Record one finished chat. The question and the session token are not accepted."""
+    contract = result.get("contract") or {}
+    status = str(contract.get("status") or "")
+    mode = str(result.get("mode") or "")
+    if result.get("clarify") or status == "clarification":
+        path = "clarification"
+    elif status == "no_answer":
+        path = "no_answer"
+    elif mode == "faq":
+        path = "faq"
+    elif mode in ("llm", "llm-structured", "answer-contract"):
+        path = "generation"
+    else:
+        path = "template"
+    sources = []
+    for src in result.get("sources") or []:
+        if isinstance(src, dict):
+            sid = src.get("chunk_id") or src.get("id")
+            if sid:
+                sources.append(str(sid)[:80])
+    try:
+        from answer_contract import load_prompt_settings
+        prompt_version = str(load_prompt_settings().get("version") or "")
+    except Exception:
+        prompt_version = ""
+    try:
+        revision = index_revision()
+    except Exception:
+        revision = ""
+    NOTES.add({
+        "created_at": time.strftime("%Y-%m-%d", time.gmtime()),
+        "path": path,
+        "cache_hit": result.get("cache") == "hit",
+        "cache_lookup": result.get("cache") in ("hit", "miss"),
+        "error_code": result.get("error_code") or None,
+        "total_ms": round(float(total_ms), 1),
+        "stage_ms": {
+            "total": round(float(total_ms), 1),
+            "parse": "not measured",
+            "retrieval": "not measured",
+            "answer": "not measured",
+        },
+        "source_ids": sources[:8],
+        "index_revision": revision,
+        "prompt_version": prompt_version,
+        "model": (os.getenv("LLM_MODEL") or "unconfigured").strip(),
+        "tokens": None,
+    })
 
 
 def remember_intent(question: str, university_id: str) -> dict:
