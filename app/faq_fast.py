@@ -7,6 +7,7 @@ for that language. Thresholds are the TZ constants, not fitted on holdout.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
@@ -138,10 +139,37 @@ def try_fast_path(question: str, lang: str, catalog=None):
     return _answer(kept[0], lang, best["score"])
 
 
+_PL_PROSE = re.compile(
+    r"(?i)[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]|\b(albo|sekcja|elektronicznie|składa|wniosek|strona internetowa)\b"
+)
+
+
+def missing_faq_translations() -> list[tuple[str, str]]:
+    """FAQ ids that have no approved lead in English or Ukrainian. Not machine-translated."""
+    catalog = load_catalog()
+    missing = []
+    for entry in catalog["entries"].values():
+        lead = entry.get("lead") or {}
+        for lang in ("en", "uk"):
+            if not str(lead.get(lang) or "").strip():
+                missing.append((entry["id"], lang))
+    return missing
+
+
+def _without_untranslated_polish(body: str) -> str:
+    kept = [line for line in (body or "").splitlines() if line.strip() and not _PL_PROSE.search(line)]
+    return "\n".join(kept)
+
+
 def _answer(entry: dict, lang: str, score: float) -> dict:
     facts = [fact for fact in load_facts() if fact.id in entry["fact_ids"]]
-    lead = (entry.get("lead") or {}).get(lang) or (entry.get("lead") or {}).get("pl") or ""
+    leads = entry.get("lead") or {}
+    lead = leads.get(lang) or ""
     body = render_facts_for_user(facts, lang)
+    if lang in ("en", "uk") and lead:
+        body = _without_untranslated_polish(body)
+    elif not lead:
+        lead = leads.get("pl") or ""
     text = (lead + "\n" + body).strip()
     sources = []
     for fact in facts:

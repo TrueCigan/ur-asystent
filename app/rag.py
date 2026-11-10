@@ -1,5 +1,6 @@
 """Logika asystenta: doprecyzowanie sytuacji studenta, wyszukiwanie hybrydowe, odpowiedź z cytatami (PL/EN/UK/MN)."""
 import os, re, gzip, json, math, collections, numpy as np, scipy.sparse as sp, httpx
+_HTTPX_POST = httpx.post
 from index import tokens, norm, D, char_ngrams, char_vec
 from security import (
     SECURITY_RULES, is_security_probe, refuse_message, wrap_untrusted,
@@ -13,7 +14,7 @@ from lang import (
     LANG_NAME, map_policy, resolve_session_lang, output_lang_ok,
     sticky_lang_from_user_turns,
 )
-from deadlines import deadline_passed_note, strip_llm_deadline_notes
+from deadlines import deadline_passed_note, notes_from_signed_deadlines, strip_llm_deadline_notes
 from facts import (
     load_facts, select_facts, render_facts_block, render_facts_for_user,
     extract_income, computed_income_line, fallback_facts, strip_staff_contacts,
@@ -718,7 +719,10 @@ def _gate_required_slots(req, topic_names, prof, question, history_text=""):
     if states_doctoral or _STATED_STUDENT.search(question or "") or _STATED_INCOMING.search(question or ""):
         req = [x for x in req if x != "status"]
     if _STATUS_FREE_TOPIC.search(question or ""):
-        req = [x for x in req if x != "status"]
+        req = [x for x in req if x not in ("status", "poziom", "tryb", "rok", "drugi_kierunek")]
+    # "Which fact describes…" is a lookup, not an eligibility question.
+    if re.search(r"(?i)który temat opisuje|which stored fact|który fakt|which fact covers", question or ""):
+        req = []
     if "erasmus" in topic_names and not _PERSONAL_ELIGIBILITY.search(question or ""):
         req = [x for x in req if x != "status"]
     return list(dict.fromkeys(req))
@@ -1012,6 +1016,157 @@ def _reset_llm_attempts():
     _LLM_STOP_REASON = None
 
 
+class ModelFormatError(RuntimeError):
+    """The provider returned HTTP 200 with no usable text block."""
+
+
+def anthropic_visible_text(payload: dict) -> str:
+    """Join type=text blocks. Ignore thinking and redacted_thinking."""
+    blocks = payload.get("content") if isinstance(payload, dict) else None
+    if not isinstance(blocks, list):
+        raise ModelFormatError("Anthropic response has no content list")
+    parts = []
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        kind = block.get("type")
+        if kind in ("thinking", "redacted_thinking"):
+            continue
+        # A missing type is the older text-only payload. A thinking block always sets type.
+        if kind in (None, "text") and "text" in block:
+            parts.append(block.get("text") or "")
+    if not any(part.strip() for part in parts):
+        raise ModelFormatError("Anthropic response has no text block")
+    return "".join(parts)
+
+
+def thinking_fields(model: str | None) -> dict:
+    """Haiku 5.5 thinks by default. Disable it at effort high.
+
+    https://platform.claude.com/docs/en/build-with-claude/thinking
+    `thinking: {type: "disabled"}` is accepted on Claude Haiku 5.5 at effort
+    high or below. `budget_tokens` is rejected with HTTP 400.
+    """
+    flag = (os.getenv("LLM_THINKING") or "").strip().lower()
+    name = (model or os.getenv("LLM_MODEL") or "").strip().lower()
+    if flag in {"1", "on", "adaptive", "enabled"}:
+        return {}
+    if flag in {"0", "off", "disabled"} or name.startswith("claude-haiku-5"):
+        return {"thinking": {"type": "disabled"}, "output_config": {"effort": "high"}}
+    return {}
+
+
+def is_transport_failure(exc: BaseException) -> bool:
+    """Timeouts, connection failures, HTTP 429, and HTTP 5xx only."""
+    if isinstance(exc, ModelFormatError):
+        return False
+    if isinstance(exc, (httpx.TimeoutException, httpx.TransportError)):
+        return True
+    text = str(exc).lower()
+    if "timeout" in text or "timed out" in text:
+        return True
+    return bool(re.search(r"http[^\d]{0,12}(429|5\d\d)\b", text))
+
+
+_CAMPUS_CUE = re.compile(
+    r"(?i)stypend|wniosek|akademik|erasmus|czesn|rektor|wydział|wydzial|kierunek|"
+    r"student|uniwersytet|\bur\b|tuition|scholarship|dormitor"
+)
+_OOD_QUESTION = re.compile(
+    r"(?i)\b(pogod\w*|weather|forecast)\b|czy dostan[eę] si[eę]|czy mnie przyjm|"
+    r"will i be admitted|will i get in"
+)
+_DEAN_OFFICE = re.compile(r"(?i)dziekanat|dean'?s?\s+office|деканат")
+_DEAN_CONTACT = re.compile(r"(?i)telefon|phone|adres|kontakt|stron|numer|e-?mail")
+RETRIEVAL_MIN_SCORE = 0.05
+_HELP_URL = "https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/"
+
+
+def out_of_scope_answer(question: str, lang: str, topics, hits, history_text: str = "") -> dict | None:
+    """Honest no_answer instead of unrelated quotes."""
+    q = question or ""
+    if _DEAN_OFFICE.search(q) and _DEAN_CONTACT.search(q):
+        text = {
+            "pl": "Nie mam zatwierdzonego adresu ani telefonu dziekanatu. Nie podaję numeru innego działu. "
+                  f"Oficjalna strona świadczeń: {_HELP_URL}",
+            "en": "There is no signed dean's office address or phone. I will not substitute another office. "
+                  f"Official benefits page: {_HELP_URL}",
+            "uk": "Немає затвердженої адреси чи телефону деканату. Я не підставляю номер іншого відділу. "
+                  f"Офіційна сторінка стипендій: {_HELP_URL}",
+        }.get(map_policy(lang), "Nie mam zatwierdzonego adresu ani telefonu dziekanatu.")
+        return {"answer": text, "sources": [{"title": "Świadczenia", "url": _HELP_URL}]}
+    admission = bool(re.search(r"(?i)dostan[eę] si[eę]|admitted|przyjm", q))
+    explicit = bool(_OOD_QUESTION.search(q)) or admission
+    top = max((float(h.get("score") or 0) for h in (hits or [])), default=0.0)
+    # A follow-up stays in scope when the dialogue already named a campus subject.
+    low = (not topics) and top < RETRIEVAL_MIN_SCORE and not _CAMPUS_CUE.search(f"{q}\n{history_text or ''}")
+    if not explicit and not low:
+        return None
+    if admission:
+        text = {
+            "pl": "Nie mogę przewidzieć przyjęcia na studia i nie obiecuję miejsca.",
+            "en": "I cannot predict admission and I will not promise a place.",
+            "uk": "Я не передбачаю вступу і не обіцяю місця.",
+        }.get(map_policy(lang), "Nie mogę przewidzieć przyjęcia na studia i nie obiecuję miejsca.")
+        return {"answer": text, "sources": []}
+    text = {
+        "pl": "Nie mam potwierdzonej odpowiedzi w oficjalnych materiałach UR. "
+              f"W sprawach świadczeń: {_HELP_URL}",
+        "en": "The official UR material on file does not confirm an answer. "
+              f"For student benefits: {_HELP_URL}",
+        "uk": "У наявних офіційних матеріалах UR немає підтвердженої відповіді. "
+              f"Стипендії: {_HELP_URL}",
+    }.get(map_policy(lang), "Nie mam potwierdzonej odpowiedzi w oficjalnych materiałach UR.")
+    return {"answer": text, "sources": [{"title": "Świadczenia", "url": _HELP_URL}]}
+
+
+def record_model_failure(exc: BaseException) -> str:
+    """Provider failures open the breaker. Parse and format errors do not."""
+    from phase4 import note_format_error, note_provider_error
+    if is_transport_failure(exc):
+        note_provider_error()
+        return "transport"
+    note_format_error(f"{type(exc).__name__}: {exc}")
+    return "format"
+
+
+def post_with_deadline(url: str, timeout_s: float, **kwargs):
+    """One wall-clock budget for connect, write, and the whole body."""
+    import time
+    deadline = time.monotonic() + float(timeout_s)
+
+    def remaining() -> float:
+        return deadline - time.monotonic()
+
+    if remaining() <= 0:
+        raise httpx.TimeoutException("wall-clock deadline exceeded")
+    timeout = httpx.Timeout(
+        connect=min(5.0, max(0.05, remaining())),
+        read=max(0.05, remaining()),
+        write=min(10.0, max(0.05, remaining())),
+        pool=min(5.0, max(0.05, remaining())),
+    )
+    with httpx.Client(timeout=timeout) as client:
+        with client.stream("POST", url, **kwargs) as response:
+            buf = bytearray()
+            for chunk in response.iter_bytes():
+                if time.monotonic() >= deadline:
+                    raise httpx.TimeoutException("wall-clock deadline exceeded")
+                buf.extend(chunk)
+            raw = bytes(buf)
+            code = response.status_code
+            headers = response.headers
+
+    class _Response:
+        status_code = code
+        headers = headers
+
+        def json(self):
+            return json.loads(raw.decode("utf-8"))
+
+    return _Response()
+
+
 def send_temperature(model: str | None = None) -> bool:
     """Haiku 5.x rejects the temperature field. Omit it unless the env forces it on."""
     flag = (os.getenv("LLM_SEND_TEMPERATURE") or "").strip().lower()
@@ -1141,12 +1296,24 @@ def call_llm(messages, temperature=0.25, timeout=None, max_tokens=None, retries=
                 }
                 if send_temperature(anthropic_body["model"]):
                     anthropic_body["temperature"] = temperature
-                r = httpx.post(
-                    "https://api.anthropic.com/v1/messages",
-                    timeout=timeout or _ANTHROPIC_TIMEOUT,
-                    headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
-                    json=anthropic_body,
-                )
+                anthropic_body.update(thinking_fields(anthropic_body["model"]))
+                headers = {"x-api-key": key, "anthropic-version": "2023-06-01"}
+                # A numeric timeout is one wall-clock budget. A patched httpx.post
+                # stays on the existing fake and never opens a live connection.
+                if isinstance(timeout, (int, float)) and httpx.post is _HTTPX_POST:
+                    r = post_with_deadline(
+                        "https://api.anthropic.com/v1/messages",
+                        float(timeout),
+                        headers=headers,
+                        json=anthropic_body,
+                    )
+                else:
+                    r = httpx.post(
+                        "https://api.anthropic.com/v1/messages",
+                        timeout=timeout or _ANTHROPIC_TIMEOUT,
+                        headers=headers,
+                        json=anthropic_body,
+                    )
             except httpx.TimeoutException as e:
                 _record_llm_attempt(transport="error", http_status=None)
                 last = e
@@ -1163,7 +1330,7 @@ def call_llm(messages, temperature=0.25, timeout=None, max_tokens=None, retries=
                 _record_llm_attempt(transport="ok", http_status=200, request_id=rid)
                 payload = r.json()
                 _note_stop_reason(payload.get("stop_reason"))
-                return payload["content"][0]["text"]
+                return anthropic_visible_text(payload)
             _record_llm_attempt(transport="error", http_status=r.status_code, request_id=rid)
             last = f"HTTP {r.status_code}"
             if retries != 0 and r.status_code in (429, 500, 529) and att == 0:
@@ -2207,7 +2374,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
         out = finalize_answer_urls(
             out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6, cited_fact_indexes=cited,
         )
-        out += deadline_passed_note(out, lang)
+        out += notes_from_signed_deadlines(selected_facts, lang)
         out, fee_corrected = _with_selected_english_tuition(out, lang, selected_facts, question, hist_user)
         if fee_corrected:
             llm_path = dict(llm_path)
@@ -2221,6 +2388,13 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             ),
             state,
         )
+
+    scope = out_of_scope_answer(question, lang, topics, hits, hist_user)
+    if scope is not None:
+        return _attach_state(dict(
+            clarify=False, mode="no_answer", sources=scope["sources"], profile=prof, topics=topics,
+            lang=lang, answer=scope["answer"], llm_path=closed_path("deterministic"),
+        ), state)
 
     generation_block = _generation_block_reason() if llm_enabled() else None
     if llm_enabled() and not generation_block:
@@ -2346,20 +2520,20 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             done["contract"] = degraded
             return done
         except Exception as exc:
+            kind = "format"
             try:
-                from phase4 import note_provider_error
-                note_provider_error()
+                kind = record_model_failure(exc)
             except Exception:
                 pass
             from answer_contract import provider_failure_reason
-            reason = provider_failure_reason(exc)
+            reason = "format" if kind == "format" else provider_failure_reason(exc)
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
             ans = strip_untrusted_wrappers(redact_secrets(
                 compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
             ))
             return _finalize(ans, "wyszukiwanie", llm_path_from_attempts(
                 final="fallback", model_used=False,
-                discarded=reason if reason in ("timeout", "rate_limit") else "exception",
+                discarded=reason if reason in ("timeout", "rate_limit", "format") else "exception",
             ))
     else:
         err = ""

@@ -555,3 +555,11 @@ def generation_allowed() -> bool:
 
 def note_provider_error() -> None:
     BREAKER.record()
+
+
+FORMAT_NOTES: deque = deque(maxlen=50)
+
+
+def note_format_error(reason: str) -> None:
+    """A parse or schema failure. It does not open the provider circuit breaker."""
+    FORMAT_NOTES.append({"reason": str(reason)[:160], "at": time.time()})

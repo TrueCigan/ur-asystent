@@ -363,6 +363,44 @@ def strip_llm_deadline_notes(text: str) -> str:
     return "\n".join(lines).rstrip()
 
 
+# Only these signed records are application or submission deadlines.
+_APPLICATION_DEADLINE_IDS = frozenset({
+    "dorm_application_deadline",
+    "social_rector_deadline",
+})
+
+
+def notes_from_signed_deadlines(facts, lang: str = "pl", today: date | None = None) -> str:
+    """Warn only from a signed fact's application deadline, never from a quote."""
+    today = today or date.today()
+    found: list[Deadline] = []
+    topics: list[str] = []
+    for fact in facts or []:
+        if getattr(fact, "status", None) != "verified":
+            continue
+        if getattr(fact, "id", None) not in _APPLICATION_DEADLINE_IDS:
+            continue
+        raw = getattr(fact, "deadline", None) or {}
+        if not isinstance(raw, dict):
+            continue
+        end_raw = raw.get("end")
+        if not end_raw:
+            continue
+        try:
+            end = date.fromisoformat(str(end_raw)[:10])
+        except ValueError:
+            continue
+        start = None
+        if raw.get("start"):
+            try:
+                start = date.fromisoformat(str(raw["start"])[:10])
+            except ValueError:
+                start = None
+        found.append(Deadline(start=start, end=end, label_key="until"))
+        topics.extend(getattr(fact, "topic", None) or [])
+    return render_deadline_notes(found, lang, today, topics=topics)
+
+
 def deadline_passed_note(text: str, lang: str = "pl", today: date | None = None, topics: list[str] | None = None) -> str:
     """Compat wrapper for harness / rag.answer."""
     today = today or date.today()

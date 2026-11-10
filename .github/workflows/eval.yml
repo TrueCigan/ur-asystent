@@ -50,6 +50,8 @@ jobs:
         run: python tests/test_phase6_hardening.py
       - name: Phase 6 eval fixes (no network)
         run: python tests/test_phase6_fixes.py
+      - name: Phase 6 rerun fixes
+        run: python tests/test_phase6_fixes2.py
       - name: Docker image build and container smoke
         run: |
           docker build -t ur-asystent-ci .

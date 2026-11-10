@@ -71,6 +71,8 @@ def test_haiku_request_omits_temperature():
         assert captured["url"] == "https://api.anthropic.com/v1/messages"
         assert "temperature" not in captured["body"]
         assert captured["body"]["model"] == "claude-haiku-5-5"
+        assert captured["body"]["thinking"] == {"type": "disabled"}
+        assert captured["body"]["output_config"]["effort"] == "high"
 
         os.environ["LLM_MODEL"] = "claude-sonnet-4-5"
         rag.call_llm(
@@ -105,7 +107,7 @@ def test_haiku_request_omits_temperature():
 def test_timeout_tokens_and_context_defaults():
     settings = ac.load_prompt_settings()
     assert settings["answer_timeout_s"] == 12
-    assert settings["answer_max_tokens"] == 1200
+    assert settings["answer_max_tokens"] == 2000
     assert settings["budget_s"] == 15
     assert settings["parse_timeout_s"] == 1
     assert settings["context_chunks"] == 3

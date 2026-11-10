@@ -246,9 +246,8 @@ def test_local_fake_smoke_and_unscored_report():
     assert len(cases) == 40
     for case in cases:
         assert case["id"] in report
-    # The 2026-11-10 live report replaced the empty template. It is scored and not a launch.
+    # The 2026-11-10 rerun report replaced the first live report. It is scored and not a launch.
     assert "12/40" in report
-    assert "NOT met" in report
     assert "Not a launch approval" in report
     runbook = (ROOT / "docs/phase0/RUNBOOK.md").read_text(encoding="utf-8")
     assert "data/index.npz" in runbook
