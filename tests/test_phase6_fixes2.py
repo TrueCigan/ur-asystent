@@ -1,6 +1,7 @@
 """Offline checks for the rerun fixes. No network call to a paid model."""
 from __future__ import annotations
 
+import json
 import os
 import sys
 import threading
@@ -137,6 +138,129 @@ def test_faq_english_drops_polish_prose_and_lists_missing_leads():
     assert ("faq-submission-channel", "en") not in missing
 
 
+def test_local_server_covers_text_errors_deadline_and_extractor():
+    """Real 127.0.0.1 responses, including the HTTP 200 object call_llm reads."""
+    from extract import extract_turn
+
+    script = []
+
+    class Local(BaseHTTPRequestHandler):
+        def do_POST(self):
+            spec = script.pop(0)
+            if spec.get("slow"):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                for _ in range(40):
+                    try:
+                        self.wfile.write(b" ")
+                        self.wfile.flush()
+                    except Exception:
+                        return
+                    time.sleep(0.15)
+                return
+            body = json.dumps(spec["body"]).encode("utf-8")
+            self.send_response(spec["status"])
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("request-id", "local-req")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *_args):
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Local)
+    port = server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    url = f"http://127.0.0.1:{port}/v1/messages"
+    saved = {
+        "LLM_PROVIDER": os.environ.get("LLM_PROVIDER"),
+        "LLM_API_KEY": os.environ.get("LLM_API_KEY"),
+        "LLM_MODEL": os.environ.get("LLM_MODEL"),
+        "EXTRACTOR_LLM": os.environ.get("EXTRACTOR_LLM"),
+    }
+    original = rag.post_with_deadline
+
+    def via_local(remote, timeout_s, **kwargs):
+        assert remote.startswith("https://api.anthropic.com/")
+        return original(url, timeout_s, **kwargs)
+
+    def call_local(messages, temperature=0, timeout=None, max_tokens=None, retries=0):
+        return rag.call_llm(
+            messages, temperature=temperature, timeout=timeout or 2,
+            max_tokens=max_tokens or 200, retries=0,
+        )
+
+    try:
+        rag.post_with_deadline = via_local
+        os.environ["LLM_PROVIDER"] = "anthropic"
+        os.environ["LLM_API_KEY"] = "offline-test-only"
+        os.environ["LLM_MODEL"] = "claude-haiku-5-5"
+        os.environ["EXTRACTOR_LLM"] = "1"
+        messages = [{"role": "system", "content": "s"}, {"role": "user", "content": "u"}]
+
+        script.append({"status": 200, "body": {
+            "content": [{"type": "text", "text": "plain answer"}],
+            "stop_reason": "end_turn",
+        }})
+        direct = original(url, 2, json={"ping": 1})
+        assert direct.status_code == 200
+        assert direct.headers.get("request-id") == "local-req"
+        assert direct.json()["content"][0]["text"] == "plain answer"
+
+        script.append({"status": 200, "body": {
+            "content": [{"type": "text", "text": "from call"}],
+            "stop_reason": "end_turn",
+        }})
+        assert call_local(messages) == "from call"
+
+        script.append({"status": 200, "body": {
+            "content": [
+                {"type": "thinking", "thinking": "hidden"},
+                {"type": "text", "text": "visible"},
+            ],
+            "stop_reason": "end_turn",
+        }})
+        assert call_local(messages) == "visible"
+
+        for status in (429, 500):
+            script.append({"status": status, "body": {"error": status}})
+            try:
+                call_local(messages)
+                raise AssertionError(f"HTTP {status} was accepted")
+            except RuntimeError as exc:
+                assert f"HTTP {status}" in str(exc)
+
+        script.append({"slow": True})
+        started = time.monotonic()
+        try:
+            call_local(messages, timeout=0.4)
+            raise AssertionError("slow body was accepted")
+        except RuntimeError as exc:
+            assert "timeout" in str(exc).lower()
+        assert time.monotonic() - started < 2.0
+
+        script.append({"status": 200, "body": {
+            "content": [
+                {"type": "thinking", "thinking": "skip"},
+                {"type": "text", "text": '{"intents":[],"slot_updates":{"status":"pl"},"conflicts":[]}'},
+            ],
+            "stop_reason": "end_turn",
+        }})
+        extracted = extract_turn("jestem studentem", {}, None, ["status"], call_local)
+        assert extracted["slot_updates"]["status"] == "pl"
+    finally:
+        rag.post_with_deadline = original
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+        server.shutdown()
+
+
 def test_dev_cases_answer_or_refuse_without_irrelevant_quotes():
     samples = {
         "Który temat opisuje świadczenie przy orzeczeniu o niepełnosprawności?": "niepełnospraw",
@@ -170,6 +294,7 @@ def main():
         test_text_blocks_ignore_thinking_and_haiku_disables_it,
         test_format_errors_do_not_open_the_breaker,
         test_wall_clock_timeout_stops_a_slow_body,
+        test_local_server_covers_text_errors_deadline_and_extractor,
         test_deadline_warning_ignores_quotes_and_exam_dates,
         test_faq_english_drops_polish_prose_and_lists_missing_leads,
         test_dev_cases_answer_or_refuse_without_irrelevant_quotes,

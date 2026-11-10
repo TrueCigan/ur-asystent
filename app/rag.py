@@ -1133,6 +1133,7 @@ def record_model_failure(exc: BaseException) -> str:
 def post_with_deadline(url: str, timeout_s: float, **kwargs):
     """One wall-clock budget for connect, write, and the whole body."""
     import time
+    from types import SimpleNamespace
     deadline = time.monotonic() + float(timeout_s)
 
     def remaining() -> float:
@@ -1153,18 +1154,14 @@ def post_with_deadline(url: str, timeout_s: float, **kwargs):
                 if time.monotonic() >= deadline:
                     raise httpx.TimeoutException("wall-clock deadline exceeded")
                 buf.extend(chunk)
-            raw = bytes(buf)
-            code = response.status_code
-            headers = response.headers
+            status_code = response.status_code
+            header_map = {str(key).lower(): value for key, value in response.headers.items()}
+            body = bytes(buf)
 
-    class _Response:
-        status_code = code
-        headers = headers
+    def read_json(payload=body):
+        return json.loads(payload.decode("utf-8"))
 
-        def json(self):
-            return json.loads(raw.decode("utf-8"))
-
-    return _Response()
+    return SimpleNamespace(status_code=status_code, headers=header_map, json=read_json)
 
 
 def send_temperature(model: str | None = None) -> bool:
