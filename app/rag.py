@@ -2451,32 +2451,41 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             preview = card.get("value_preview") or ""
             if len(preview) > card_chars:
                 card["value_preview"] = preview[:card_chars] + "…"
+        shown_for_prompt = selected_facts[:card_n]
+        from answer_contract import assemble_citable
+        fact_rows = []
+        for fact, card in zip(shown_for_prompt, cards):
+            fact_rows.append({
+                "id": getattr(fact, "id", None),
+                "title": card.get("label") or getattr(fact, "id", ""),
+                "url": ((getattr(fact, "source", None) or {}).get("url") or "").strip(),
+                "text": card.get("value_preview") or "",
+            })
+        manifest = assemble_citable(
+            fact_rows, hits, chunk_n=chunk_n, chunk_chars=chunk_chars,
+        )
+        by_cite = {row["chunk_id"]: row["n"] for row in manifest}
+        for card in cards:
+            if card.get("id") in by_cite:
+                card["n"] = by_cite[card["id"]]
+        citable_ids = [{"n": row["n"], "id": row["chunk_id"]} for row in manifest]
         user_payload = _json.dumps({
             "lang": lang,
             "profile": prof,
             "topics": topics,
+            "citable_ids": citable_ids,
             "fact_cards": cards,
             "sources": [
-                {"id": i, "title": h.get("title"), "url": h.get("url")}
-                for i, h in enumerate(hits[:chunk_n], 1)
+                {"id": row["chunk_id"], "n": row["n"], "title": row["title"]}
+                for row in manifest if row.get("kind") == "chunk"
             ],
             "dialogue": dialogue,
         }, ensure_ascii=False)
         msgs = [
             {"role": "system", "content": sys},
-            {"role": "user", "content": user_payload + "\n\nReturn JSON only."},
+            {"role": "user", "content": user_payload + "\n\nReturn JSON only. Cite only ids from citable_ids."},
         ]
         msgs[0]["content"] = prompt_settings["answer_prompt"]
-        manifest = []
-        for i, hit in enumerate(hits[:chunk_n], 1):
-            manifest.append({
-                "n": i,
-                "chunk_id": (hit.get("chunk_id") or hit.get("url") or f"hit-{i}"),
-                "title": hit.get("title") or "",
-                "url": hit.get("url") or "",
-                "page": hit.get("page"),
-                "text": (hit.get("text") or "")[:chunk_chars],
-            })
         try:
             # One generation. Invalid schema, bad citations, and wrong language do not call again.
             raw = strip_untrusted_wrappers(redact_secrets(call_llm(
@@ -2523,6 +2532,18 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                     final="model", model_used=True, discarded=None,
                 ))
                 done["contract"] = accepted
+                cited_sources = []
+                for item in accepted["citations"]:
+                    if not item.get("url"):
+                        continue
+                    cited_sources.append({
+                        "n": item["n"],
+                        "title": item.get("title") or "",
+                        "url": item["url"],
+                        "fact_ids": [] if str(item.get("chunk_id") or "").startswith("chunk-") else [item["chunk_id"]],
+                    })
+                if cited_sources:
+                    done["sources"] = cited_sources
                 return done
             if reason == "lang" or (raw and not looks_like_json(raw) and not output_lang_ok(raw, lang)):
                 out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)

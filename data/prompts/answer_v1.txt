@@ -3,7 +3,7 @@ Return one JSON object and nothing else. The object has exactly these fields:
 - status: one of answered, partial, clarification, no_answer
 - language: one of pl, en, uk (Mongolian uses en)
 - answer: string, 120 words or fewer, with citation marks [n] in the text
-- citations: a list of objects with only n (integer) and chunk_id (string from the evidence manifest). Do not add url, title, page, or source_id.
+- citations: a list of objects with only n (integer) and chunk_id. chunk_id and n must be copied from citable_ids in the user message. Do not add url, title, page, or source_id. Do not cite an id that is not in that list.
 - follow_up: a string, or null
 No other fields. Do not add clarification_question, unknown, unknowns, contact, or source_id.
 Example: {"status":"answered","language":"pl","answer":"Wniosek składa się w podanym kanale. [1]","citations":[{"n":1,"chunk_id":"the-chunk-id-from-the-manifest"}],"follow_up":null}

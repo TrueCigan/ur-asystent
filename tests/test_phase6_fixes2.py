@@ -326,6 +326,86 @@ def test_rerun2_schema_deadline_channel_and_clarifications():
     assert "status" in missing
 
 
+def test_citable_ids_match_the_manifest():
+    import json
+    fact_url = "https://student.uniwersytetradom.pl/domy-studenckie/"
+    chunk_url = "https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/"
+    rows = ac.assemble_citable(
+        [{
+            "id": "dorm_application_deadline",
+            "title": "Termin wniosku o akademik",
+            "url": fact_url,
+            "text": "15.05.2026",
+        }],
+        [{"url": chunk_url, "title": "Świadczenia", "i": 2, "text": "fragment strony"}],
+        chunk_n=1,
+        chunk_chars=80,
+    )
+    assert [row["chunk_id"] for row in rows][0] == "dorm_application_deadline"
+    assert rows[1]["chunk_id"].startswith("chunk-")
+    assert rows[1]["chunk_id"] != chunk_url
+    assert ac.stable_chunk_id({"url": chunk_url, "i": 2}) == rows[1]["chunk_id"]
+    shown = [{"n": row["n"], "id": row["chunk_id"]} for row in rows]
+    assert [item["id"] for item in shown] == [row["chunk_id"] for row in rows]
+
+    def draft(n, cid, mark):
+        return json.dumps({
+            "status": "answered",
+            "language": "pl",
+            "answer": f"Termin jest w zatwierdzonym materiale. [{mark}]",
+            "citations": [{"n": n, "chunk_id": cid}],
+            "follow_up": None,
+        })
+
+    fact, reason = ac.accept_model_answer(draft(1, "dorm_application_deadline", 1), rows, "pl")
+    assert reason is None
+    assert fact["citations"][0]["url"] == fact_url
+    assert "chunk_id" not in fact["citations"][0] or fact["citations"][0]["chunk_id"] == "dorm_application_deadline"
+    chunk, reason = ac.accept_model_answer(draft(2, rows[1]["chunk_id"], 2), rows, "pl")
+    assert reason is None
+    assert chunk["citations"][0]["url"] == chunk_url
+    rejected, why = ac.accept_model_answer(draft(1, "not-shown", 1), rows, "pl")
+    assert rejected is None and why == "forbidden_citation"
+
+    captured = {}
+
+    def local_llm(messages, **_kwargs):
+        payload = json.loads(messages[-1]["content"].split("\n\nReturn", 1)[0])
+        captured["ids"] = payload["citable_ids"]
+        cited = next(item for item in payload["citable_ids"] if item["id"] == "dorm_application_deadline")
+        return draft(cited["n"], cited["id"], cited["n"])
+
+    saved = {
+        "LLM_PROVIDER": os.environ.get("LLM_PROVIDER"),
+        "LLM_API_KEY": os.environ.get("LLM_API_KEY"),
+        "LLM_MODEL": os.environ.get("LLM_MODEL"),
+    }
+    original = rag.call_llm
+    try:
+        os.environ["LLM_PROVIDER"] = "anthropic"
+        os.environ["LLM_API_KEY"] = "offline-test-only"
+        os.environ["LLM_MODEL"] = "claude-haiku-5-5"
+        rag.call_llm = local_llm
+        result = rag.answer("Podaj termin składania wniosku o dom studencki.", [])
+    finally:
+        rag.call_llm = original
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+    assert captured["ids"], "prompt listed no citable ids"
+    assert result.get("mode") == "answer-contract", result.get("llm_path")
+    cited = (result.get("contract") or {}).get("citations") or []
+    assert cited and cited[0]["chunk_id"] == "dorm_application_deadline"
+    shown = next(item for item in captured["ids"] if item["id"] == "dorm_application_deadline")
+    assert cited[0]["n"] == shown["n"]
+    assert cited[0]["url"].startswith("https://")
+    prompt_ids = {item["id"] for item in captured["ids"]}
+    assert "dorm_application_deadline" in prompt_ids
+    assert all(not item["id"].startswith("http") for item in captured["ids"])
+
+
 def test_dev_cases_answer_or_refuse_without_irrelevant_quotes():
     samples = {
         "Który temat opisuje świadczenie przy orzeczeniu o niepełnosprawności?": "niepełnospraw",
@@ -363,6 +443,7 @@ def main():
         test_deadline_warning_ignores_quotes_and_exam_dates,
         test_faq_english_drops_polish_prose_and_lists_missing_leads,
         test_rerun2_schema_deadline_channel_and_clarifications,
+        test_citable_ids_match_the_manifest,
         test_dev_cases_answer_or_refuse_without_irrelevant_quotes,
     ]
     failed = 0

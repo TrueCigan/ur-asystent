@@ -166,6 +166,53 @@ def apply_explicit_filters(intent: IntentIn, explicit: dict | None) -> IntentIn:
     return intent.model_copy(update=updates)
 
 
+def stable_chunk_id(hit: dict) -> str:
+    """Stable id for a retrieved chunk. It is not the page URL."""
+    import hashlib
+    url = (hit.get("url") or "").strip()
+    index = hit.get("i")
+    raw = f"{url}\n{'' if index is None else index}"
+    return "chunk-" + hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def assemble_citable(fact_rows: list[dict], hits: list[dict], *, chunk_n: int, chunk_chars: int) -> list[dict]:
+    """The only citation ids. Fact cards use their fact id; chunks use stable_chunk_id."""
+    rows = []
+    seen: set[str] = set()
+    number = 1
+    for fact in fact_rows or []:
+        cid = str(fact.get("id") or "").strip()
+        if not cid or cid in seen:
+            continue
+        seen.add(cid)
+        rows.append({
+            "n": number,
+            "chunk_id": cid,
+            "kind": "fact",
+            "title": fact.get("title") or cid,
+            "url": fact.get("url") or "",
+            "page": None,
+            "text": fact.get("text") or "",
+        })
+        number += 1
+    for hit in (hits or [])[: max(0, int(chunk_n))]:
+        cid = stable_chunk_id(hit)
+        if cid in seen:
+            continue
+        seen.add(cid)
+        rows.append({
+            "n": number,
+            "chunk_id": cid,
+            "kind": "chunk",
+            "title": hit.get("title") or "",
+            "url": hit.get("url") or "",
+            "page": hit.get("page"),
+            "text": (hit.get("text") or "")[: max(0, int(chunk_chars))],
+        })
+        number += 1
+    return rows
+
+
 def manifest_index(manifest: list[dict]) -> dict[str, dict]:
     return {row["chunk_id"]: row for row in manifest or [] if row.get("chunk_id")}
 
