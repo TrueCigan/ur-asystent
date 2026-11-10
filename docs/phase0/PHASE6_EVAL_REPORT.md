@@ -1,4 +1,4 @@
-# 40-case live eval report — run 1, rerun 1, rerun 2 (2026-11-10)
+# 40-case live eval report — run 1, rerun 1, rerun 2, rerun 3 (2026-11-10)
 
 All runs: box-local FastAPI TestClient → /api/chat, not production. Not a launch approval. No merge, deploy or push, no app code changes, no tuning, no 10-concurrent load test.
 
@@ -148,6 +148,59 @@ Score changes rerun 1 → rerun 2: p0-dev-faq-03 3→2, p0-dev-faq-04 3→1, p0-
 
 - Single rerun, no LLM judge, scores are manual against facts.yaml and the case notes. Rerun 1 and run 1 scores were taken from their own manual_scores.json; run 1 was not re-graded under the explicit rule. Provider bill not checked. The /api/chat request has no filters field. Rollback: nothing deployed.
 - Secret check: grep over /workspace/ur-eval-out and /workspace/ur-eval-raw for the Anthropic key prefix and the last 12 characters of the key: 0 files.
+
+## Rerun 3 (317c743)
+
+Box-local FastAPI TestClient → /api/chat, not production. Not a launch approval. No app change in this commit. Full tables, the redacted answers, and the harness are in `docs/phase0/live-eval-2026-11-10/rerun3/`. The staff-name list used to redact the report script is not stored in that copy.
+
+### Setup
+
+- Commit `317c743ea7a3f5e8fbd228a4891cd4f8544600ac` (parent `a090e29`), branch `cursor/phase-0-harness-ac61`, clean worktree. Run 14:15:10–14:25:21 Europe/Warsaw.
+- Index `af3842f4dc7cc47f215f` (6406 chunks), settings `2026-11-09`, faq `f30d3cf29797d9f73339`, prompt `v1`. Model `claude-haiku-5-5`. Defaults, no env overrides. `temperature` was sent on 0 of 49 calls.
+- The harness is the rerun 2 harness, with the smoke call replaced by a `/api/chat` probe on `p0-dev-deadline-01`. That probe returned HTTP 200, `req_011CguJsnAWsHTCHsvWxZhQx`, a model-written answer, 1.696 s. All 40 cases × 3 runs then ran. Runs 2–3 cleared the response and intent caches.
+- Two earlier probes the same day stopped before the 40 cases: `36f5396` (`forbidden_citation`, fact id not in the manifest, $0.000350) and `a090e29` (`forbidden_citation`, repeated id and renumbered marks, $0.000328).
+
+### Score
+
+| metric | rerun 2 (799d60a) | rerun 3 (317c743) |
+|---|---|---|
+| Pass total / dev / holdout | 18/40 / 14/30 / 4/10 | **19/40 / 15/30 / 4/10** |
+| Critical-fail cases | 3 | **2** |
+| Model-written answers, run 1 / all requests | 0/40 / 0/120 | **12/40 / 36/120** |
+| Model-path requests rejected | 42/42 `invalid_schema` | **12/48** (11 `forbidden_citation`, 1 timeout) |
+| Calls / verified live | 46 / 46 | 49 / 49 |
+| Cost (usage × price) | $0.01398 | $0.01808 this run; **$0.01875** with the two probes |
+| Circuit breaker | no | no (1 timeout recorded) |
+| Slowest request | 2.81 s | 108.63 s (harness read the body before the app; see below) |
+
+Targets ≥36/40 and ≥9/10 holdout are not met. Tokens 105477 in / 15057 out. Price $0.10 / $0.50 per MTok. The $2 spend guard did not fire. Schema rejections: 0. Every model text was valid JSON with the expected fields.
+
+Run 1 of each case: 12 model-written, 4 fallback after a model call (`faq-04`, `typo-03`, `ambig-02`, `ambig-03`), 24 deterministic (11 FAQ, 7 `no_answer`, 3 security, 3 clarification). Unstable across the three runs: `faq-04` (F/M/F), `holdout-faq-01` (M/F/M), `amount-02` (M/M/F), `typo-03` (F/F/M).
+
+The 11 citation rejections, replayed offline with no API call: a clarification draft that carried citations ×6 (`ambig-02` runs 1–3, `ambig-03` runs 1–2, `faq-04` run 3); a `no_answer` draft citing facts instead of the help link ×3 (`faq-04` run 1, `holdout-faq-01` run 2, `amount-02` run 3); more than 5 citations ×2 (`typo-03` runs 1–2; the draft itself was right). No rejection was for an unknown id.
+
+### Critical fails
+
+- `p0-holdout-deadline-01`: the model called 3667 PLN a monthly income limit. That figure is the 2026/2027 combined social and rector scholarship cap. The income maximum on file is 1908,90 for 2025/2026.
+- `p0-dev-faq-06`: disability amounts 1000 / 1200 / 1400 PLN match the stored 2025/2026 figures and were shown with no year. The row is `facts_approved=false`.
+
+Both are judgment calls. Rerun 2's three unlabeled-deadline criticals are gone. No 29/30.09 or exam-date "termin minął". No 3556. No leak and no injection.
+
+### Recorded failure groups
+
+1. The "Źródła:" list in the answer text does not match the cited facts in 11 of 12 run-1 model answers. The response `sources` field has the fact URLs. The text block is still built from retrieval hits, often 2021–2023 PDFs. The report notes that fixing this would lift `deadline-01`, `conflict-01`, and `holdout-conflict-01` to 4/4 (22/40, holdout 5/10).
+2. A required fact was not in `citable_ids`, so the model said it was not confirmed: `doctoral_rector_eligible` (`faq-04`, `holdout-faq-01`), `social_rector_deadline` (`deadline-02`), `rector_social_cap_monthly` 3667 (`holdout-amount-01`).
+3. Clarification and `no_answer` drafts that cite facts, and the `typo-03` draft with 6 citations, fall back to a bare source list.
+4. Content errors in model answers: the 3667 income-limit wording, the undated disability amounts, the benefits channel attached to a dorm application (`typo-02`), the dorm-fee reading of the scholarship supplement (`amount-02`), and missing DWZ steps (`holdout-typo-01`).
+5. Expected clarifications `deadline-03` and `holdout-deadline-02` still get a deterministic `no_answer`.
+6. EN/UK FAQ answers still carry Polish fact text (`faq-03`, `faq-05`, `xlang-01`, `xlang-02`). Mongolian still maps to English (`holdout-xlang-01`); the owner has not decided.
+7. `ambig-03` run 3 took 108.6 s. The provider body took 108.45 s. The app marked `timeout` and showed the fallback. The harness reads the full body before the app sees the stream, so the app's 12 s wall clock could not cut the call. Every other request finished in 2.8 s or less. The breaker did not open.
+
+Category passes (4/4), rerun 3, with holdout in parentheses: faq 3 (0/1), deadlines 1 (0/2), amounts 2 (0/1), cross-language 2 (1/1), typos 1 (0/1), ambiguity 2 (1/1), no-answer 4 (1/1), conflict 1 (0/1), injection 3 (1/1).
+
+### Limits
+
+Single run of this commit. Manual scores, no LLM judge. Provider bill not read. The redacted file replaces phones, emails, and staff names. Nothing was deployed.
 
 ## Appendix — stopped attempt on 50a2fcd (kept stop note)
 

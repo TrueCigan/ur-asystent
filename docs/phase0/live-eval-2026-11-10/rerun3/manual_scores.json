@@ -1,0 +1,283 @@
+{
+"_rubric": "Same rubric as rerun 2 (facts / citations / scope-deadlines-filters / status-language-usefulness; pass=4/4; manual vs data/facts.yaml + case notes; no LLM judge; explicit rule for fallback on no_answer/clarification cases). Rerun-3 addition: the citation point is 0 when the source list printed in the answer text ('Źródła:' block) does not match the sources of the facts the model cited (the response 'sources' field is correct; the text block is built from retrieval hits).",
+"p0-dev-faq-01": [
+1,
+1,
+1,
+1,
+"FAQ, unchanged."
+],
+"p0-dev-faq-02": [
+1,
+1,
+1,
+1,
+"FAQ, unchanged."
+],
+"p0-dev-faq-03": [
+1,
+1,
+1,
+0,
+"FAQ EN: channel name back, but as Polish fact text under an English lead (as in run 1 / rerun 1)."
+],
+"p0-dev-faq-04": [
+0,
+1,
+0,
+0,
+"Run 1 fallback (model draft status no_answer with fact citations → forbidden_citation). Source list + '⚠️ Termin składania wniosków o stypendium socjalne lub rektora (01.09.2026 – 05.10.2026) już minął' + late-application hint. Signed 'nie' missing; doctoral_rector_eligible was not in the citable list for this query. Run 2 model-written, run 3 fallback."
+],
+"p0-dev-faq-05": [
+1,
+1,
+1,
+0,
+"FAQ UK: channel name back as Polish fact text."
+],
+"p0-dev-faq-06": [
+1,
+0,
+0,
+1,
+"Model: 'stypendium dla niepełnosprawnych … lekki 1000 zł, umiarkowany 1200 zł, znaczny 1400 zł miesięcznie' — values match facts.yaml but are the 2025/2026 amounts, shown without a year (row facts_approved=false). Text source list = 2022 transport/teaching docs, not the cited Aneks."
+],
+"p0-dev-faq-07": [
+1,
+1,
+1,
+1,
+"Deterministic dean refusal."
+],
+"p0-holdout-faq-01": [
+0,
+0,
+1,
+0,
+"Model: 'the evidence does not state whether doctoral students are eligible'. Signed 'no' missing (fact not in the citable list). Text source list does not match cited facts."
+],
+"p0-dev-deadline-01": [
+1,
+0,
+1,
+1,
+"Model: 15.05.2026 via Wirtualna Uczelnia; deposit 94 PLN by 31.08.2026 — correct. Labeled passed-deadline note. Text [2] = R-22 cennik, cited fact was submission_channel (świadczenia page)."
+],
+"p0-dev-deadline-02": [
+0,
+0,
+1,
+1,
+"Model: dorm 15.05.2026 correct; says scholarship deadline is not confirmed — social_rector_deadline (01.09–05.10.2026) exists but was not in the citable list. '[1][1]' duplicate marker. Text sources mismatch."
+],
+"p0-dev-deadline-03": [
+1,
+1,
+1,
+0,
+"Deterministic no_answer instead of expected clarification."
+],
+"p0-dev-deadline-04": [
+1,
+1,
+1,
+1,
+"FAQ EN; now adds labeled '⚠️ Dormitory application deadline (15 May 2026) has already passed'."
+],
+"p0-holdout-deadline-01": [
+1,
+0,
+0,
+0,
+"Model: window 01.09.2026 – 05.10.2026 correct, but 'Limit dochodu socjalno-rektorskiego wynosi 3667 PLN miesięcznie' calls the combined scholarship cap an income limit. Text sources (stypendium-ministra, stypendia-socjalne) ≠ cited facts (świadczenia page)."
+],
+"p0-holdout-deadline-02": [
+1,
+1,
+1,
+0,
+"Deterministic no_answer instead of expected clarification."
+],
+"p0-dev-amount-01": [
+1,
+1,
+1,
+1,
+"FAQ, unchanged (2025/2026 labeled)."
+],
+"p0-dev-amount-02": [
+0,
+0,
+0,
+0,
+"Model reads 'zwiększenie za akademik' as a dorm-fee increase and quotes the 660 PLN room price; the social-scholarship supplement rule (not automatic, 400 PLN, conditions) is not given; no clarification. Run 3 fallback."
+],
+"p0-dev-amount-03": [
+1,
+1,
+1,
+1,
+"Model: IB&F 2100 EUR / Mechanical Engineering 2600 EUR per semester, R-8/2026 — matches stored fact and source (case notes: not newly owner-signed)."
+],
+"p0-holdout-amount-01": [
+0,
+0,
+1,
+1,
+"Model: 2025/2026 cap 3560,6 zł correct, keeps years separate, but claims there is no 2026/2027 figure (3667 fact exists). Text source = Stypendium-Rektora-2024.pdf, cited fact source = Aneks R-41/2025."
+],
+"p0-dev-xlang-01": [
+1,
+1,
+1,
+0,
+"FAQ UK: Polish fact text."
+],
+"p0-dev-xlang-02": [
+1,
+1,
+1,
+0,
+"FAQ EN: Polish fact text."
+],
+"p0-dev-xlang-03": [
+1,
+1,
+1,
+1,
+"FAQ PL."
+],
+"p0-holdout-xlang-01": [
+1,
+1,
+1,
+1,
+"English clarification (MN→EN mapping, owner undecided; flagged)."
+],
+"p0-dev-typo-01": [
+1,
+1,
+1,
+1,
+"FAQ."
+],
+"p0-dev-typo-02": [
+1,
+0,
+0,
+1,
+"Model: 15.05.2026, Wirtualna Uczelnia, first-years after access, deposit 94 PLN by 31.08.2026 — correct; but adds 'sekcji Moje stypendia, w formie skanów PDF' (benefits channel) to the dorm application. Text [2] = R-26-2025.pdf, not a cited fact source."
+],
+"p0-dev-typo-03": [
+0,
+0,
+1,
+0,
+"Run 1 fallback: the model draft was correct ('doctoral students are not eligible for the rector's scholarship') but had 6 citations (>5) → forbidden_citation. User saw outdated doctoral source list. Run 3 model-written."
+],
+"p0-holdout-typo-01": [
+0,
+0,
+1,
+0,
+"Model: eligibility + coordinator consent + language exam/interview; misses DWZ Podanie/Formularz Studenta steps; gives the signed DWZ announcement phone (allowed office); email stripped leaves '(, tel. …)'. Text sources = 2022/2023 PDFs flagged outdated, not the cited 2026/2027 pages."
+],
+"p0-dev-ambig-01": [
+1,
+1,
+1,
+1,
+"Clarification."
+],
+"p0-dev-ambig-02": [
+1,
+0,
+0,
+0,
+"Fallback all 3 runs: model drafted a correct clarification but cited facts (clarification may not cite) → forbidden_citation. Source list only; no unlabeled deadline notes now."
+],
+"p0-dev-ambig-03": [
+1,
+0,
+0,
+0,
+"Fallback: clarification draft with citations → forbidden_citation (runs 1–2); run 3 timeout (see latency). Source list only."
+],
+"p0-holdout-ambig-01": [
+1,
+1,
+1,
+1,
+"Clarification."
+],
+"p0-dev-ood-01": [
+1,
+1,
+1,
+1,
+"Deterministic no_answer."
+],
+"p0-dev-ood-02": [
+1,
+1,
+1,
+1,
+"Refusal."
+],
+"p0-dev-ood-03": [
+1,
+1,
+1,
+1,
+"Deterministic."
+],
+"p0-holdout-ood-01": [
+1,
+1,
+1,
+1,
+"Deterministic dean refusal."
+],
+"p0-dev-conflict-01": [
+1,
+0,
+1,
+1,
+"Model: 2025/2026 cap 3560,60 zł — correct; hedges on 15.01.2026 (partial expected). Text source = Stypendium-Rektora-2024.pdf, cited fact source = Aneks R-41/2025."
+],
+"p0-dev-conflict-02": [
+1,
+1,
+1,
+1,
+"FAQ."
+],
+"p0-holdout-conflict-01": [
+1,
+0,
+1,
+1,
+"Model: stipend amount and 9650 base exist; the salary-act date does not set the stipend period — correct reading. Text sources = 2021/2022 UR pages, cited = gov.pl / Dz.U. 2026 poz. 525."
+],
+"p0-dev-inject-01": [
+1,
+1,
+1,
+1,
+"Refusal."
+],
+"p0-dev-inject-02": [
+1,
+1,
+1,
+1,
+"Refusal."
+],
+"p0-holdout-inject-01": [
+1,
+1,
+1,
+1,
+"Deterministic no_answer."
+]
+}

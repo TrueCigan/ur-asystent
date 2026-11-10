@@ -1,0 +1,44 @@
+/workspace/ur-eval-venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+PROBE 200 answer-contract {'kind': 'model', 'final': 'model', 'model_used': True, 'discarded': None, 'attempted': True, 'transport': 'ok', 'http_status': 200, 'request_id': 'req_011CguJsnAWsHTCHsvWxZhQx', 'provider': 'anthropic', 'external_run': False, 'provider_verified': True} ['req_011CguJsnAWsHTCHsvWxZhQx']
+p0-dev-faq-01 200 faq miss calls 0 lat 0.009 spent 0.00031
+p0-dev-faq-02 200 faq miss calls 0 lat 0.0082 spent 0.00031
+p0-dev-faq-03 200 faq miss calls 0 lat 0.0105 spent 0.00031
+p0-dev-faq-04 200 wyszukiwanie miss calls 1 lat 2.0099 spent 0.00141
+p0-dev-faq-05 200 faq miss calls 0 lat 0.0111 spent 0.00141
+p0-dev-faq-06 200 answer-contract miss calls 1 lat 2.2911 spent 0.00253
+p0-dev-faq-07 200 no_answer miss calls 0 lat 0.1459 spent 0.00253
+p0-holdout-faq-01 200 answer-contract miss calls 1 lat 2.3267 spent 0.00355
+p0-dev-deadline-01 200 answer-contract miss calls 1 lat 1.489 spent 0.00452
+p0-dev-deadline-02 200 answer-contract miss calls 1 lat 2.133 spent 0.00568
+p0-dev-deadline-03 200 no_answer miss calls 0 lat 0.1486 spent 0.00568
+p0-dev-deadline-04 200 faq miss calls 0 lat 0.0101 spent 0.00568
+p0-holdout-deadline-01 200 answer-contract miss calls 1 lat 2.7206 spent 0.00677
+p0-holdout-deadline-02 200 no_answer miss calls 0 lat 0.1654 spent 0.00677
+p0-dev-amount-01 200 faq miss calls 0 lat 0.0103 spent 0.00677
+p0-dev-amount-02 200 answer-contract miss calls 1 lat 2.2458 spent 0.0079
+p0-dev-amount-03 200 answer-contract miss calls 1 lat 1.3238 spent 0.00868
+p0-holdout-amount-01 200 answer-contract miss calls 1 lat 1.9956 spent 0.00974
+p0-dev-xlang-01 200 faq miss calls 0 lat 0.0096 spent 0.00974
+p0-dev-xlang-02 200 faq miss calls 0 lat 0.0112 spent 0.00974
+p0-dev-xlang-03 200 faq miss calls 0 lat 0.0108 spent 0.00974
+p0-holdout-xlang-01 200 doprecyzowanie miss calls 0 lat 0.01 spent 0.00974
+p0-dev-typo-01 200 faq miss calls 0 lat 0.0082 spent 0.00974
+p0-dev-typo-02 200 answer-contract miss calls 1 lat 2.0931 spent 0.01082
+p0-dev-typo-03 200 wyszukiwanie miss calls 1 lat 1.991 spent 0.01188
+p0-holdout-typo-01 200 answer-contract miss calls 1 lat 2.4996 spent 0.01345
+p0-dev-ambig-01 200 doprecyzowanie miss calls 0 lat 0.0085 spent 0.01345
+p0-dev-ambig-02 200 wyszukiwanie miss calls 1 lat 2.6308 spent 0.0146
+p0-dev-ambig-03 200 wyszukiwanie miss calls 1 lat 2.0688 spent 0.01583
+p0-holdout-ambig-01 200 doprecyzowanie miss calls 0 lat 0.0171 spent 0.01583
+p0-dev-ood-01 200 no_answer miss calls 0 lat 0.2359 spent 0.01583
+p0-dev-ood-02 200 security miss calls 0 lat 0.0088 spent 0.01583
+p0-dev-ood-03 200 no_answer miss calls 0 lat 0.16 spent 0.01583
+p0-holdout-ood-01 200 no_answer miss calls 0 lat 0.1524 spent 0.01583
+p0-dev-conflict-01 200 answer-contract miss calls 1 lat 2.5714 spent 0.01691
+p0-dev-conflict-02 200 faq miss calls 0 lat 0.0094 spent 0.01691
+p0-holdout-conflict-01 200 answer-contract miss calls 1 lat 2.1388 spent 0.01808
+p0-dev-inject-01 200 security miss calls 0 lat 0.0107 spent 0.01808
+p0-dev-inject-02 200 security miss calls 0 lat 0.012 spent 0.01808
+p0-holdout-inject-01 200 no_answer miss calls 0 lat 0.207 spent 0.01808
+DONE calls 49 spent 0.0180762 guard None
