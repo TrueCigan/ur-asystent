@@ -398,12 +398,58 @@ def test_citable_ids_match_the_manifest():
     assert result.get("mode") == "answer-contract", result.get("llm_path")
     cited = (result.get("contract") or {}).get("citations") or []
     assert cited and cited[0]["chunk_id"] == "dorm_application_deadline"
-    shown = next(item for item in captured["ids"] if item["id"] == "dorm_application_deadline")
-    assert cited[0]["n"] == shown["n"]
+    assert cited[0]["n"] == 1
+    assert "[1]" in (result.get("contract") or {}).get("answer", "")
     assert cited[0]["url"].startswith("https://")
     prompt_ids = {item["id"] for item in captured["ids"]}
     assert "dorm_application_deadline" in prompt_ids
     assert all(not item["id"].startswith("http") for item in captured["ids"])
+
+
+def test_probe_draft_is_renumbered_by_chunk_id():
+    import json
+    rows = ac.assemble_citable(
+        [
+            {"id": "dorm_prices", "title": "Ceny akademika", "url": "https://student.uniwersytetradom.pl/domy-studenckie/", "text": "ceny"},
+            {"id": "dorm_application_deadline", "title": "Termin wniosku", "url": "https://student.uniwersytetradom.pl/domy-studenckie/", "text": "15.05.2026"},
+            {"id": "submission_channel", "title": "Kanał", "url": "https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/", "text": "Wirtualna Uczelnia"},
+        ],
+        [
+            {"url": "https://student.uniwersytetradom.pl/a", "title": "A", "i": 0, "text": "a"},
+            {"url": "https://student.uniwersytetradom.pl/b", "title": "B", "i": 1, "text": "b"},
+            {"url": "https://student.uniwersytetradom.pl/c", "title": "C", "i": 2, "text": "c"},
+        ],
+        chunk_n=3,
+        chunk_chars=40,
+    )
+    assert [row["chunk_id"] for row in rows[:3]] == [
+        "dorm_prices", "dorm_application_deadline", "submission_channel",
+    ]
+    draft = {
+        "status": "answered",
+        "language": "pl",
+        "answer": "Termin [1]. Powtórzenie [2]. Kanał [3]. Poza listą [9].",
+        "citations": [
+            {"n": 1, "chunk_id": "dorm_application_deadline"},
+            {"n": 2, "chunk_id": "dorm_application_deadline"},
+            {"n": 3, "chunk_id": "submission_channel"},
+        ],
+        "follow_up": None,
+    }
+    accepted, reason = ac.accept_model_answer(json.dumps(draft), rows, "pl")
+    assert reason is None
+    assert [(item["n"], item["chunk_id"]) for item in accepted["citations"]] == [
+        (1, "dorm_application_deadline"),
+        (2, "submission_channel"),
+    ]
+    assert accepted["answer"] == "Termin [1]. Powtórzenie [1]. Kanał [2]. Poza listą ."
+    assert accepted["citations"][0]["url"].startswith("https://student.uniwersytetradom.pl/")
+    unknown = dict(draft, citations=[{"n": 1, "chunk_id": "not-shown"}])
+    rejected, why = ac.accept_model_answer(json.dumps(unknown), rows, "pl")
+    assert rejected is None and why == "forbidden_citation"
+    prompt = ac.load_prompt_settings()["answer_prompt"]
+    assert "submission_channel" in prompt
+    assert "Numbering is done by the server" in prompt
 
 
 def test_dev_cases_answer_or_refuse_without_irrelevant_quotes():
@@ -444,6 +490,7 @@ def main():
         test_faq_english_drops_polish_prose_and_lists_missing_leads,
         test_rerun2_schema_deadline_channel_and_clarifications,
         test_citable_ids_match_the_manifest,
+        test_probe_draft_is_renumbered_by_chunk_id,
         test_dev_cases_answer_or_refuse_without_irrelevant_quotes,
     ]
     failed = 0

@@ -259,33 +259,47 @@ def validate_answer(data: dict, manifest: list[dict], *, language: str):
         return None, "invalid_schema"
     if len(answer.citations) > 5:
         return None, "forbidden_citation"
-    numbers = [item.n for item in answer.citations]
-    ids = [item.chunk_id for item in answer.citations]
-    if len(numbers) != len(set(numbers)) or len(ids) != len(set(ids)):
-        return None, "forbidden_citation"
     by_id = manifest_index(manifest)
-    bound = []
+    # chunk_id is the only check. The model's n is a marker key, not a list index.
+    marker_to_id: dict[int, str] = {}
+    order: list[str] = []
     for item in answer.citations:
         row = by_id.get(item.chunk_id)
-        if row is None or int(row.get("n") or 0) != item.n:
+        if row is None:
             return None, "forbidden_citation"
         if answer.status == "no_answer" and item.chunk_id != HELP_CHUNK_ID:
             return None, "forbidden_citation"
         if answer.status == "clarification":
             return None, "forbidden_citation"
+        previous = marker_to_id.get(item.n)
+        if previous is not None and previous != item.chunk_id:
+            return None, "forbidden_citation"
+        marker_to_id.setdefault(item.n, item.chunk_id)
+        if item.chunk_id not in order:
+            order.append(item.chunk_id)
+    if answer.status in ("answered", "partial") and not order:
+        return None, "forbidden_citation"
+    new_number = {chunk_id: index for index, chunk_id in enumerate(order, 1)}
+    old_to_new = {marker: new_number[chunk_id] for marker, chunk_id in marker_to_id.items()}
+
+    def _rewrite(match: re.Match) -> str:
+        marker = int(match.group(1))
+        updated = old_to_new.get(marker)
+        if updated is None:
+            return ""
+        return f"[{updated}]"
+
+    text = _CITE.sub(_rewrite, text)
+    bound = []
+    for chunk_id in order:
+        row = by_id[chunk_id]
         bound.append({
-            "n": item.n,
-            "chunk_id": item.chunk_id,
+            "n": new_number[chunk_id],
+            "chunk_id": chunk_id,
             "url": row.get("url") or "",
             "title": row.get("title") or "",
             "page": row.get("page"),
         })
-    cited = {int(m.group(1)) for m in _CITE.finditer(text)}
-    listed = {item.n for item in answer.citations}
-    if cited != listed:
-        return None, "forbidden_citation"
-    if answer.status in ("answered", "partial") and not bound:
-        return None, "forbidden_citation"
     return {
         "status": answer.status,
         "language": answer.language,
