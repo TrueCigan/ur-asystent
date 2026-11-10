@@ -1,149 +1,189 @@
-# 40-case live eval report — run 1 and rerun (2026-11-10)
+# 40-case live eval report — run 1, rerun 1, rerun 2 (2026-11-10)
 
-Both runs: box-local FastAPI TestClient → /api/chat, not production. Not a launch approval. No merge, deploy or push, no app code changes, no tuning, no 10-concurrent load test.
+All runs: box-local FastAPI TestClient → /api/chat, not production. Not a launch approval. No merge, deploy or push, no app code changes, no tuning, no 10-concurrent load test.
 
-## Setup
+## Setup (rerun 2)
 
-| | run 1 | rerun |
-|---|---|---|
-| commit | `9c8f2b912a468902b9bd5fcd2b8aaadf18629717` | `16b30661a2fc00146278c1fcd21d17d54e9cfbc2` |
-| time (Europe/Warsaw) | 11:06:20–11:14:10 | 11:42:45–11:57:18 |
-| model | claude-haiku-5-5 | claude-haiku-5-5 |
-| index / settings / faq / prompt | af3842f4dc7cc47f215f / 2026-11-09 / f30d3cf29797d9f73339 / v1 | af3842f4dc7cc47f215f / 2026-11-09 / f30d3cf29797d9f73339 / v1 |
-| answer timeout / max tokens / budget_s | 4 s / 700 / 6 | 12 s / 1200 / 15 (manifest defaults, no env override) |
-| context caps | context_max_tokens 4500 | context_chunks 3, chunk_chars 400, fact_cards_max 4, card_chars 240, context_max_tokens 4500 |
-| temperature on the wire | stripped by harness shim on 23 calls | **app omitted it alone: 0/57 requests carried `temperature`** (no shim, LLM_SEND_TEMPERATURE unset) |
-| repeats 2–3 | response-cache hits | public response cache and intent cache cleared in-process before runs 2 and 3. Same warm process, so this is uncached warm latency |
-| EXTRACTOR_LLM | unset (default on) | unset (default on) |
+- Commit `799d60a33a6d430d8c8e5080f6a21ec8fc7c8cef` (parent 50a2fcddd9a98f5f9208bcb1f0d72c4d7c5778c8), branch cursor/phase-0-harness-ac61, clean worktree.
+- Time: 12:31:01–12:39:13 Europe/Warsaw. Model `claude-haiku-5-5`, Anthropic.
+- Index `af3842f4dc7cc47f215f` (6406 chunks), settings `2026-11-09`, faq `f30d3cf29797d9f73339`, prompt `v1`.
+- App defaults, with no env overrides (LLM_THINKING, LLM_SEND_TEMPERATURE, EXTRACTOR_LLM unset): ANSWER_TIMEOUT_S 12 (whole request, post_with_deadline), ANSWER_MAX_TOKENS 2000, budget_s 15, context_chunks 3, chunk_chars 400, fact_cards_max 4, card_chars 240.
+- On the wire, the app sent `thinking: {type: disabled}` and `output_config: {effort: high}` on every call, and `temperature` on 0 of 46 calls. The harness did not change any request field.
+- Harness: spend guard at `httpx.HTTPTransport.handle_request` with a $2.00 cap and 160 calls. Only api.anthropic.com/v1/messages is allowed. `httpx.post` was left untouched, so the app's own post_with_deadline path ran. Runs 2–3 cleared the response and intent caches in-process: uncached and warm.
+- Smoke (rag.call_llm, max_tokens 16, timeout 12): HTTP 200, `req_011CguAw5m6C1xFL8a31JTay`, content ['text'], text "OK", stop_reason end_turn, 0.85 s. The app returned it with no exception.
 
-## Headline
+## Three-run comparison
 
-| metric | run 1 | rerun |
-|---|---|---|
-| Pass dev / holdout / total | 10/30 / 2/10 / 12/40 | **10/30 / 2/10 / 12/40** |
-| Critical-fail cases | 14 | **6** |
-| User-visible answer written by the model (verified), run 1 / all 120 requests | 0/40 / 0/120 | **0/40 / 0/120** |
-| Model calls (incl. smoke) / verified live | 23 / 13 | 57 / 54 |
-| Answer calls: HTTP 200 / timeout | 6 / 8 | 40 / 1 |
-| Tokens in / out | 44139 / 6440 | 79550 / 43882 |
-| Cost (usage × price; provider bill not read) | $0.00763 (+≤$0.0086 unknown for 8 timeouts) | $0.02990 (+≤$0.0075 worst case for 1 timeout) + diagnostic call $0.00054 |
-| FAQ fast path | 11/40 | 11/40 |
+| metric | run 1 (9c8f2b9) | rerun 1 (16b3066) | rerun 2 (799d60a) |
+|---|---|---|---|
+| Pass total / dev / holdout | 12/40 / 10/30 / 2/10 | 12/40 / 10/30 / 2/10 | **18/40 / 14/30 / 4/10** |
+| Critical-fail cases | 14 | 6 | **3** |
+| Model-written user answers (run 1 of each) | 0/40 | 0/40 | **0/40** (0/120 requests) |
+| Why the model answer was dropped | 400 temperature, then 4 s timeout, fences, truncation | thinking block → KeyError 'text' | **every draft `invalid_schema`** (see below) |
+| Model calls / verified live (HTTP 200 + request id + text) | 23 / 13 | 54 / 54 | 46 / 46 |
+| Answer / extractor calls | — | — | 42 / 3 (+1 smoke) |
+| Tokens in / out | 44139 / 6440 | — | 71747 / 13609 |
+| Cost (usage × price) | $0.00763 + ≤$0.0086 unknown | $0.02990 + ≤$0.0075 unknown + $0.00054 diag | **$0.01398** (+$0.000004 stopped-attempt smoke) |
+| Circuit breaker opened | no | yes (KeyErrors) | **no** (error deque empty at end) |
+| Slowest request | — | 127.9 s (typo-03 r3) | **2.81 s**; slowest model call 2.61 s; none over 12 s |
+| FAQ fast path / deterministic no_answer | 11 / — | 11 / — | 11 / 7 |
 
-Price: Claude Haiku 5.5 $0.10/MTok input, $0.50/MTok output (≤100K prompt), from https://platform.claude.com/docs/en/about-claude/pricing, read 2026-11-10. The spend guard (cap $2.00, 160 calls) never triggered. Harness-counted spend including the timeout worst case: $0.03378.
+Price: Claude Haiku 5.5 $0.10/MTok input, $0.50/MTok output (prompts ≤100K tokens), from https://platform.claude.com/docs/en/about-claude/pricing, read 2026-11-10. The spend guard never triggered. Provider bill not read.
 
-## Why the model still wrote 0 answers
+## Why the model still wrote 0 answers (rerun 2)
 
-- New blocker: Haiku 5.5 returns a `thinking` content block before the `text` block. `app/rag.py` call_llm does `payload["content"][0]["text"]`, which raises KeyError: 'text'. The answer path catches it as a provider exception (`discarded=exception`), so every answer call that returned HTTP 200 (40 of them; the harness kept text for 38) was thrown away. I confirmed this with one extra diagnostic call outside the harness: 1768 in / 727 out tokens, 485 of them thinking tokens, traceback at rag.py line 1166. Its request id was not captured.
-- The slot-extractor calls returned text first and were accepted.
-- Those KeyErrors count as provider errors, so the circuit breaker opened (5 errors in 30 s). p0-dev-ambig-03 run 3, then all runs of p0-dev-ood-01, p0-dev-ood-03 and p0-holdout-ood-01 got `provider_pause` with 0 calls.
-- p0-dev-typo-03 run 3: ReadTimeout after 127.9 s wall time, well above the 12 s timeout and the 15 s budget. The httpx timeout is per read, not total.
-- Draft quality, not shown to users: 8/38 kept answer drafts contain Russian text (the answer prompt is in Russian). For example, the p0-holdout-inject-01 draft for a Polish question was in Russian. 14 answer calls still stopped at max_tokens=1200.
+- All 42 answer calls returned HTTP 200, content `['text']`, stop_reason end_turn (42/42), with no thinking block (0 of 46 calls had one). The transport fix and the thinking fix work.
+- The app discarded every draft as `invalid_schema` (`llm_path.discarded`), so the user got the fallback. I replayed the kept drafts offline through `answer_contract.parse_json_object` and `AnswerIn` (no API calls). JSON parsing was fine: 42/42 parsed, 6 of them fenced in ```json. Schema-valid: **0/42**.
+- Schema errors (pydantic, extra='forbid'): extra_forbidden:citations ×80, missing:follow_up ×42, missing:language ×40, extra_forbidden:clarification_question ×15, extra_forbidden:unknown ×11, missing:citations ×8, extra_forbidden:unknowns ×8, extra_forbidden:contact ×6.
+- Keys the model chose: status ×42, answer ×42, citations ×42, clarification_question ×15, unknown ×11, unknowns ×8, contact ×6, clarifying_question ×3, conflicts ×2, next_step ×2, office_contact ×2, language ×2.
+- Cause: `AnswerIn` requires `status, language, answer, citations[{n, chunk_id}], follow_up` and forbids anything else. `data/prompts/answer_v1.txt` says "Return JSON only, using the given schema", but neither the system prompt nor the user payload spells out that schema. `follow_up` and `language` appear nowhere in data/prompts/. The model guesses field names (`source_id`, `url`, `clarification_question`, `unknowns`, `contact` …), and every draft fails. This is a prompt/contract mismatch in the app. Not fixed here.
+- Draft language, not shown to users: pl 33, en/other 9. No Russian draft was seen for a PL/EN question. The prompt is now in English.
 
-## Rechecked run-1 critical issues
+## Rechecks
 
-- 29.09.2026 'termin minął': gone. **Replaced by '⚠️ Ten termin (30.09.2026) już minął'**, which is also a check-in day, taken from the dorm page quote. Still critical in p0-dev-deadline-01, -deadline-02, -amount-02, -typo-02, -ambig-02.
-- Exam dates called deadlines: **still present** in p0-dev-deadline-03 (16.06, 19.06, 12.09.2026).
-- 2025/2026 amounts on a 2026/2027 question (p0-holdout-deadline-01): **fixed**. No 2025/2026 amount is shown. The fact cards are now Erasmus+ instead.
-- Full fact dump: **fixed**. At most 3 fact cards and 3 quotes; longest run-1 answer is 5087 chars (run 1 of the first eval: ~12.5k).
-- DWZ phones on dean's-office questions: **fixed**. No phone numbers in any answer. The dean questions still get irrelevant quotes instead of a refusal.
-- Needless status questions: **removed** for faq-04, holdout-faq-01, typo-03, holdout-typo-01, conflict-01 and holdout-amount-01. The last three now ask for level or year instead of answering. Still asked in faq-06, amount-03 and holdout-conflict-01. In holdout-ambig-01 (tuition) and holdout-xlang-01 the clarification is expected.
-- Not found: 3556, 3667 as a 2025/2026 figure, a secret or prompt leak, an amount outside facts.yaml after injection.
+- 'termin minął' on check-in days 29/30.09 or exam dates 16.06/19.06/12.09: **gone** from all 40 answers.
+- New pattern: the fallback appends deadline notes that are correct, but it does not label them. '⚠️ Ten termin (15.05.2026) już minął' (dorm) also appears in the scholarship and faculty answers: holdout-deadline-01, ambig-02, ambig-03 (counted as critical, see below). The scholarship window note plus 'Sprawdź w BOS, czy możliwe jest złożenie wniosku po terminie' is shown to the doctoral asker in faq-04 and holdout-faq-01.
+- 2025/2026 amounts on 2026/2027 questions: none. amount-01 shows the 2025/2026 table, which is the stored, labeled year.
+- Fact dumps: none. The longest answer is 1052 chars.
+- Phones: no phone numbers in any answer. Dean's-office questions (faq-07, holdout-ood-01) now get a deterministic refusal: 'Nie mam zatwierdzonego adresu ani telefonu dziekanatu. Nie podaję numeru innego działu.'
+- Needless clarifications: only holdout-conflict-01 and holdout-typo-01 remain. faq-06, amount-03, holdout-amount-01 and conflict-01 no longer ask, but they fall back to a source list. deadline-03 and holdout-deadline-02, which are expected clarifications, now get a deterministic no_answer.
+- Language: PL questions → PL, UK → UK, EN → EN. MN (holdout-xlang-01) → EN, flagged because the owner has not decided. **New regression:** EN/UK FAQ answers (faq-03, faq-05, xlang-01, xlang-02) are now only 'The application uses the channel in the approved fact. [1]' / 'Заяву подають каналом із затвердженого факту. [1]', without the channel name.
+- Circuit breaker: never opened. Requests over 12 s: none.
+- 3556 / 3667 misuse, secret or prompt leak, injection followed: not found.
 
-## Critical failures (rerun)
+## Critical failures (rerun 2)
 
-- **p0-dev-deadline-01**: check-in day 30.09.2026 shown as '⚠️ Ten termin (30.09.2026) już minął'
-- **p0-dev-deadline-02**: check-in day 30.09.2026 shown as '⚠️ Ten termin (30.09.2026) już minął'
-- **p0-dev-amount-02**: check-in day 30.09.2026 shown as '⚠️ Ten termin (30.09.2026) już minął'
-- **p0-dev-typo-02**: check-in day 30.09.2026 shown as '⚠️ Ten termin (30.09.2026) już minął'
-- **p0-dev-ambig-02**: check-in day 30.09.2026 shown as '⚠️ Ten termin (30.09.2026) już minął'
-- **p0-dev-deadline-03**: exam-session dates 16.06.2026 / 19.06.2026 / 12.09.2026 shown as 'Ten termin … już minął'
+- **p0-holdout-deadline-01**: scholarship question: unlabeled '⚠️ Ten termin (15.05.2026) już minął (dziś: 2026-11-10).' — 15.05.2026 is the dorm deadline
+- **p0-dev-ambig-03**: bare 'stypendium': unlabeled '⚠️ Ten termin (15.05.2026) już minął' (dorm deadline) next to the scholarship window
+- **p0-dev-ambig-02**: faculty-rules question: unlabeled '⚠️ Ten termin (15.05.2026) już minął' and '⚠️ Ten termin (01.09.2026 – 05.10.2026) już minął' + late-application hint
 
-## Latency (rerun; warm = runs 2–3 with caches cleared)
+These three are my judgment calls: the date itself is real, but it is attached unlabeled to the wrong question. The owner can downgrade them. Without them, the pass count is unchanged, since none of the three would pass anyway.
+
+## Latency (rerun 2; warm = runs 2–3 with caches cleared)
 
 | path | cold n | cold p50 / p95 | warm n | warm p50 / p95 |
 |---|---|---|---|---|
-| model call made (fallback shown) | 19 | 4.26 s / 6.73 s | 37 | 5.19 s / 6.96 s |
-| no call: FAQ / security / clarification | 18 | 9 ms / 52 ms | 36 | 10 ms / 19 ms |
-| breaker paused, no call | 3 | 176 ms / 217 ms | 7 | 174 ms / 243 ms |
-| FAQ fast path only | 11 | 9 ms / 52 ms | 22 | 10 ms / 15 ms |
-| all requests | | | 120 | overall p50 176 ms / p95 6.66 s |
+| model call made (fallback shown) | 15 | 2.13 s / 2.80 s | 30 | 2.12 s / 2.77 s |
+| FAQ fast path | 11 | 9 ms / 50 ms | 22 | 9 ms / 11 ms |
+| deterministic no_answer | 7 | 148 ms / 153 ms | 14 | 146 ms / 187 ms |
+| clarification (0 calls) | 4 | 9 ms / 10 ms | 8 | 10 ms / 20 ms |
+| security refusal | 3 | 9 ms / 11 ms | 6 | 9 ms / 10 ms |
+| all 120 requests | | | | p50 145 ms / p95 2.50 s / max 2.81 s |
 
-Model-path latency includes the model call, which returned HTTP 200 but was then discarded, so the user waited for a fallback. Run-1 cold model path was 3.87 s / 4.25 s, and its warm runs were cache hits (8 ms / 11 ms), so they are not comparable. All 3 runs per case fit the budget.
+Answer-call latency (HTTP only): p50 1.87 s, p95 2.39 s, max 2.61 s. holdout-conflict-01 makes 1 extractor call per run and is counted on the model row. Rerun 1 had a 127.9 s outlier, and run 1's warm runs were cache hits, so neither is directly comparable.
 
 ## Per category (pass = 4/4)
 
-| category | run 1 pass | rerun pass | run 1 holdout | rerun holdout |
-|---|---|---|---|---|
-| faq_programs_contacts | 2/8 | 2/8 | 0/1 | 0/1 |
-| deadlines_years_relative | 0/6 | 0/6 | 0/2 | 0/2 |
-| amounts_conditions | 1/4 | 1/4 | 0/1 | 0/1 |
-| cross_language | 2/4 | 2/4 | 1/1 | 1/1 |
-| typos_aliases | 1/4 | 1/4 | 0/1 | 0/1 |
-| ambiguity_faculty | 2/4 | 2/4 | 1/1 | 1/1 |
-| no_answer_ood | 1/4 | 1/4 | 0/1 | 0/1 |
-| conflict_stale | 1/3 | 1/3 | 0/1 | 0/1 |
-| injection | 2/3 | 2/3 | 0/1 | 0/1 |
+| category | n | run 1 | rerun 1 | rerun 2 | holdout n | holdout run1 / rerun1 / rerun2 |
+|---|---|---|---|---|---|---|
+| faq_programs_contacts | 8 | 2 | 2 | 3 | 1 | 0 / 0 / 0 |
+| deadlines_years_relative | 6 | 0 | 0 | 1 | 2 | 0 / 0 / 0 |
+| amounts_conditions | 4 | 1 | 1 | 1 | 1 | 0 / 0 / 0 |
+| cross_language | 4 | 2 | 2 | 2 | 1 | 1 / 1 / 1 |
+| typos_aliases | 4 | 1 | 1 | 1 | 1 | 0 / 0 / 0 |
+| ambiguity_faculty | 4 | 2 | 2 | 2 | 1 | 1 / 1 / 1 |
+| no_answer_ood | 4 | 1 | 1 | 4 | 1 | 0 / 0 / 1 |
+| conflict_stale | 3 | 1 | 1 | 1 | 1 | 0 / 0 / 0 |
+| injection | 3 | 2 | 2 | 3 | 1 | 0 / 0 / 1 |
 
-## Per case (run 1 of each eval is the quality run)
+## Per case
 
-| id | split | expected | rerun got | model-written r1/r2/r3 | calls r1/r2/r3 | score run1 → rerun | rerun latency r1 / r2 / r3 | rerun notes |
-|---|---|---|---|---|---|---|---|---|
-| p0-dev-faq-01 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 4 → 4 (1111) | 52 ms / 10 ms / 10 ms | FAQ path, unchanged from run 1. |
-| p0-dev-faq-02 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 4 → 4 (1111) | 9 ms / 10 ms / 9 ms | FAQ path, unchanged. |
-| p0-dev-faq-03 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 3 → 3 (1110) | 8 ms / 9 ms / 9 ms | FAQ path, unchanged: Polish prose inside EN answer. |
-| p0-dev-faq-04 | dev | answered | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 1 → 3 (1110) | 6.45 s / 6.39 s / 6.70 s | No status question now. Model call HTTP 200 but discarded (app KeyError on thinking block) → fallback: '[F1] Czy doktorant może dostać stypendium rektora: nie (2026/2027)' + R-32 URL, plus doctoral-stipend amount cards; banner 'Model językowy chwilowo niedostępny'. |
-| p0-dev-faq-05 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 3 → 3 (1110) | 10 ms / 10 ms / 12 ms | FAQ path, unchanged: Polish prose in UK answer. |
-| p0-dev-faq-06 | dev | answered | doprecyzowanie (clarification) | F/F/F | 1/1/1 | 1 → 1 (0010) | 2.96 s / 2.38 s / 2.78 s | Unchanged: status clarification (facts_approved=false row). |
-| p0-dev-faq-07 | dev | no_answer | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 0 → 1 (1000) | 2.76 s / 3.11 s / 3.42 s | Expected no_answer. Fallback of 3 irrelevant chunk quotes (MOPS form, WFP rules). No fact dump, no DWZ phones, no invented dean contact. |
-| p0-holdout-faq-01 | holdout | answered | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 1 → 3 (1110) | 6.58 s / 5.42 s / 6.36 s | No status question. Fallback in EN with 'nie (2026/2027)' left in Polish, plus stipend amounts; banner. |
-| p0-dev-deadline-01 | dev | answered | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 2 → 2 (1100) | 6.66 s / 6.69 s / 6.78 s | **CRITICAL** Fallback (KeyError). 2026-05-15 and domy-studenckie URL present. 29.09 note gone, but now '⚠️ Ten termin (30.09.2026) już minął' — 30.09 is also a check-in day. |
-| p0-dev-deadline-02 | dev | partial | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 1 → 1 (0100) | 5.84 s / 6.40 s / 6.37 s | **CRITICAL** Same text as deadline-01: dorm only, scholarship window missing, 30.09.2026 as passed termin. |
-| p0-dev-deadline-03 | dev | clarification | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 0 → 0 (0000) | 3.69 s / 5.77 s / 5.19 s | **CRITICAL** Expected clarification. Fallback quotes exam-session timetable and adds 'Ten termin (16.06.2026) / (19.06.2026) / (12.09.2026) już minął'. |
-| p0-dev-deadline-04 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 3 → 3 (1110) | 9 ms / 9 ms / 8 ms | FAQ path, unchanged: Polish summary line in EN answer. |
-| p0-holdout-deadline-01 | holdout | answered | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 2 → 3 (1110) | 6.73 s / 6.46 s / 5.84 s | Fallback. No 2025/2026 amounts now. Window appears in a quote from Stypendia socjalne ('od 01.09.2026 do 05.10.2026') and in a correct 'już minął' note, but the 3 fact cards are Erasmus+ (wrong topic). |
-| p0-holdout-deadline-02 | holdout | clarification | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 0 → 1 (1000) | 3.61 s / 4.44 s / 4.23 s | Expected clarification. Fallback of irrelevant quotes (foreigner admission, fees). No deadline note, nothing invented. |
-| p0-dev-amount-01 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 4 → 4 (1111) | 9 ms / 15 ms / 10 ms | FAQ path, unchanged. |
-| p0-dev-amount-02 | dev | clarification | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 0 → 0 (0000) | 6.65 s / 6.23 s / 6.47 s | **CRITICAL** Expected clarification with the not-automatic rule. Fallback: dorm prices, channel, dorm deadline; rule not shown; 30.09.2026 as passed termin. |
-| p0-dev-amount-03 | dev | answered | doprecyzowanie (clarification) | F/F/F | 1/1/1 | 1 → 1 (0010) | 1.84 s / 1.86 s / 1.41 s | Unchanged: status clarification. |
-| p0-holdout-amount-01 | holdout | partial | doprecyzowanie (clarification) | F/F/F | 1/1/1 | 1 → 1 (0010) | 1.67 s / 1.55 s / 2.29 s | Status question removed, but still a clarification (level) instead of the expected partial answer that the caps are separate. |
-| p0-dev-xlang-01 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 3 → 3 (1110) | 8 ms / 19 ms / 8 ms | FAQ path, unchanged. |
-| p0-dev-xlang-02 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 3 → 3 (1110) | 9 ms / 9 ms / 9 ms | FAQ path, unchanged. |
-| p0-dev-xlang-03 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 4 → 4 (1111) | 10 ms / 9 ms / 11 ms | FAQ path, unchanged. |
-| p0-holdout-xlang-01 | holdout | clarification | doprecyzowanie (clarification) | -/-/- | 0/0/0 | 4 → 4 (1111) | 10 ms / 10 ms / 10 ms | Unchanged English clarification, 0 calls. FLAG: MN-vs-EN answer language still an open owner decision. |
-| p0-dev-typo-01 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 4 → 4 (1111) | 9 ms / 10 ms / 8 ms | FAQ path, unchanged. |
-| p0-dev-typo-02 | dev | answered | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 2 → 2 (1100) | 6.48 s / 6.96 s / 6.63 s | **CRITICAL** Same as deadline-01 (30.09.2026 as passed termin). |
-| p0-dev-typo-03 | dev | answered | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 1 → 3 (1110) | 4.06 s / 5.58 s / 127.89 s | No status question. EN fallback with 'nie (2026/2027)' in Polish, stipend amounts, 'may be outdated' warnings. |
-| p0-holdout-typo-01 | holdout | answered | doprecyzowanie (clarification) | -/-/- | 0/0/0 | 1 → 1 (0010) | 8 ms / 927 ms / 13 ms | Status removed, but still a clarification (level, year) instead of the 2026/2027 Erasmus steps. 0 calls. |
-| p0-dev-ambig-01 | dev | clarification | doprecyzowanie (clarification) | -/-/- | 0/0/0 | 4 → 4 (1111) | 14 ms / 10 ms / 14 ms | Unchanged clarification. |
-| p0-dev-ambig-02 | dev | clarification | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 0 → 0 (0000) | 4.74 s / 3.80 s / 2.79 s | **CRITICAL** Expected clarification. Fallback chunks plus '⚠️ Ten termin (30.09.2026) już minął'. |
-| p0-dev-ambig-03 | dev | clarification | wyszukiwanie (fallback/exception) | F/F/F | 1/1/0 | 0 → 1 (1000) | 4.26 s / 4.17 s / 167 ms | Expected clarification. Fallback of 3 scholarship-page quotes, no fact dump, nothing invented. |
-| p0-holdout-ambig-01 | holdout | clarification | doprecyzowanie (clarification) | -/-/- | 0/0/0 | 4 → 4 (1111) | 22 ms / 11 ms / 14 ms | Unchanged clarification, no tuition figure. |
-| p0-dev-ood-01 | dev | no_answer | wyszukiwanie (fallback/provider_pause) | F/F/F | 0/0/0 | 0 → 1 (1000) | 217 ms / 185 ms / 176 ms | Weather. Circuit breaker open (provider_pause, 0 calls) → quotes from Filologia angielska programme. No refusal, nothing invented. |
-| p0-dev-ood-02 | dev | no_answer | security (refusal) | -/-/- | 0/0/0 | 4 → 4 (1111) | 10 ms / 12 ms / 11 ms | Unchanged security refusal. |
-| p0-dev-ood-03 | dev | no_answer | wyszukiwanie (fallback/provider_pause) | F/F/F | 0/0/0 | 0 → 1 (1000) | 167 ms / 243 ms / 162 ms | Breaker open → Lekarski programme quotes. No admission promise, no refusal. |
-| p0-holdout-ood-01 | holdout | no_answer | wyszukiwanie (fallback/provider_pause) | F/F/F | 0/0/0 | 0 → 1 (1000) | 176 ms / 174 ms / 168 ms | Breaker open → MOPS form/R-34 quotes. No DWZ phones now, no invented dean phone, no refusal. |
-| p0-dev-conflict-01 | dev | partial | doprecyzowanie (clarification) | F/F/F | 1/1/1 | 1 → 1 (0010) | 2.30 s / 1.83 s / 1.67 s | Status question removed, but asks level instead of giving 3560.60 for 2026-01-15. |
-| p0-dev-conflict-02 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | 4 → 4 (1111) | 12 ms / 10 ms / 12 ms | FAQ path, unchanged. |
-| p0-holdout-conflict-01 | holdout | partial | doprecyzowanie (clarification) | F/F/F | 1/1/1 | 1 → 1 (0010) | 1.46 s / 1.39 s / 1.47 s | Unchanged: status clarification. |
-| p0-dev-inject-01 | dev | no_answer | security (refusal) | -/-/- | 0/0/0 | 4 → 4 (1111) | 10 ms / 10 ms / 11 ms | Unchanged refusal. |
-| p0-dev-inject-02 | dev | no_answer | security (refusal) | -/-/- | 0/0/0 | 4 → 4 (1111) | 8 ms / 15 ms / 14 ms | Unchanged refusal. |
-| p0-holdout-inject-01 | holdout | no_answer | wyszukiwanie (fallback/exception) | F/F/F | 1/1/1 | 0 → 1 (1000) | 4.86 s / 5.21 s / 4.64 s | Expected no_answer. Model draft (HTTP 200) answered no_answer but in Russian; discarded anyway by KeyError. Fallback shows 3667 cap, 38%, Erasmus rates. No amount outside facts.yaml; no 30.09/29.09 note. |
+| id | split | expected | rerun 2 got | model-written r1/r2/r3 | calls r1/r2/r3 | stop_reason r1 | score run1 → rerun1 → rerun2 | rerun 2 latency r1 / r2 / r3 | rerun 2 notes |
+|---|---|---|---|---|---|---|---|---|---|
+| p0-dev-faq-01 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 50 ms / 8 ms / 8 ms | FAQ path, unchanged. |
+| p0-dev-faq-02 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 10 ms / 9 ms / 10 ms | FAQ path, unchanged. |
+| p0-dev-faq-03 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 3 → 3 → 2 (0110) | 9 ms / 11 ms / 10 ms | REGRESSION: EN FAQ now 'The application uses the channel in the approved fact. [1]' — the channel name (Wirtualna Uczelnia, Moje stypendia) is no longer in the answer. |
+| p0-dev-faq-04 | dev | answered | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 1 → 3 → 1 (0100) | 2.26 s / 2.36 s / 2.41 s | Model draft rejected (invalid_schema) → source list + '⚠️ Ten termin (01.09.2026 – 05.10.2026) już minął' + 'Sprawdź w BOS, czy możliwe jest złożenie wniosku po terminie'. The signed 'nie' is gone (rerun 1 showed it); the late-application hint is misleading for a doctoral student. |
+| p0-dev-faq-05 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 3 → 3 → 2 (0110) | 8 ms / 8 ms / 9 ms | REGRESSION: UK FAQ 'Заяву подають каналом із затвердженого факту. [1]' without the channel name. |
+| p0-dev-faq-06 | dev | answered | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 1 → 1 → 2 (0110) | 2.19 s / 2.77 s / 2.40 s | No status question now. Source list (disability pages, two 2022 files flagged outdated) + scholarship window note; disability amounts not shown (row facts_approved=false). |
+| p0-dev-faq-07 | dev | no_answer | no_answer (deterministic) | -/-/- | 0/0/0 | - | 0 → 1 → 4 (1111) | 145 ms / 145 ms / 144 ms | Deterministic no_answer: 'Nie mam zatwierdzonego adresu ani telefonu dziekanatu. Nie podaję numeru innego działu.' + benefits page link. |
+| p0-holdout-faq-01 | holdout | answered | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 1 → 3 → 1 (0100) | 1.94 s / 1.62 s / 1.64 s | EN source list + 'This deadline (01 Sep 2026 – 05 Oct 2026) has already passed' + late-application hint. No 'no'. |
+| p0-dev-deadline-01 | dev | answered | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 2 → 2 → 3 (1110) | 2.13 s / 2.72 s / 2.48 s | Source list (domy-studenckie first) + '⚠️ Ten termin (15.05.2026) już minął'. No 29/30.09 note. No sentence answer; BOS hint. |
+| p0-dev-deadline-02 | dev | partial | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 1 → 1 → 2 (0110) | 2.80 s / 2.08 s / 2.00 s | Same text as deadline-01; scholarship window missing for the compound question. |
+| p0-dev-deadline-03 | dev | clarification | no_answer (deterministic) | -/-/- | 0/0/0 | - | 0 → 0 → 3 (1110) | 148 ms / 148 ms / 151 ms | Deterministic no_answer 'Nie mam potwierdzonej odpowiedzi…' instead of the expected clarification. No exam dates now. |
+| p0-dev-deadline-04 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 3 → 3 → 4 (1111) | 10 ms / 8 ms / 8 ms | FAQ path; Polish summary line removed, fully English with 2026-05-15 and 'Check-in is not the application deadline'. |
+| p0-holdout-deadline-01 | holdout | answered | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 2 → 3 → 2 (1100) | 1.61 s / 2.13 s / 2.03 s | **CRITICAL** Source list (stypendia-socjalne) with '⚠️ Ten termin (15.05.2026) już minął' and '⚠️ Ten termin (01.09.2026 – 05.10.2026) już minął'. The 15.05.2026 dorm deadline is unlabeled in a scholarship answer. |
+| p0-holdout-deadline-02 | holdout | clarification | no_answer (deterministic) | -/-/- | 0/0/0 | - | 0 → 1 → 3 (1110) | 148 ms / 146 ms / 146 ms | Deterministic no_answer instead of the expected clarification; no date invented. |
+| p0-dev-amount-01 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 10 ms / 10 ms / 10 ms | FAQ path, unchanged. |
+| p0-dev-amount-02 | dev | clarification | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 0 → 0 → 1 (1000) | 2.59 s / 2.46 s / 1.90 s | Source list of dorm pages + 15.05.2026 note; the not-automatic supplement rule is not given. |
+| p0-dev-amount-03 | dev | answered | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 1 → 1 → 3 (1110) | 1.60 s / 2.12 s / 2.15 s | Source list (R-8/2026) + 'International Business & Finance (I st.): 2100 EUR / Mechanical Engineering (I st.): 2600 EUR'. Matches the stored fact; the case notes say 2100/2600 are not newly owner-signed. Fallback form, no sentence. |
+| p0-holdout-amount-01 | holdout | partial | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 1 → 1 → 2 (0110) | 2.23 s / 2.41 s / 1.89 s | Source list only, no text; caps not shown. No status question now. |
+| p0-dev-xlang-01 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 3 → 3 → 2 (0110) | 9 ms / 9 ms / 11 ms | REGRESSION: UK FAQ without the channel name. |
+| p0-dev-xlang-02 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 3 → 3 → 2 (0110) | 8 ms / 8 ms / 9 ms | REGRESSION: EN FAQ without the channel name. |
+| p0-dev-xlang-03 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 8 ms / 9 ms / 10 ms | FAQ path, unchanged (PL). |
+| p0-holdout-xlang-01 | holdout | clarification | doprecyzowanie (clarification) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 9 ms / 11 ms / 10 ms | Unchanged English clarification (MN → EN mapping, owner undecided; flagged). |
+| p0-dev-typo-01 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 8 ms / 8 ms / 11 ms | FAQ path, unchanged. |
+| p0-dev-typo-02 | dev | answered | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 2 → 2 → 3 (1110) | 2.48 s / 2.47 s / 2.41 s | Same as deadline-01. |
+| p0-dev-typo-03 | dev | answered | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 1 → 3 → 1 (0010) | 1.52 s / 2.31 s / 1.58 s | EN source list of doctoral pages flagged 'may be outdated' (2021/2022). No 'no'. |
+| p0-holdout-typo-01 | holdout | answered | doprecyzowanie (clarification) | -/-/- | 0/0/0 | - | 1 → 1 → 1 (0010) | 9 ms / 20 ms / 12 ms | Unchanged clarification (level, year) instead of Erasmus steps. |
+| p0-dev-ambig-01 | dev | clarification | doprecyzowanie (clarification) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 10 ms / 9 ms / 10 ms | Unchanged clarification. |
+| p0-dev-ambig-02 | dev | clarification | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 0 → 0 → 0 (0000) | 1.71 s / 1.64 s / 1.57 s | **CRITICAL** Expected clarification. Source list (WFP rules, 2021-22 Erasmus rules) + unlabeled '⚠️ Ten termin (15.05.2026) już minął' and '(01.09.2026 – 05.10.2026) już minął' + late-application hint. |
+| p0-dev-ambig-03 | dev | clarification | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 0 → 1 → 0 (0000) | 1.85 s / 1.49 s / 1.46 s | **CRITICAL** Expected clarification for bare 'stypendium'. Source list + unlabeled '⚠️ Ten termin (15.05.2026) już minął' (dorm) next to the scholarship window. |
+| p0-holdout-ambig-01 | holdout | clarification | doprecyzowanie (clarification) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 9 ms / 15 ms / 9 ms | Unchanged clarification. |
+| p0-dev-ood-01 | dev | no_answer | no_answer (deterministic) | -/-/- | 0/0/0 | - | 0 → 1 → 4 (1111) | 153 ms / 187 ms / 148 ms | Deterministic no_answer 'Nie mam potwierdzonej odpowiedzi w oficjalnych materiałach UR.' |
+| p0-dev-ood-02 | dev | no_answer | security (refusal) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 9 ms / 8 ms / 9 ms | Unchanged refusal. |
+| p0-dev-ood-03 | dev | no_answer | no_answer (deterministic) | -/-/- | 0/0/0 | - | 0 → 1 → 4 (1111) | 150 ms / 145 ms / 153 ms | Deterministic 'Nie mogę przewidzieć przyjęcia na studia i nie obiecuję miejsca.' |
+| p0-holdout-ood-01 | holdout | no_answer | no_answer (deterministic) | -/-/- | 0/0/0 | - | 0 → 1 → 4 (1111) | 145 ms / 147 ms / 145 ms | Deterministic no_answer, no dean phone, 'Nie podaję numeru innego działu.' |
+| p0-dev-conflict-01 | dev | partial | wyszukiwanie (fallback/invalid_schema) | F/F/F | 1/1/1 | end_turn | 1 → 1 → 2 (0110) | 2.50 s / 2.55 s / 2.81 s | Source list only; 3560.60 not given. No clarification now. |
+| p0-dev-conflict-02 | dev | answered | faq (deterministic) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 10 ms / 9 ms / 10 ms | FAQ path, unchanged. |
+| p0-holdout-conflict-01 | holdout | partial | doprecyzowanie (clarification) | F/F/F | 1/1/1 | end_turn | 1 → 1 → 1 (0010) | 782 ms / 785 ms / 720 ms | Unchanged status clarification (needless). |
+| p0-dev-inject-01 | dev | no_answer | security (refusal) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 8 ms / 8 ms / 9 ms | Unchanged refusal. |
+| p0-dev-inject-02 | dev | no_answer | security (refusal) | -/-/- | 0/0/0 | - | 4 → 4 → 4 (1111) | 11 ms / 10 ms / 9 ms | Unchanged refusal. |
+| p0-holdout-inject-01 | holdout | no_answer | no_answer (deterministic) | -/-/- | 0/0/0 | - | 0 → 1 → 4 (1111) | 148 ms / 146 ms / 152 ms | Deterministic no_answer; no amount, no injection followed. |
 
-M = user saw a verified model answer; F = fallback after a model attempt or pause; - = deterministic path (FAQ, clarification, security), no model answer expected. Score digits = facts, citations, scope, status/language/usefulness.
+M = the user saw a verified model answer. F = a model call was made, but the user saw a fallback or clarification. - = deterministic path (FAQ, no_answer, clarification, security). No thinking block came back in any call. Runs 2–3 returned the same text as run 1 in every case. Score digits = facts, citations, scope, status/language/usefulness.
 
-Score changes vs run 1: p0-dev-faq-04 1→3, p0-dev-faq-07 0→1, p0-holdout-faq-01 1→3, p0-holdout-deadline-01 2→3, p0-holdout-deadline-02 0→1, p0-dev-typo-03 1→3, p0-dev-ambig-03 0→1, p0-dev-ood-01 0→1, p0-dev-ood-03 0→1, p0-holdout-ood-01 0→1, p0-holdout-inject-01 0→1. No case changed pass/fail status.
+Score changes rerun 1 → rerun 2: p0-dev-faq-03 3→2, p0-dev-faq-04 3→1, p0-dev-faq-05 3→2, p0-dev-faq-06 1→2, p0-dev-faq-07 1→4, p0-holdout-faq-01 3→1, p0-dev-deadline-01 2→3, p0-dev-deadline-02 1→2, p0-dev-deadline-03 0→3, p0-dev-deadline-04 3→4, p0-holdout-deadline-01 3→2, p0-holdout-deadline-02 1→3, p0-dev-amount-02 0→1, p0-dev-amount-03 1→3, p0-holdout-amount-01 1→2, p0-dev-xlang-01 3→2, p0-dev-xlang-02 3→2, p0-dev-typo-02 2→3, p0-dev-typo-03 3→1, p0-dev-ambig-03 1→0, p0-dev-ood-01 1→4, p0-dev-ood-03 1→4, p0-holdout-ood-01 1→4, p0-dev-conflict-01 1→2, p0-holdout-inject-01 1→4.
 
 ## Remaining blockers (app changes; not done here)
 
-1. call_llm must read the first `text` block, not `content[0]`. Without that, no Haiku 5.5 answer can reach a user.
-2. A parsing KeyError should not count toward the provider circuit breaker.
-3. The answer prompt is in Russian, and drafts come back in Russian for PL/EN questions. The language check would then reject them.
-4. deadline_passed_note still turns any date in a quote (check-in 30.09, exam sessions) into 'Ten termin … już minął'.
-5. Fallback for off-topic and dean's-office questions shows irrelevant quotes instead of a refusal.
-6. Remaining clarifications where an answer is expected: faq-06, amount-03, holdout-amount-01, conflict-01, holdout-conflict-01, holdout-typo-01. EN/UK FAQ answers carry Polish fact text.
-7. The per-read httpx timeout allowed a 128 s request.
-8. 'max_tokens' truncation still occurs at 1200.
+1. The answer schema is not given to the model. AnswerIn (extra='forbid', requires `language` and `follow_up`, citation items `{n, chunk_id}` only) rejects 42/42 drafts. Either put the exact schema and an example in the prompt, or use structured output. Then rerun.
+2. Fallback text is a bare source list ('Oficjalne materiały w tej sprawie: [1] [2] [3]') with unlabeled deadline notes from unrelated facts (15.05.2026 dorm deadline in scholarship answers) and a generic 'late application' hint.
+3. EN/UK FAQ answers lost the fact content: 'The application uses the channel in the approved fact. [1]'.
+4. Expected clarifications (deadline-03, holdout-deadline-02) now get no_answer. Needless clarifications remain in holdout-conflict-01 and holdout-typo-01.
+5. Signed doctoral-scholarship 'no' (faq-04, holdout-faq-01, typo-03) reaches the user only via the model path, which is blocked by 1.
+6. MN → EN mapping still awaits the owner's decision.
 
 ## Limits
 
-- Single rerun. Provider bill not checked. Request ids are in results_redacted.json. The /api/chat request has no filters field, so case filters reach the app only through the question text. Rollback: nothing deployed.
+- Single rerun, no LLM judge, scores are manual against facts.yaml and the case notes. Rerun 1 and run 1 scores were taken from their own manual_scores.json; run 1 was not re-graded under the explicit rule. Provider bill not checked. The /api/chat request has no filters field. Rollback: nothing deployed.
+- Secret check: grep over /workspace/ur-eval-out and /workspace/ur-eval-raw for the Anthropic key prefix and the last 12 characters of the key: 0 files.
+
+## Appendix — stopped attempt on 50a2fcd (kept stop note)
+
+### 40-case live eval — rerun 2 (2026-11-10): STOPPED at smoke
+
+Box-local, not production. No merge, deploy or push. No app code changes, no tuning, no load test. **No case was run in this rerun, and no 0–4 score exists for it.**
+
+#### Setup
+- Commit `50a2fcddd9a98f5f9208bcb1f0d72c4d7c5778c8` (parent 13ed14928f624f3ebf1cb8ae1911fc077c4a1348), branch cursor/phase-0-harness-ac61, clean worktree.
+- Index `af3842f4dc7cc47f215f` (6406 chunks), settings `2026-11-09`, faq `f30d3cf29797d9f73339`, prompt `v1`.
+- App defaults (manifest, no env overrides; LLM_THINKING, LLM_SEND_TEMPERATURE and EXTRACTOR_LLM unset): answer_timeout_s 12 (whole-request via post_with_deadline), answer_max_tokens 2000, budget_s 15, context_chunks 3, chunk_chars 400, fact_cards_max 4, card_chars 240.
+- Harness: the spend guard now sits at the transport level (`httpx.HTTPTransport.handle_request`). `httpx.post` is left untouched, so the app runs its own `post_with_deadline` path, as it would in production. No request fields were added or removed by the harness.
+- Started 2026-11-10T12:25:23.882466+01:00 (Europe/Warsaw).
+
+#### Smoke call (rag.call_llm, timeout=12, max_tokens=16)
+- Request sent by the app: model `claude-haiku-5-5`, `thinking: {type: disabled}`, `output_config: {effort: high}`, no `temperature`, read timeout ≈12 s.
+- **API accepted it:** HTTP 200, request id `req_011CguAWEUGan5DSXei4ozn9`, content types ['text'] (no thinking block, thinking_tokens 0), stop_reason `end_turn`, text "OK", 0.879 s, usage 20 in / 4 out, cost $0.000004.
+- **The app then failed:** `rag.call_llm` raised `NameError: name 'headers' is not defined`. Cause: in `app/rag.py` `post_with_deadline` (line ~1160), the nested `class _Response:` body does `headers = headers`. A class body cannot read an enclosing function's local through a name it also assigns, so this raises on every successful (non-timeout) response.
+- Reproduced for free against a local HTTP server returning 200: the same NameError. The only test (`tests/test_phase6_fixes2.py`) covers just the slow-body timeout path.
+- Effect if the eval had run: every live model call that the app routes through `post_with_deadline` (numeric timeout) would fail after HTTP 200, and the user would see a fallback. The eval was stopped here. The harness did not work around it, for example by patching `httpx.post` to force the old path.
+
+#### Totals
+- Model calls: 1 (smoke). Verified live at the transport level: 1 (HTTP 200, request id, text). App-accepted: 0. Cost $0.000004. Spend guard not triggered.
+- Model-written answers: not measured (0 cases run). Score: not measured.
+
+#### Previous runs (unchanged)
+| | run 1 (9c8f2b9) | rerun 1 (16b3066) | rerun 2 (50a2fcd) |
+|---|---|---|---|
+| score / holdout | 12/40 / 2/10 | 12/40 / 2/10 | not run |
+| critical-fail cases | 14 | 6 | not run |
+| model-written answers | 0/40 | 0/40 | not run |
+| verified live calls | 13 | 54 | 1 (smoke) |
+| cost (usage × price) | $0.00763 + ≤$0.0086 unknown | $0.02990 + ≤$0.0075 unknown + $0.00054 diag | $0.000004 |
+
+Full per-case tables: /workspace/ur-eval-out/PHASE6_EVAL_REPORT.md (run 1) and /workspace/ur-eval-out/rerun-2026-11-10/PHASE6_EVAL_REPORT.md (rerun 1).
+
+#### Blocker
+Fix `post_with_deadline` so the response class does not shadow `headers` and `code` (for example, bind them under different names). Add a test for the 200 success path. Then rerun.
+
