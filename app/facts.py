@@ -204,6 +204,14 @@ def fallback_facts(facts: list[Fact], question: str, topics: list[str] | None = 
             points += 4
         if asks_doctoral and (fid.startswith("doctoral") or fid == "professor_salary_monthly"):
             points += 3
+        # A short signed yes/no that covers every topic in the question is the answer.
+        value = str(fact.value).strip().lower() if not isinstance(fact.value, (dict, list)) else ""
+        if value in {"nie", "tak", "no", "yes"} and topics and topics <= set(fact.topic or []):
+            if "rector" in fid or "rektor" in fid:
+                if re.search(r"(?i)rektor|rector", question or ""):
+                    points += 20
+            elif re.search(r"(?i)\b(czy|can|whether|may|чи)\b", question or ""):
+                points += 20
         if asks_doctoral and fid == "disability_amounts":
             points -= 3
         if not asks_when and "deadline" in fid:
@@ -559,6 +567,10 @@ def _fact_entry_lines(f: Fact, i: int, lang: str, *, for_user: bool) -> list[str
         body = format_fact_value(value, unit="EUR", lang=lang)
     else:
         body = format_fact_value(f.value, unit=unit if not isinstance(f.value, (dict, list)) else "", lang=lang)
+        if lang in ("en", "uk") and str(f.value).strip().lower() == "nie":
+            body = "no"
+        elif lang in ("en", "uk") and str(f.value).strip().lower() == "tak":
+            body = "yes"
     if isinstance(f.value, (dict, list)):
         head_unit = f" {unit}" if unit else ""
         head = f"[F{i}] {label}{head_unit}{year}{unver}{src}:"

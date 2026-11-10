@@ -170,7 +170,35 @@ def manifest_index(manifest: list[dict]) -> dict[str, dict]:
     return {row["chunk_id"]: row for row in manifest or [] if row.get("chunk_id")}
 
 
+def coerce_answer_payload(data: dict, language: str) -> dict:
+    """Drop fields AnswerIn does not define. Fill language and follow_up when absent.
+
+    Citations keep only n and chunk_id. A source_id or url is not a citation.
+    """
+    if not isinstance(data, dict):
+        return {}
+    allowed = ("status", "language", "answer", "citations", "follow_up")
+    out = {key: data[key] for key in allowed if key in data}
+    if out.get("language") not in ANSWER_LANGS:
+        out["language"] = language if language in ANSWER_LANGS else "pl"
+    follow = out.get("follow_up")
+    out["follow_up"] = follow.strip() if isinstance(follow, str) and follow.strip() else None
+    cleaned = []
+    for item in out.get("citations") or []:
+        if not isinstance(item, dict):
+            continue
+        chunk_id = item.get("chunk_id")
+        if item.get("n") is None or not chunk_id:
+            continue
+        cleaned.append({"n": item["n"], "chunk_id": str(chunk_id)})
+    out["citations"] = cleaned
+    out.setdefault("status", "")
+    out.setdefault("answer", "")
+    return out
+
+
 def validate_answer(data: dict, manifest: list[dict], *, language: str):
+    data = coerce_answer_payload(data, language)
     try:
         answer = AnswerIn.model_validate(data)
     except ValidationError:

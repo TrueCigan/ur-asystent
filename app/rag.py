@@ -657,7 +657,8 @@ _STATUS_FREE_TOPIC = re.compile(
     r"na\s+jaki\s+okres|okres\s+obowi|salary\s*act|ustaw\w+\s+o\s+wynagrod)"
 )
 _PERSONAL_ELIGIBILITY = re.compile(
-    r"(?i)(?:czy\s+mog[eę]|can\s+i\s+(?:get|apply|receive)|чи\s+можу|би\s+боломж)"
+    r"(?i)(?:czy\s+mog[eę]|can\s+i\s+(?:get|apply|receive)|чи\s+можу|би\s+боломж|"
+    r"jak\s+dosta[cć]|jak\s+uzyska|jak\s+otrzyma|how\s+(?:do\s+i|to)\s+(?:get|apply))"
 )
 
 
@@ -725,6 +726,28 @@ def _gate_required_slots(req, topic_names, prof, question, history_text=""):
         req = []
     if "erasmus" in topic_names and not _PERSONAL_ELIGIBILITY.search(question or ""):
         req = [x for x in req if x != "status"]
+    # A rule or a procedure does not need the speaker's status. One signed fact
+    # that does not constrain status does not need it either. An empty question
+    # is not evidence that status is irrelevant.
+    if question:
+        personal = bool(_PERSONAL_ELIGIBILITY.search(question))
+        asks_benefit = bool(re.search(
+            r"(?i)яка\s+стипенд|яку\s+стипенд|ile\s|how\s+much|wysoko|"
+            r"скільки|сколько|what\s+(?:scholarship|stipend)",
+            question,
+        ))
+        if not personal and not asks_benefit:
+            req = [x for x in req if x != "status"]
+            if "erasmus" in topic_names:
+                req = [x for x in req if x not in ("poziom", "rok", "tryb")]
+        else:
+            from facts import load_facts
+            matched = [
+                fact for fact in load_facts()
+                if fact.status == "verified" and set(fact.topic or []) & set(topic_names)
+            ]
+            if len(matched) == 1 and "status" not in (matched[0].applies_to or {}):
+                req = [x for x in req if x != "status"]
     return list(dict.fromkeys(req))
 
 
@@ -2371,7 +2394,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
         out = finalize_answer_urls(
             out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6, cited_fact_indexes=cited,
         )
-        out += notes_from_signed_deadlines(selected_facts, lang)
+        out += notes_from_signed_deadlines(selected_facts, lang, question_topics=topics)
         out, fee_corrected = _with_selected_english_tuition(out, lang, selected_facts, question, hist_user)
         if fee_corrected:
             llm_path = dict(llm_path)

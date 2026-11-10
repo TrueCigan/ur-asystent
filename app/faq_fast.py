@@ -168,9 +168,17 @@ def _answer(entry: dict, lang: str, score: float) -> dict:
     body = render_facts_for_user(facts, lang)
     if lang in ("en", "uk") and lead:
         body = _without_untranslated_polish(body)
+        for fact in facts:
+            # The signed channel string stays as written. The lead is the template.
+            if fact.id == "submission_channel" and fact.value:
+                signed = str(fact.value).strip()
+                if signed and signed not in body:
+                    body = (body + "\n" + signed).strip()
     elif not lead:
         lead = leads.get("pl") or ""
     text = (lead + "\n" + body).strip()
+    from deadlines import notes_from_signed_deadlines
+    text += notes_from_signed_deadlines(facts, lang, question_topics=[entry.get("topic") or ""])
     sources = []
     for fact in facts:
         url = (fact.source or {}).get("url") or ""

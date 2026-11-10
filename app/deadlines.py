@@ -45,6 +45,7 @@ class Deadline:
     end: date
     label_key: str
     source_url: str | None = None
+    subject: str = ""
 
 
 def _fold(token: str) -> str:
@@ -315,12 +316,20 @@ def render_deadline_notes(
             disp = f"{_fmt(d.start, lang)} – {_fmt(d.end, lang)}"
         else:
             disp = _fmt(d.end, lang)
-        msg = {
-            "pl": f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()}).",
-            "en": f"⚠️ This deadline ({disp}) has already passed (today: {today.isoformat()}).",
-            "uk": f"⚠️ Цей термін ({disp}) уже минув (сьогодні: {today.isoformat()}).",
-            "mn": f"⚠️ Энэ хугацаа ({disp}) өнгөрсөн (өнөөдөр: {today.isoformat()}).",
-        }.get(lang) or f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()})."
+        if d.subject:
+            msg = {
+                "pl": f"⚠️ {d.subject} ({disp}) już minął (dziś: {today.isoformat()}).",
+                "en": f"⚠️ {d.subject} ({disp}) has already passed (today: {today.isoformat()}).",
+                "uk": f"⚠️ {d.subject} ({disp}) уже минув (сьогодні: {today.isoformat()}).",
+                "mn": f"⚠️ {d.subject} ({disp}) өнгөрсөн (өнөөдөр: {today.isoformat()}).",
+            }.get(lang) or f"⚠️ {d.subject} ({disp}) już minął (dziś: {today.isoformat()})."
+        else:
+            msg = {
+                "pl": f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()}).",
+                "en": f"⚠️ This deadline ({disp}) has already passed (today: {today.isoformat()}).",
+                "uk": f"⚠️ Цей термін ({disp}) уже минув (сьогодні: {today.isoformat()}).",
+                "mn": f"⚠️ Энэ хугацаа ({disp}) өнгөрсөн (өнөөдөр: {today.isoformat()}).",
+            }.get(lang) or f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()})."
         if msg not in notes:
             notes.append(msg)
     tset = set(topics or [])
@@ -370,15 +379,35 @@ _APPLICATION_DEADLINE_IDS = frozenset({
 })
 
 
-def notes_from_signed_deadlines(facts, lang: str = "pl", today: date | None = None) -> str:
-    """Warn only from a signed fact's application deadline, never from a quote."""
+_DEADLINE_SUBJECT = {
+    "dorm_application_deadline": {
+        "pl": "Termin składania wniosków o miejsce w domu studenckim",
+        "en": "Dormitory application deadline",
+        "uk": "Термін подання заяв на місце в гуртожитку",
+    },
+    "social_rector_deadline": {
+        "pl": "Termin składania wniosków o stypendium socjalne lub rektora",
+        "en": "Social or rector scholarship application deadline",
+        "uk": "Термін подання заяв на соціальну стипендію або стипендію ректора",
+    },
+}
+
+
+def notes_from_signed_deadlines(
+    facts, lang: str = "pl", today: date | None = None, question_topics: list[str] | None = None,
+) -> str:
+    """Warn only from a signed application deadline whose topic matches the question."""
     today = today or date.today()
     found: list[Deadline] = []
     topics: list[str] = []
+    asked = set(question_topics or [])
     for fact in facts or []:
         if getattr(fact, "status", None) != "verified":
             continue
         if getattr(fact, "id", None) not in _APPLICATION_DEADLINE_IDS:
+            continue
+        fact_topics = list(getattr(fact, "topic", None) or [])
+        if question_topics is not None and not (asked & set(fact_topics)):
             continue
         raw = getattr(fact, "deadline", None) or {}
         if not isinstance(raw, dict):
@@ -396,8 +425,10 @@ def notes_from_signed_deadlines(facts, lang: str = "pl", today: date | None = No
                 start = date.fromisoformat(str(raw["start"])[:10])
             except ValueError:
                 start = None
-        found.append(Deadline(start=start, end=end, label_key="until"))
-        topics.extend(getattr(fact, "topic", None) or [])
+        labels = _DEADLINE_SUBJECT.get(getattr(fact, "id", ""), {})
+        subject = labels.get(lang) or labels.get("pl") or ""
+        found.append(Deadline(start=start, end=end, label_key="until", subject=subject))
+        topics.extend(fact_topics)
     return render_deadline_notes(found, lang, today, topics=topics)
 
 

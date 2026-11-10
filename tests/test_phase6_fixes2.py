@@ -128,8 +128,11 @@ def test_faq_english_drops_polish_prose_and_lists_missing_leads():
     answer = try_fast_path("Where do I submit a scholarship application?", "en")
     assert answer is not None
     text = answer["answer"]
-    assert "elektronicznie" not in text
     assert "The application uses the channel" in text
+    assert "Wirtualna Uczelnia" in text and "Moje stypendia" in text
+    uk = try_fast_path("Куди подавати заяву на стипендію?", "uk")
+    assert uk is not None
+    assert "Wirtualna Uczelnia" in uk["answer"] and "Moje stypendia" in uk["answer"]
     missing = missing_faq_translations()
     assert ("faq-income-group-2025-2026", "en") in missing
     assert ("faq-doctoral-period", "uk") in missing
@@ -261,6 +264,68 @@ def test_local_server_covers_text_errors_deadline_and_extractor():
         server.shutdown()
 
 
+def test_rerun2_schema_deadline_channel_and_clarifications():
+    import json
+    manifest = [{
+        "n": 1, "chunk_id": "chunk-a",
+        "url": "https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/",
+        "title": "Świadczenia", "page": 2,
+    }]
+    draft = {
+        "status": "answered",
+        "answer": "Wniosek składa się w podanym kanale. [1]",
+        "citations": [{
+            "n": 1, "chunk_id": "chunk-a", "source_id": "src",
+            "url": "https://evil.example/not-signed",
+        }],
+        "clarification_question": "który?",
+        "unknown": "x",
+        "unknowns": ["y"],
+        "contact": "dziekanat",
+    }
+    accepted, reason = ac.accept_model_answer(json.dumps(draft), manifest, "pl")
+    assert reason is None
+    assert accepted["language"] == "pl"
+    assert accepted["follow_up"] is None
+    assert "evil.example" not in accepted["citations"][0]["url"]
+    assert accepted["citations"][0]["chunk_id"] == "chunk-a"
+    unbound = dict(draft, citations=[{"n": 1, "source_id": "only", "url": "https://evil.example/"}])
+    rejected, why = ac.accept_model_answer(json.dumps(unbound), manifest, "pl")
+    assert rejected is None and why == "forbidden_citation"
+    settings = ac.load_prompt_settings()
+    assert '"follow_up"' in settings["answer_prompt"]
+    assert "chunk_id" in settings["answer_prompt"]
+
+    dorm = rag.answer("Do kiedy składa się wniosek o akademik?", [])
+    assert "domu studenckim" in (dorm.get("answer") or "")
+    assert "15.05.2026" in (dorm.get("answer") or "")
+    scholarship = rag.answer(
+        "Który limit socjalne plus rektora obowiązuje 15 stycznia 2026 wewnątrz roku akademickiego 2025/2026?",
+        [],
+    )
+    assert "15.05.2026" not in (scholarship.get("answer") or "")
+    assert "wniosków o miejsce w domu studenckim" not in (scholarship.get("answer") or "")
+    faculty = rag.answer("Pokaż zasady dla tego wydziału.", [])
+    assert "15.05.2026" not in (faculty.get("answer") or "")
+    assert "wniosków o miejsce w domu studenckim" not in (faculty.get("answer") or "")
+
+    doctoral = rag.answer("Czy doktorant szkoły doktorskiej może dostać stypendium rektora?", [])
+    assert "nie" in (doctoral.get("answer") or "").lower()
+    english = rag.answer("rectors scholaship for a doctoral studnet", [])
+    assert "no" in (english.get("answer") or "").lower()
+
+    _topics, _prof, missing = rag.needed(
+        "Czy data przepisu o wynagrodzeniu profesora ustala okres stypendium doktoranckiego?", "",
+    )
+    assert "status" not in missing
+    _topics, _prof, missing = rag.needed("erazmus jak wyjechac na wymiane", "")
+    assert missing == []
+    _topics, _prof, missing = rag.needed("Czy mogę dostać stypendium rektora?", "")
+    assert "status" in missing
+    _topics, _prof, missing = rag.needed("Jak dostać stypendium socjalne?", "")
+    assert "status" in missing
+
+
 def test_dev_cases_answer_or_refuse_without_irrelevant_quotes():
     samples = {
         "Który temat opisuje świadczenie przy orzeczeniu o niepełnosprawności?": "niepełnospraw",
@@ -297,6 +362,7 @@ def main():
         test_local_server_covers_text_errors_deadline_and_extractor,
         test_deadline_warning_ignores_quotes_and_exam_dates,
         test_faq_english_drops_polish_prose_and_lists_missing_leads,
+        test_rerun2_schema_deadline_channel_and_clarifications,
         test_dev_cases_answer_or_refuse_without_irrelevant_quotes,
     ]
     failed = 0

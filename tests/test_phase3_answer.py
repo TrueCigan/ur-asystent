@@ -61,7 +61,9 @@ def test_schema_rejects_extra_fields_truncated_json_and_bad_citations():
     forged = _answered()
     forged["citations"] = [{"n": 1, "chunk_id": "chunk-a", "url": "https://evil.example/"}]
     ok, reason = ac.accept_model_answer(__import__("json").dumps(forged), _manifest(), "pl")
-    assert ok is None and reason == "invalid_schema"
+    assert reason is None
+    assert "evil.example" not in ok["citations"][0]["url"]
+    assert ok["citations"][0]["url"].startswith("https://student.uniwersytetradom.pl/")
     ok, reason = ac.accept_model_answer(
         __import__("json").dumps(_answered("missing-chunk")), _manifest(), "pl",
     )
