@@ -144,7 +144,102 @@ def select_facts(
     # Facts-first tuition (P5): always attach matching tuition cards for oplaty
     if "oplaty" in tset:
         selected = _ensure_tuition_facts(selected, facts, profile, question or "", include_unverified)
+    named = named_academic_year(question or "")
+    if named:
+        selected = [f for f in selected if not f.academic_year or f.academic_year == named]
     return selected
+
+
+_YEAR_IN_QUESTION = re.compile(r"\b(20\d{2})\s*[/–—\-]\s*(20\d{2})\b")
+_CONTACT_QUESTION = re.compile(
+    r"(?i)(?:telefon|phone|\bnumer\b|kontakt|e-mail|email|дізнат|утас)"
+)
+_STAFF_CONTACT_FACT_IDS = {"erasmus_dwz_contact"}
+_PHONE_LINE = re.compile(r"(?i)(?:\+48|\bphone\b|\btelefon\b|@)")
+
+
+def named_academic_year(question: str) -> str | None:
+    """Academic year written in the question, for example 2026/2027."""
+    match = _YEAR_IN_QUESTION.search(question or "")
+    if not match:
+        return None
+    return f"{match.group(1)}/{match.group(2)}"
+
+
+def question_asks_office_contact(question: str) -> bool:
+    return bool(_CONTACT_QUESTION.search(question or ""))
+
+
+def fallback_facts(facts: list[Fact], question: str, topics: list[str] | None = None, limit: int = 3) -> list[Fact]:
+    """At most a few fact cards that match the question. Never the whole catalogue."""
+    contact = question_asks_office_contact(question)
+    topics = set(topics or [])
+    question_l = (question or "").lower()
+    pool = []
+    for fact in facts or []:
+        if fact.id in _STAFF_CONTACT_FACT_IDS and not contact:
+            continue
+        pool.append(fact)
+
+    def score(fact: Fact) -> int:
+        points = 0
+        fid = fact.id or ""
+        if topics and set(fact.topic or []) & topics:
+            points += 1
+        for token in fid.split("_"):
+            if len(token) > 3 and token in question_l:
+                points += 3
+        asks_amount = re.search(
+            r"(?i)ile|how much|wysoko|kwot|cap\b|limit|скільки|сколько|стипенд|gpa|średn|sredn",
+            question or "",
+        )
+        asks_when = re.search(r"(?i)termin|deadline|kiedy|when|do kiedy|until|od kiedy", question or "")
+        asks_disability = re.search(r"(?i)niepe[lł]n|orzeczen|disability|інвал", question or "")
+        asks_doctoral = re.search(r"(?i)doktor|phd|аспірант|докторант|doctoral", question or "")
+        if asks_amount and re.search(r"amount|stipend|salary|topup|cap|rate|threshold|points", fid):
+            points += 5
+        if re.search(r"(?i)\bgpa\b|średn|sredn|punkt", question or "") and "points" in fid:
+            points += 6
+        if asks_disability and "disability" in fid:
+            points += 4
+        if asks_doctoral and (fid.startswith("doctoral") or fid == "professor_salary_monthly"):
+            points += 3
+        if asks_doctoral and fid == "disability_amounts":
+            points -= 3
+        if not asks_when and "deadline" in fid:
+            points -= 4
+        return points
+
+    if not pool:
+        return []
+    if not topics and max(score(fact) for fact in pool) == 0:
+        return []
+    # One card per fact family. A named year was already applied in select_facts.
+    # Otherwise keep the later academic year so two cap years do not fill the card list.
+    pool.sort(key=lambda fact: (score(fact), _year_key(fact.academic_year)), reverse=True)
+    kept: list[Fact] = []
+    seen: set[str] = set()
+    for fact in pool:
+        family = re.sub(r"_20\d{2}_20\d{2}$", "", fact.id or "")
+        if family in seen:
+            continue
+        seen.add(family)
+        kept.append(fact)
+        if len(kept) >= limit:
+            break
+    return kept
+
+
+def strip_staff_contacts(text: str, question: str) -> str:
+    """Drop staff phone and email lines unless the question asks for that office."""
+    if question_asks_office_contact(question):
+        return text or ""
+    kept = []
+    for line in (text or "").splitlines():
+        if _PHONE_LINE.search(line):
+            continue
+        kept.append(line)
+    return "\n".join(kept).strip()
 
 
 def _ensure_tuition_facts(
@@ -483,15 +578,23 @@ def render_facts_block(facts: list[Fact], lang: str = "pl", computed_lines: list
     return "\n".join(lines)
 
 
-def render_facts_for_user(facts: list[Fact], lang: str = "pl", computed_lines: list[str] | None = None) -> str:
+def render_facts_for_user(
+    facts: list[Fact],
+    lang: str = "pl",
+    computed_lines: list[str] | None = None,
+    numbers: list[int] | None = None,
+) -> str:
     """User-visible facts block — no 'authoritative / quote exactly' header."""
     if not facts and not computed_lines:
         return ""
     lines: list[str] = []
-    for i, f in enumerate(facts, 1):
-        lines.extend(_fact_entry_lines(f, i, lang, for_user=True))
+    for pos, fact in enumerate(facts):
+        number = numbers[pos] if numbers and pos < len(numbers) else pos + 1
+        lines.extend(_fact_entry_lines(fact, number, lang, for_user=True))
     for j, line in enumerate(computed_lines or [], 1):
-        lines.append(f"[F{len(facts) + j}] {line}")
+        # Past the fact list so a computed line is not cited as a different fact.
+        marker = 900 + j if numbers else len(facts) + j
+        lines.append(f"[F{marker}] {line}")
     return "\n".join(lines)
 
 

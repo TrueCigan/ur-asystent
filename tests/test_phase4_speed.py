@@ -241,8 +241,8 @@ def test_prompt_timeouts_stay_the_slo():
     from answer_contract import load_prompt_settings
     settings = load_prompt_settings()
     assert settings["parse_timeout_s"] == 1
-    assert settings["answer_timeout_s"] == 4
-    assert settings["budget_s"] == 6
+    assert settings["answer_timeout_s"] == 12
+    assert settings["budget_s"] == 15
     assert settings["allow_two_calls"] is False
     assert settings["temperature"] == 0
 

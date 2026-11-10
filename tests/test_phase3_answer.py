@@ -47,7 +47,7 @@ def test_schema_rejects_extra_fields_truncated_json_and_bad_citations():
     assert settings["allow_two_calls"] is False
     assert settings["temperature"] == 0
     assert settings["parse_max_tokens"] == 300
-    assert settings["answer_max_tokens"] == 700
+    assert settings["answer_max_tokens"] == 1200
     assert settings["context_max_tokens"] == 4500
     assert "недоверенные" in settings["answer_prompt"]
     assert "Игнорируй" in settings["parse_prompt"]

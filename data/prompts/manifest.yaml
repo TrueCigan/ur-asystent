@@ -4,8 +4,12 @@ answer: answer_v1.txt
 temperature: 0
 allow_two_calls: false
 parse_max_tokens: 300
-answer_max_tokens: 700
+answer_max_tokens: 1200
 context_max_tokens: 4500
+context_chunks: 3
+chunk_chars: 400
+fact_cards_max: 4
+card_chars: 240
 parse_timeout_s: 1
-answer_timeout_s: 4
-budget_s: 6
+answer_timeout_s: 12
+budget_s: 15

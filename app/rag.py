@@ -16,7 +16,7 @@ from lang import (
 from deadlines import deadline_passed_note, strip_llm_deadline_notes
 from facts import (
     load_facts, select_facts, render_facts_block, render_facts_for_user,
-    extract_income, computed_income_line,
+    extract_income, computed_income_line, fallback_facts, strip_staff_contacts,
 )
 
 IDX = None
@@ -630,12 +630,57 @@ def _recent_benefit_from_history(history_text):
     many = _recent_benefits_from_history(history_text)
     return many[-1] if many else None
 
+# A question that names the person, not a bare mention of the doctoral stipend.
+_STATED_DOCTORAL = re.compile(
+    r"(?i)(?:"
+    r"doctoral\s+stud\w+|"
+    r"phd\s+stud\w+|"
+    r"doktorant\w*\s+szko\w*\s+doktorsk|"
+    r"szko\w*\s+doktorsk\w*.{0,48}doktorant|"
+    r"czy\s+doktorant|"
+    r"докторын\s+оюутан"
+    r")"
+)
+_THIRD_PERSON = re.compile(
+    r"(?i)(?<!\w)(?:she|he|they|her|his|their|ona|on|oni|вона|він|вони|она|он|они)(?!\w)"
+)
+_STATED_STUDENT = re.compile(
+    r"(?i)(?:jestem\s+student\w*|i\s+am\s+a\s+student\b|я\s+студент\w*|би\s+оюутан)"
+)
+_STATED_INCOMING = re.compile(
+    r"(?i)(?:erasmus\s+incoming|incoming\s+(?:erasmus|student)|"
+    r"student\s+przyje[zż]\w*|студент\s+за\s+обмін|ірсэн\s+оюутан)"
+)
+_STATUS_FREE_TOPIC = re.compile(
+    r"(?i)(?:\b(?:limit|cap)\b|łączn\w*\s+kwot|laczna\s+kwot|"
+    r"na\s+jaki\s+okres|okres\s+obowi|salary\s*act|ustaw\w+\s+o\s+wynagrod)"
+)
+_PERSONAL_ELIGIBILITY = re.compile(
+    r"(?i)(?:czy\s+mog[eę]|can\s+i\s+(?:get|apply|receive)|чи\s+можу|би\s+боломж)"
+)
+
+
 def _gate_required_slots(req, topic_names, prof, question, history_text=""):
     """Drop slots that facts/profile already make unnecessary (P4 — no clarify loops)."""
     req = list(req or [])
     topic_names = list(topic_names or [])
     prof = prof or {}
     blob = f"{question or ''}\n{history_text or ''}"
+    # The question already names the status. Do this before any extractor call.
+    negated_doctoral = bool(re.search(
+        r"(?i)n(?:ie|i)\s+jestem\s+doktorant|not\s+(?:a\s+)?doctoral|не\s+(?:є\s+)?докторант",
+        question or "",
+    ))
+    states_doctoral = (
+        bool(_STATED_DOCTORAL.search(question or ""))
+        and not negated_doctoral
+        and not _THIRD_PERSON.search(question or "")
+    )
+    if prof.get("status") != "doktorant" and states_doctoral:
+        prof["status"] = "doktorant"
+        prof.setdefault("poziom", "SD")
+    elif _STATED_INCOMING.search(question or "") and not prof.get("status"):
+        prof["status"] = "cudzoziemiec"
     if prof.get("status") == "doktorant" or prof.get("poziom") == "SD":
         req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
     # PL-language tuition without foreigner markers → do not demand status (R5-5)
@@ -669,6 +714,13 @@ def _gate_required_slots(req, topic_names, prof, question, history_text=""):
     # Disability degree already fills the slot — never re-ask niepelnosprawnosc
     if prof.get("niepelnosprawnosc") == "tak":
         req = [x for x in req if x != "niepelnosprawnosc"]
+    # Status is already in the question, or this topic does not depend on it.
+    if states_doctoral or _STATED_STUDENT.search(question or "") or _STATED_INCOMING.search(question or ""):
+        req = [x for x in req if x != "status"]
+    if _STATUS_FREE_TOPIC.search(question or ""):
+        req = [x for x in req if x != "status"]
+    if "erasmus" in topic_names and not _PERSONAL_ELIGIBILITY.search(question or ""):
+        req = [x for x in req if x != "status"]
     return list(dict.fromkeys(req))
 
 
@@ -951,10 +1003,33 @@ REQUEST_BUDGET_SEC = 55.0
 
 
 _LLM_ATTEMPTS = []
+_LLM_STOP_REASON = None
 
 
 def _reset_llm_attempts():
+    global _LLM_STOP_REASON
     _LLM_ATTEMPTS.clear()
+    _LLM_STOP_REASON = None
+
+
+def send_temperature(model: str | None = None) -> bool:
+    """Haiku 5.x rejects the temperature field. Omit it unless the env forces it on."""
+    flag = (os.getenv("LLM_SEND_TEMPERATURE") or "").strip().lower()
+    if flag in {"0", "false", "no", "off"}:
+        return False
+    if flag in {"1", "true", "yes", "on"}:
+        return True
+    name = (model if model is not None else os.getenv("LLM_MODEL") or "").strip().lower()
+    return not name.startswith("claude-haiku-5")
+
+
+def last_stop_reason() -> str | None:
+    return _LLM_STOP_REASON
+
+
+def _note_stop_reason(value) -> None:
+    global _LLM_STOP_REASON
+    _LLM_STOP_REASON = value
 
 
 def _record_llm_attempt(*, transport, http_status=None, request_id=None):
@@ -1033,9 +1108,12 @@ def call_llm(messages, temperature=0.25, timeout=None, max_tokens=None, retries=
         for m in dict.fromkeys(chain):
             for att in range(4):
                 try:
+                    gemini_body = {"model": m, "messages": messages, "reasoning_effort": "low"}
+                    if send_temperature(m):
+                        gemini_body["temperature"] = temperature
                     r = httpx.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", timeout=90,
                                    headers={"Authorization": f"Bearer {key}"},
-                                   json={"model": m, "messages": messages, "temperature": temperature, "reasoning_effort": "low"})
+                                   json=gemini_body)
                 except httpx.TimeoutException as e:
                     last = e; break
                 if r.status_code == 200:
@@ -1055,17 +1133,19 @@ def call_llm(messages, temperature=0.25, timeout=None, max_tokens=None, retries=
         for att in range(attempts):
             t0 = time.monotonic()
             try:
+                anthropic_body = {
+                    "model": model or "claude-sonnet-4-5",
+                    "max_tokens": max_tokens or 1400,
+                    "system": messages[0]["content"],
+                    "messages": messages[1:],
+                }
+                if send_temperature(anthropic_body["model"]):
+                    anthropic_body["temperature"] = temperature
                 r = httpx.post(
                     "https://api.anthropic.com/v1/messages",
                     timeout=timeout or _ANTHROPIC_TIMEOUT,
                     headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
-                    json={
-                        "model": model or "claude-sonnet-4-5",
-                        "max_tokens": max_tokens or 1400,
-                        "system": messages[0]["content"],
-                        "messages": messages[1:],
-                        "temperature": temperature,
-                    },
+                    json=anthropic_body,
                 )
             except httpx.TimeoutException as e:
                 _record_llm_attempt(transport="error", http_status=None)
@@ -1081,7 +1161,9 @@ def call_llm(messages, temperature=0.25, timeout=None, max_tokens=None, retries=
             log.info("anthropic status=%s latency=%.2fs request-id=%s", r.status_code, time.monotonic() - t0, rid)
             if r.status_code == 200:
                 _record_llm_attempt(transport="ok", http_status=200, request_id=rid)
-                return r.json()["content"][0]["text"]
+                payload = r.json()
+                _note_stop_reason(payload.get("stop_reason"))
+                return payload["content"][0]["text"]
             _record_llm_attempt(transport="error", http_status=r.status_code, request_id=rid)
             last = f"HTTP {r.status_code}"
             if retries != 0 and r.status_code in (429, 500, 529) and att == 0:
@@ -1094,8 +1176,11 @@ def call_llm(messages, temperature=0.25, timeout=None, max_tokens=None, retries=
     # block clearly non-http(s) bases to reduce SSRF risk if env is mis-set
     if not (base or "").startswith(("https://", "http://localhost", "http://127.0.0.1")):
         raise RuntimeError("LLM_BASE_URL niedozwolony")
+    openai_body = {"model": model or "gpt-4o-mini", "messages": messages}
+    if send_temperature(openai_body["model"]):
+        openai_body["temperature"] = temperature
     r = httpx.post(base + "/chat/completions", timeout=120, headers={"Authorization": f"Bearer {key}"},
-                   json={"model": model or "gpt-4o-mini", "messages": messages, "temperature": temperature})
+                   json=openai_body)
     if r.status_code >= 400:
         raise RuntimeError(f"LLM niedostępny (HTTP {r.status_code})")
     return r.json()["choices"][0]["message"]["content"]
@@ -2094,7 +2179,17 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             if line:
                 computed_lines.append(line)
     facts_block = render_facts_block(selected_facts, lang, computed_lines=computed_lines)
-    facts_for_user = render_facts_for_user(selected_facts, lang, computed_lines=computed_lines)
+    shown_facts = fallback_facts(selected_facts, question, topics, limit=3)
+    positions = {id(fact): index for index, fact in enumerate(selected_facts, 1)}
+    facts_for_user = strip_staff_contacts(
+        render_facts_for_user(
+            shown_facts,
+            lang,
+            computed_lines=computed_lines,
+            numbers=[positions[id(fact)] for fact in shown_facts],
+        ),
+        question,
+    )
 
     blob6 = _hit_blob(hits[:6])
     # Parallel to selected_facts. Only a verified fact contributes an official URL.
@@ -2140,7 +2235,6 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                      .replace("{lang}", lang)
                      .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
                      .replace("{security_rules}", SECURITY_RULES))
-        cards = fact_cards(selected_facts, lang)
         dialogue = {
             "prior_user_turns": [
                 (m.get("content") or "")[:500]
@@ -2149,6 +2243,20 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             "latest": question,
             "original_intent": getattr(state, "original_question", None),
         }
+        from answer_contract import (
+            accept_model_answer, fallback_contract, load_prompt_settings, looks_like_json,
+            output_was_truncated, unwrap_model_text,
+        )
+        prompt_settings = load_prompt_settings()
+        chunk_n = max(1, int(prompt_settings["context_chunks"]))
+        chunk_chars = max(80, int(prompt_settings["chunk_chars"]))
+        card_n = max(1, int(prompt_settings["fact_cards_max"]))
+        card_chars = max(80, int(prompt_settings["card_chars"]))
+        cards = fact_cards(selected_facts[:card_n], lang)
+        for card in cards:
+            preview = card.get("value_preview") or ""
+            if len(preview) > card_chars:
+                card["value_preview"] = preview[:card_chars] + "…"
         user_payload = _json.dumps({
             "lang": lang,
             "profile": prof,
@@ -2156,7 +2264,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             "fact_cards": cards,
             "sources": [
                 {"id": i, "title": h.get("title"), "url": h.get("url")}
-                for i, h in enumerate(hits[:6], 1)
+                for i, h in enumerate(hits[:chunk_n], 1)
             ],
             "dialogue": dialogue,
         }, ensure_ascii=False)
@@ -2164,20 +2272,16 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             {"role": "system", "content": sys},
             {"role": "user", "content": user_payload + "\n\nReturn JSON only."},
         ]
-        from answer_contract import (
-            accept_model_answer, fallback_contract, load_prompt_settings, looks_like_json,
-        )
-        prompt_settings = load_prompt_settings()
         msgs[0]["content"] = prompt_settings["answer_prompt"]
         manifest = []
-        for i, hit in enumerate(hits[:5], 1):
+        for i, hit in enumerate(hits[:chunk_n], 1):
             manifest.append({
                 "n": i,
                 "chunk_id": (hit.get("chunk_id") or hit.get("url") or f"hit-{i}"),
                 "title": hit.get("title") or "",
                 "url": hit.get("url") or "",
                 "page": hit.get("page"),
-                "text": (hit.get("text") or "")[:800],
+                "text": (hit.get("text") or "")[:chunk_chars],
             })
         try:
             # One generation. Invalid schema, bad citations, and wrong language do not call again.
@@ -2188,7 +2292,15 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                 max_tokens=prompt_settings["answer_max_tokens"],
                 retries=0,
             )))
-            data = parse_model_json(raw)
+            stop_reason = last_stop_reason()
+            if output_was_truncated(stop_reason):
+                degraded = fallback_contract(lang, manifest, "truncated")
+                done = _finalize(degraded["answer"], "wyszukiwanie", llm_path_from_attempts(
+                    final="fallback", model_used=False, discarded="truncated",
+                ))
+                done["contract"] = degraded
+                return done
+            data = parse_model_json(unwrap_model_text(raw) if raw else raw)
             if data and not template_has_raw_money(data.get("template") or ""):
                 fids = list(data.get("fact_ids") or [])
                 if "oplaty" in topics:
@@ -2211,7 +2323,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                     return _finalize(out, "wyszukiwanie", llm_path_from_attempts(
                         final="fallback", model_used=False, discarded="lang",
                     ))
-            accepted, reason = accept_model_answer(raw, manifest, lang)
+            accepted, reason = accept_model_answer(raw, manifest, lang, stop_reason=stop_reason)
             if accepted:
                 done = _finalize(accepted["answer"], "answer-contract", llm_path_from_attempts(
                     final="model", model_used=True, discarded=None,

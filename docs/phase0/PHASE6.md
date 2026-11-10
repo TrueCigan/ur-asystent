@@ -16,3 +16,16 @@ This slice is hardening, retention, backup checks, outage fallback, a runbook, l
 ## Explicitly not this phase
 
 No paid eval, no `EVAL_REAL=1`, no 10-concurrent load test, no measured p50 or p95, and no 0–4 scores. No merge and no deploy. No Postgres, Redis, embeddings, external identity provider, MFA, or GDPR paperwork. No new FAQ amounts or deadlines. Rectorate launch remains a separate permission.
+
+## Model-path defaults after the 2026-11-10 eval
+
+The live run is recorded in `PHASE6_EVAL_REPORT.md` (12/40, not release-ready). These defaults change the app that a later rerun would call. They are not a new score.
+
+- Answer HTTP timeout is 12 seconds (`ANSWER_TIMEOUT_S`, manifest `answer_timeout_s`). The previous 4 second value timed out on long prompts. Parse timeout stays 1 second.
+- Max output tokens are 1200 (`ANSWER_MAX_TOKENS`). The previous cap was 700.
+- Prompt context is 3 chunks of 400 characters (`ANSWER_CONTEXT_CHUNKS`, `ANSWER_CHUNK_CHARS`), plus at most 4 fact cards of 240 characters (`ANSWER_FACT_CARDS`, `ANSWER_CARD_CHARS`). The old prompt attached 6 source titles and 800-character excerpts. `context_max_tokens` stays 4500 as a ceiling, not a claim that a prompt is that small.
+- `ANSWER_BUDGET_S` is 15 (1 second parse + 12 second answer + margin). The in-process request ceiling `REQUEST_BUDGET_SEC` stays 55 seconds, which is above the model timeout. The circuit breaker is unchanged: 5 provider errors inside 30 seconds, then generation pauses for 60 seconds and the existing fallback is used. One model call, no repair call.
+- `temperature` is omitted when `LLM_MODEL` starts with `claude-haiku-5`. `LLM_SEND_TEMPERATURE=0` omits it for any model. `LLM_SEND_TEMPERATURE=1` sends it. Other models still send `temperature` 0.
+- A fenced ```json object is parsed. `stop_reason` `max_tokens` is not accepted as an answer.
+- Fallback shows at most 3 fact cards for the question, plus links. Staff phone lines stay out unless the question asks for that office. “Ten termin już minął” is only for an application or submission deadline, not a check-in date, an exam date, or a timetable date.
+- A question that names an academic year does not show fact cards from another year. Status is not asked again when the question already states it, or when the topic is a yearly cap, Erasmus general information, or the doctoral stipend period / salary-act date. That decision is made before the slot extractor.

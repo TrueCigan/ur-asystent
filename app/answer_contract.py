@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import re
 import uuid
 from pathlib import Path
@@ -60,6 +61,13 @@ STATUSES = {"answered", "partial", "clarification", "no_answer"}
 TEMPORAL = {"current", "historical", "unspecified"}
 
 
+def _env_int(name: str, default: int) -> int:
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return int(default)
+    return int(raw)
+
+
 def load_prompt_settings() -> dict:
     import yaml
     raw = yaml.safe_load((PROMPT_DIR / "manifest.yaml").read_text(encoding="utf-8"))
@@ -69,27 +77,53 @@ def load_prompt_settings() -> dict:
         "temperature": raw["temperature"],
         "allow_two_calls": bool(raw["allow_two_calls"]),
         "parse_max_tokens": int(raw["parse_max_tokens"]),
-        "answer_max_tokens": int(raw["answer_max_tokens"]),
+        "answer_max_tokens": _env_int("ANSWER_MAX_TOKENS", raw["answer_max_tokens"]),
         "context_max_tokens": int(raw["context_max_tokens"]),
+        "context_chunks": _env_int("ANSWER_CONTEXT_CHUNKS", raw.get("context_chunks", 3)),
+        "chunk_chars": _env_int("ANSWER_CHUNK_CHARS", raw.get("chunk_chars", 400)),
+        "fact_cards_max": _env_int("ANSWER_FACT_CARDS", raw.get("fact_cards_max", 4)),
+        "card_chars": _env_int("ANSWER_CARD_CHARS", raw.get("card_chars", 240)),
         "parse_timeout_s": int(raw["parse_timeout_s"]),
-        "answer_timeout_s": int(raw["answer_timeout_s"]),
-        "budget_s": int(raw["budget_s"]),
+        "answer_timeout_s": _env_int("ANSWER_TIMEOUT_S", raw["answer_timeout_s"]),
+        "budget_s": _env_int("ANSWER_BUDGET_S", raw["budget_s"]),
         "parse_prompt": (PROMPT_DIR / raw["parse"]).read_text(encoding="utf-8").strip(),
         "answer_prompt": (PROMPT_DIR / raw["answer"]).read_text(encoding="utf-8").strip(),
     }
 
 
-def parse_json_object(raw: str) -> tuple[dict | None, str | None]:
-    """Return (object, None) or (None, reason). No second model call."""
+_FENCE = re.compile(r"^```(?:json)?\s*([\s\S]*?)\s*```\s*$", re.IGNORECASE)
+
+
+def unwrap_model_text(raw: str) -> str:
+    """Drop a single markdown fence and surrounding whitespace."""
     text = (raw or "").strip()
-    if not text:
-        return None, "invalid_schema"
+    fenced = _FENCE.match(text)
+    if fenced:
+        return fenced.group(1).strip()
     if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text, count=1, flags=re.IGNORECASE)
+        if text.endswith("```"):
+            text = text[:-3]
+        return text.strip()
+    return text
+
+
+def output_was_truncated(stop_reason: str | None) -> bool:
+    """Anthropic stop_reason max_tokens means the object was cut off."""
+    return (stop_reason or "").strip().lower() == "max_tokens"
+
+
+def parse_json_object(raw: str, stop_reason: str | None = None) -> tuple[dict | None, str | None]:
+    """Return (object, None) or (None, reason). No second model call."""
+    if output_was_truncated(stop_reason):
+        return None, "truncated"
+    text = unwrap_model_text(raw)
+    if not text:
         return None, "invalid_schema"
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        return None, "truncated" if text.startswith("{") else "invalid_schema"
+        return None, "truncated" if text.startswith("{") or text.startswith("[") else "invalid_schema"
     if not isinstance(data, dict):
         return None, "invalid_schema"
     return data, None
@@ -261,8 +295,8 @@ def fallback_contract(lang: str, manifest: list[dict], reason: str) -> dict:
     }
 
 
-def accept_model_answer(raw: str, manifest: list[dict], language: str):
-    data, reason = parse_json_object(raw)
+def accept_model_answer(raw: str, manifest: list[dict], language: str, stop_reason: str | None = None):
+    data, reason = parse_json_object(raw, stop_reason=stop_reason)
     if data is None:
         return None, reason
     return validate_answer(data, manifest, language=language)

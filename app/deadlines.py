@@ -25,14 +25,17 @@ _DEADLINE_CTX = re.compile(
     r"(?i)(?:do|until|by|termin|deadline|nie\s+później\s+niż|nie\s+pozniej\s+niz|"
     r"до|не\s*пізніше|składa\s*się\s*do|wpłacić\s*do|wplacic\s*do|"
     r"registration\s+closes|opłat\w*\s*do|wniosek.{0,20}do|zadatek.{0,20}do|"
-    r"zakwaterowanie\s+w\s+terminie|закрывається|закривається)",
+    r"закрывається|закривається)",
 )
 
+# Check-in, exam sessions, and timetable dates are not application deadlines.
 _EXCLUDE_CTX = re.compile(
     r"(?i)(?:z\s+dnia|dated|uchwał|zarządzen|regulation|aktualizac|updated|"
     r"egzamin|exam|екзамен|о\s+\d{1,2}:\d{2}|zaktualizowana|"
     r"uchwała\s*nr|zarządzenie\s*nr|\bBIP\b|resolution|postanowien|"
-    r"enter\s+into\s+force|wchodzi\s+w\s+życie|strona\s+zaktualizowana)",
+    r"enter\s+into\s+force|wchodzi\s+w\s+życie|strona\s+zaktualizowana|"
+    r"kwaterowan|zakwaterowan|check-?in|move-?in|wprowadz|заселен|"
+    r"sesj\w*\s*egzamin|timetable|rozkład\s+zaj|rozklad\s+zaj|plan\s+zaj)",
 )
 
 
@@ -90,8 +93,8 @@ def _yearless_date(month: int, day: int, today: date) -> date | None:
 
 def _ctx_ok(text: str, start: int, end: int) -> bool:
     """Require deadline cue nearby; reject regulation/exam/update dates."""
-    left = text[max(0, start - 40):start]
-    right = text[end:min(len(text), end + 20)]
+    left = text[max(0, start - 80):start]
+    right = text[end:min(len(text), end + 48)]
     window = left + text[start:end] + right
     if _EXCLUDE_CTX.search(window):
         return False
@@ -135,6 +138,9 @@ def parse_deadlines(text: str, today: date | None = None) -> list[Deadline]:
         if not end:
             continue
         covered.append((m.start(), m.end()))
+        window = text[max(0, m.start() - 80):min(len(text), m.end() + 40)]
+        if _EXCLUDE_CTX.search(window):
+            continue
         found.append(Deadline(start=start, end=end, label_key="range"))
 
     # Partial ranges: 29.09–1.10.2026 (inherit year; if start month > end month → year-1)
@@ -155,6 +161,9 @@ def parse_deadlines(text: str, today: date | None = None) -> list[Deadline]:
         if not end:
             continue
         covered.append((m.start(), m.end()))
+        window = text[max(0, m.start() - 80):min(len(text), m.end() + 40)]
+        if _EXCLUDE_CTX.search(window):
+            continue
         found.append(Deadline(start=start, end=end, label_key="partial_range"))
 
     # Ranges with month names: 1–5 października 2026
@@ -199,8 +208,8 @@ def parse_deadlines(text: str, today: date | None = None) -> list[Deadline]:
             continue
         if mid and mid > end:
             end = mid
+        # Move-in windows are not application deadlines, so they get no warning.
         covered.append((m.start(), m.end()))
-        found.append(Deadline(start=start, end=end, label_key="window"))
 
     # Prefixed single: until/by/do + date (always contextual)
     for m in re.finditer(

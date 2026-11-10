@@ -246,9 +246,10 @@ def test_local_fake_smoke_and_unscored_report():
     assert len(cases) == 40
     for case in cases:
         assert case["id"] in report
-    assert report.count("not measured") >= 40
-    assert "Overall p50 / p95: not measured" in report
-    assert not re.search(r"\| [0-4] \|", report)
+    # The 2026-11-10 live report replaced the empty template. It is scored and not a launch.
+    assert "12/40" in report
+    assert "NOT met" in report
+    assert "Not a launch approval" in report
     runbook = (ROOT / "docs/phase0/RUNBOOK.md").read_text(encoding="utf-8")
     assert "data/index.npz" in runbook
     assert "EVAL_REAL=0" in runbook
