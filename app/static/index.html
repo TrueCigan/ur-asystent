@@ -527,7 +527,7 @@ function render(text) {
     .replace(/(https?:\/\/[^\s<&]+)/g, (m) => {
       const href = safeUrl(m.replace(/&amp;/g, '&'));
       if (!href) return m;
-      return `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(href)}</a>`;
+      return `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(href)}</a>`;
     });
 }
 function setInputsLocked(on) {
@@ -741,11 +741,78 @@ async function askApiOnce(q, signal) {
   return j;
 }
 
+function applySession(j) {
+  if (j.lang) {
+    sessionLang = j.lang;
+    try { sessionStorage.setItem('ur_session_lang', j.lang); } catch (_) {}
+  }
+  if (j.state) {
+    sessionState = j.state;
+    try { sessionStorage.setItem('ur_session_state', j.state); } catch (_) {}
+  }
+}
+
+async function askApiStream(q, signal) {
+  const payload = {question: q, history: H, conv_id: convId};
+  if (sessionLang) payload.session_lang = sessionLang;
+  if (sessionState) payload.state = sessionState;
+  if (scenarioSocialOn && scenarioCtx) payload.scenario_context = scenarioCtx;
+  const r = await fetch('/api/chat/stream', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Accept': 'text/event-stream'},
+    body: JSON.stringify(payload),
+    signal
+  });
+  const ct = (r.headers.get('content-type') || '');
+  if (!r.ok || !ct.includes('text/event-stream') || !r.body) return null;
+  const reader = r.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let answer = '';
+  let sawAnswer = false;
+  const meta = {clarify: false, lang: '', state: '', mode: ''};
+  while (true) {
+    const step = await reader.read();
+    if (step.done) break;
+    buf += decoder.decode(step.value, {stream: true});
+    const blocks = buf.split('\n\n');
+    buf = blocks.pop() || '';
+    for (const block of blocks) {
+      const eventLine = block.split('\n').find(line => line.startsWith('event:'));
+      const dataLine = block.split('\n').find(line => line.startsWith('data:'));
+      if (!dataLine) continue;
+      const name = eventLine ? eventLine.slice(6).trim() : '';
+      let data = {};
+      try { data = JSON.parse(dataLine.slice(5).trim()); } catch (_) { continue; }
+      if (name === 'error') {
+        return { answer: '⚠️ ' + esc(data.message || 'error'), clarify: false, _err: 'stream' };
+      }
+      if (name === 'answer' && typeof data.text === 'string') {
+        sawAnswer = true;
+        answer += data.text;
+      }
+      if (name === 'done') {
+        meta.lang = data.language || '';
+        meta.state = data.state || '';
+        meta.clarify = !!data.clarify;
+        meta.mode = data.mode || '';
+      }
+    }
+  }
+  if (!sawAnswer) return null;
+  return { answer: answer, clarify: meta.clarify, lang: meta.lang, state: meta.state, mode: meta.mode, streamed: true };
+}
+
 async function askApi(q) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 60000);
   try {
     try {
+      const streamed = await askApiStream(q, ctrl.signal);
+      if (streamed) {
+        applySession(streamed);
+        return streamed;
+      }
       return await askApiOnce(q, ctrl.signal);
     } catch (e) {
       if (e && e.code === 'warming') {

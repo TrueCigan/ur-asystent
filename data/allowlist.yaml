@@ -1,0 +1,82 @@
+# Admin-controlled crawl allowlist. Phase 1 draft, 2026-11-09.
+# Hosts are only those already used as crawl seeds, corpus URLs, or cited fact URLs.
+# There is no function that appends a host from application code.
+# enabled: true is what the crawler may fetch.
+# On 2026-11-09 Kostya Prochan approved only the official fact domains listed below
+# that were still off. kn, wicit, squarespace, isap.sejm.gov.pl, and odyseusz stay off.
+schema_version: 1
+crawl:
+  - host: uniwersytetradom.pl
+    enabled: true
+    source: apex
+    note: One corpus document and the Erasmus recruitment announcement.
+  - host: student.uniwersytetradom.pl
+    enabled: true
+    source: student
+  - host: dwz.uniwersytetradom.pl
+    enabled: true
+    source: dwz
+  - host: rekrutacja.uniwersytetradom.pl
+    enabled: true
+    source: rekrutacja
+  - host: bip.uniwersytetradom.pl
+    enabled: true
+    source: bip
+  - host: wteii.uniwersytetradom.pl
+    enabled: true
+    source: wteii
+  - host: weif.uniwersytetradom.pl
+    enabled: true
+    source: weif
+  - host: wm.uniwersytetradom.pl
+    enabled: true
+    source: wm
+  - host: wpia.uniwersytetradom.pl
+    enabled: true
+    source: wpia
+  - host: wnminoz.uniwersytetradom.pl
+    enabled: true
+    source: wnminoz
+  - host: wfp.uniwersytetradom.pl
+    enabled: true
+    source: wfp
+  - host: wicit.uniwersytetradom.pl
+    enabled: false
+    source: wicit
+    note: Listed in the plan map. Crawl skipped it because the host returned 404.
+  - host: euczelnia.uniwersytetradom.pl
+    enabled: true
+    source: corpus
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.
+  - host: kn.uniwersytetradom.pl
+    enabled: false
+    source: corpus
+    note: Owner Kostya Prochan, 2026-11-09, left this host disabled.
+  - host: static1.squarespace.com
+    enabled: false
+    source: corpus
+    note: Owner Kostya Prochan, 2026-11-09, left this host disabled. Not an official fact domain.
+  - host: isap.sejm.gov.pl
+    enabled: false
+    source: corpus
+    note: Owner Kostya Prochan, 2026-11-09, left this host disabled. Not an official fact domain.
+  - host: sjo.uniwersytetradom.pl
+    enabled: true
+    source: erasmus-facts
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.
+  - host: www.erasmusplus.org.pl
+    enabled: true
+    source: erasmus-facts
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.
+  - host: odyseusz.msz.gov.pl
+    enabled: false
+    source: erasmus-facts
+    note: Owner Kostya Prochan, 2026-11-09, left this host disabled.
+  - host: www.gov.pl
+    enabled: true
+    source: fact-url
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.
+  - host: dziennikustaw.gov.pl
+    enabled: true
+    source: fact-url
+    note: Owner Kostya Prochan, 2026-11-09, enabled this official fact domain.

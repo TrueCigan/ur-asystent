@@ -1,5 +1,6 @@
 """Logika asystenta: doprecyzowanie sytuacji studenta, wyszukiwanie hybrydowe, odpowiedź z cytatami (PL/EN/UK/MN)."""
 import os, re, gzip, json, math, collections, numpy as np, scipy.sparse as sp, httpx
+_HTTPX_POST = httpx.post
 from index import tokens, norm, D, char_ngrams, char_vec
 from security import (
     SECURITY_RULES, is_security_probe, refuse_message, wrap_untrusted,
@@ -13,10 +14,10 @@ from lang import (
     LANG_NAME, map_policy, resolve_session_lang, output_lang_ok,
     sticky_lang_from_user_turns,
 )
-from deadlines import deadline_passed_note, strip_llm_deadline_notes
+from deadlines import deadline_passed_note, notes_from_signed_deadlines, strip_llm_deadline_notes
 from facts import (
     load_facts, select_facts, render_facts_block, render_facts_for_user,
-    extract_income, computed_income_line,
+    extract_income, computed_income_line, fallback_facts, strip_staff_contacts,
 )
 
 IDX = None
@@ -83,6 +84,9 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
                 sc[i] *= 0.15
     out, per_url = [], {}
     tset = set(topics or [])
+    hard = (profile or {}).get("hard_filters") if isinstance(profile, dict) else None
+    # Filters run before the result limit. Without filters the old stop-at-k stays.
+    pool_limit = 200 if hard else k
     for i in np.argsort(-sc):
         if sc[i] <= 0:
             continue
@@ -95,8 +99,11 @@ def search(q, k=8, prefer=None, topics=None, profile=None):
         per_url[u] = per_url.get(u, 0) + 1
         hit = dict(c, score=float(sc[i]), url=u)
         out.append(hit)
-        if len(out) >= k:
+        if len(out) >= pool_limit:
             break
+    if hard:
+        from hard_filter import limit_after_filters
+        return limit_after_filters(out, k, hard).rows
     return out
 
 
@@ -624,12 +631,58 @@ def _recent_benefit_from_history(history_text):
     many = _recent_benefits_from_history(history_text)
     return many[-1] if many else None
 
+# A question that names the person, not a bare mention of the doctoral stipend.
+_STATED_DOCTORAL = re.compile(
+    r"(?i)(?:"
+    r"doctoral\s+stud\w+|"
+    r"phd\s+stud\w+|"
+    r"doktorant\w*\s+szko\w*\s+doktorsk|"
+    r"szko\w*\s+doktorsk\w*.{0,48}doktorant|"
+    r"czy\s+doktorant|"
+    r"докторын\s+оюутан"
+    r")"
+)
+_THIRD_PERSON = re.compile(
+    r"(?i)(?<!\w)(?:she|he|they|her|his|their|ona|on|oni|вона|він|вони|она|он|они)(?!\w)"
+)
+_STATED_STUDENT = re.compile(
+    r"(?i)(?:jestem\s+student\w*|i\s+am\s+a\s+student\b|я\s+студент\w*|би\s+оюутан)"
+)
+_STATED_INCOMING = re.compile(
+    r"(?i)(?:erasmus\s+incoming|incoming\s+(?:erasmus|student)|"
+    r"student\s+przyje[zż]\w*|студент\s+за\s+обмін|ірсэн\s+оюутан)"
+)
+_STATUS_FREE_TOPIC = re.compile(
+    r"(?i)(?:\b(?:limit|cap)\b|łączn\w*\s+kwot|laczna\s+kwot|"
+    r"na\s+jaki\s+okres|okres\s+obowi|salary\s*act|ustaw\w+\s+o\s+wynagrod)"
+)
+_PERSONAL_ELIGIBILITY = re.compile(
+    r"(?i)(?:czy\s+mog[eę]|can\s+i\s+(?:get|apply|receive)|чи\s+можу|би\s+боломж|"
+    r"jak\s+dosta[cć]|jak\s+uzyska|jak\s+otrzyma|how\s+(?:do\s+i|to)\s+(?:get|apply))"
+)
+
+
 def _gate_required_slots(req, topic_names, prof, question, history_text=""):
     """Drop slots that facts/profile already make unnecessary (P4 — no clarify loops)."""
     req = list(req or [])
     topic_names = list(topic_names or [])
     prof = prof or {}
     blob = f"{question or ''}\n{history_text or ''}"
+    # The question already names the status. Do this before any extractor call.
+    negated_doctoral = bool(re.search(
+        r"(?i)n(?:ie|i)\s+jestem\s+doktorant|not\s+(?:a\s+)?doctoral|не\s+(?:є\s+)?докторант",
+        question or "",
+    ))
+    states_doctoral = (
+        bool(_STATED_DOCTORAL.search(question or ""))
+        and not negated_doctoral
+        and not _THIRD_PERSON.search(question or "")
+    )
+    if prof.get("status") != "doktorant" and states_doctoral:
+        prof["status"] = "doktorant"
+        prof.setdefault("poziom", "SD")
+    elif _STATED_INCOMING.search(question or "") and not prof.get("status"):
+        prof["status"] = "cudzoziemiec"
     if prof.get("status") == "doktorant" or prof.get("poziom") == "SD":
         req = [x for x in req if x not in ("tryb", "poziom", "rok", "kierunek", "drugi_kierunek")]
     # PL-language tuition without foreigner markers → do not demand status (R5-5)
@@ -663,6 +716,38 @@ def _gate_required_slots(req, topic_names, prof, question, history_text=""):
     # Disability degree already fills the slot — never re-ask niepelnosprawnosc
     if prof.get("niepelnosprawnosc") == "tak":
         req = [x for x in req if x != "niepelnosprawnosc"]
+    # Status is already in the question, or this topic does not depend on it.
+    if states_doctoral or _STATED_STUDENT.search(question or "") or _STATED_INCOMING.search(question or ""):
+        req = [x for x in req if x != "status"]
+    if _STATUS_FREE_TOPIC.search(question or ""):
+        req = [x for x in req if x not in ("status", "poziom", "tryb", "rok", "drugi_kierunek")]
+    # "Which fact describes…" is a lookup, not an eligibility question.
+    if re.search(r"(?i)który temat opisuje|which stored fact|który fakt|which fact covers", question or ""):
+        req = []
+    if "erasmus" in topic_names and not _PERSONAL_ELIGIBILITY.search(question or ""):
+        req = [x for x in req if x != "status"]
+    # A rule or a procedure does not need the speaker's status. One signed fact
+    # that does not constrain status does not need it either. An empty question
+    # is not evidence that status is irrelevant.
+    if question:
+        personal = bool(_PERSONAL_ELIGIBILITY.search(question))
+        asks_benefit = bool(re.search(
+            r"(?i)яка\s+стипенд|яку\s+стипенд|ile\s|how\s+much|wysoko|"
+            r"скільки|сколько|what\s+(?:scholarship|stipend)",
+            question,
+        ))
+        if not personal and not asks_benefit:
+            req = [x for x in req if x != "status"]
+            if "erasmus" in topic_names:
+                req = [x for x in req if x not in ("poziom", "rok", "tryb")]
+        else:
+            from facts import load_facts
+            matched = [
+                fact for fact in load_facts()
+                if fact.status == "verified" and set(fact.topic or []) & set(topic_names)
+            ]
+            if len(matched) == 1 and "status" not in (matched[0].applies_to or {}):
+                req = [x for x in req if x != "status"]
     return list(dict.fromkeys(req))
 
 
@@ -945,10 +1030,181 @@ REQUEST_BUDGET_SEC = 55.0
 
 
 _LLM_ATTEMPTS = []
+_LLM_STOP_REASON = None
 
 
 def _reset_llm_attempts():
+    global _LLM_STOP_REASON
     _LLM_ATTEMPTS.clear()
+    _LLM_STOP_REASON = None
+
+
+class ModelFormatError(RuntimeError):
+    """The provider returned HTTP 200 with no usable text block."""
+
+
+def anthropic_visible_text(payload: dict) -> str:
+    """Join type=text blocks. Ignore thinking and redacted_thinking."""
+    blocks = payload.get("content") if isinstance(payload, dict) else None
+    if not isinstance(blocks, list):
+        raise ModelFormatError("Anthropic response has no content list")
+    parts = []
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        kind = block.get("type")
+        if kind in ("thinking", "redacted_thinking"):
+            continue
+        # A missing type is the older text-only payload. A thinking block always sets type.
+        if kind in (None, "text") and "text" in block:
+            parts.append(block.get("text") or "")
+    if not any(part.strip() for part in parts):
+        raise ModelFormatError("Anthropic response has no text block")
+    return "".join(parts)
+
+
+def thinking_fields(model: str | None) -> dict:
+    """Haiku 5.5 thinks by default. Disable it at effort high.
+
+    https://platform.claude.com/docs/en/build-with-claude/thinking
+    `thinking: {type: "disabled"}` is accepted on Claude Haiku 5.5 at effort
+    high or below. `budget_tokens` is rejected with HTTP 400.
+    """
+    flag = (os.getenv("LLM_THINKING") or "").strip().lower()
+    name = (model or os.getenv("LLM_MODEL") or "").strip().lower()
+    if flag in {"1", "on", "adaptive", "enabled"}:
+        return {}
+    if flag in {"0", "off", "disabled"} or name.startswith("claude-haiku-5"):
+        return {"thinking": {"type": "disabled"}, "output_config": {"effort": "high"}}
+    return {}
+
+
+def is_transport_failure(exc: BaseException) -> bool:
+    """Timeouts, connection failures, HTTP 429, and HTTP 5xx only."""
+    if isinstance(exc, ModelFormatError):
+        return False
+    if isinstance(exc, (httpx.TimeoutException, httpx.TransportError)):
+        return True
+    text = str(exc).lower()
+    if "timeout" in text or "timed out" in text:
+        return True
+    return bool(re.search(r"http[^\d]{0,12}(429|5\d\d)\b", text))
+
+
+_CAMPUS_CUE = re.compile(
+    r"(?i)stypend|wniosek|akademik|erasmus|czesn|rektor|wydział|wydzial|kierunek|"
+    r"student|uniwersytet|\bur\b|tuition|scholarship|dormitor"
+)
+_OOD_QUESTION = re.compile(
+    r"(?i)\b(pogod\w*|weather|forecast)\b|czy dostan[eę] si[eę]|czy mnie przyjm|"
+    r"will i be admitted|will i get in"
+)
+_DEAN_OFFICE = re.compile(r"(?i)dziekanat|dean'?s?\s+office|деканат")
+_DEAN_CONTACT = re.compile(r"(?i)telefon|phone|adres|kontakt|stron|numer|e-?mail")
+RETRIEVAL_MIN_SCORE = 0.05
+_HELP_URL = "https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/"
+
+
+def out_of_scope_answer(question: str, lang: str, topics, hits, history_text: str = "") -> dict | None:
+    """Honest no_answer instead of unrelated quotes."""
+    q = question or ""
+    if _DEAN_OFFICE.search(q) and _DEAN_CONTACT.search(q):
+        text = {
+            "pl": "Nie mam zatwierdzonego adresu ani telefonu dziekanatu. Nie podaję numeru innego działu. "
+                  f"Oficjalna strona świadczeń: {_HELP_URL}",
+            "en": "There is no signed dean's office address or phone. I will not substitute another office. "
+                  f"Official benefits page: {_HELP_URL}",
+            "uk": "Немає затвердженої адреси чи телефону деканату. Я не підставляю номер іншого відділу. "
+                  f"Офіційна сторінка стипендій: {_HELP_URL}",
+        }.get(map_policy(lang), "Nie mam zatwierdzonego adresu ani telefonu dziekanatu.")
+        return {"answer": text, "sources": [{"title": "Świadczenia", "url": _HELP_URL}]}
+    admission = bool(re.search(r"(?i)dostan[eę] si[eę]|admitted|przyjm", q))
+    explicit = bool(_OOD_QUESTION.search(q)) or admission
+    top = max((float(h.get("score") or 0) for h in (hits or [])), default=0.0)
+    # A follow-up stays in scope when the dialogue already named a campus subject.
+    low = (not topics) and top < RETRIEVAL_MIN_SCORE and not _CAMPUS_CUE.search(f"{q}\n{history_text or ''}")
+    if not explicit and not low:
+        return None
+    if admission:
+        text = {
+            "pl": "Nie mogę przewidzieć przyjęcia na studia i nie obiecuję miejsca.",
+            "en": "I cannot predict admission and I will not promise a place.",
+            "uk": "Я не передбачаю вступу і не обіцяю місця.",
+        }.get(map_policy(lang), "Nie mogę przewidzieć przyjęcia na studia i nie obiecuję miejsca.")
+        return {"answer": text, "sources": []}
+    text = {
+        "pl": "Nie mam potwierdzonej odpowiedzi w oficjalnych materiałach UR. "
+              f"W sprawach świadczeń: {_HELP_URL}",
+        "en": "The official UR material on file does not confirm an answer. "
+              f"For student benefits: {_HELP_URL}",
+        "uk": "У наявних офіційних матеріалах UR немає підтвердженої відповіді. "
+              f"Стипендії: {_HELP_URL}",
+    }.get(map_policy(lang), "Nie mam potwierdzonej odpowiedzi w oficjalnych materiałach UR.")
+    return {"answer": text, "sources": [{"title": "Świadczenia", "url": _HELP_URL}]}
+
+
+def record_model_failure(exc: BaseException) -> str:
+    """Provider failures open the breaker. Parse and format errors do not."""
+    from phase4 import note_format_error, note_provider_error
+    if is_transport_failure(exc):
+        note_provider_error()
+        return "transport"
+    note_format_error(f"{type(exc).__name__}: {exc}")
+    return "format"
+
+
+def post_with_deadline(url: str, timeout_s: float, **kwargs):
+    """One wall-clock budget for connect, write, and the whole body."""
+    import time
+    from types import SimpleNamespace
+    deadline = time.monotonic() + float(timeout_s)
+
+    def remaining() -> float:
+        return deadline - time.monotonic()
+
+    if remaining() <= 0:
+        raise httpx.TimeoutException("wall-clock deadline exceeded")
+    timeout = httpx.Timeout(
+        connect=min(5.0, max(0.05, remaining())),
+        read=max(0.05, remaining()),
+        write=min(10.0, max(0.05, remaining())),
+        pool=min(5.0, max(0.05, remaining())),
+    )
+    with httpx.Client(timeout=timeout) as client:
+        with client.stream("POST", url, **kwargs) as response:
+            buf = bytearray()
+            for chunk in response.iter_bytes():
+                if time.monotonic() >= deadline:
+                    raise httpx.TimeoutException("wall-clock deadline exceeded")
+                buf.extend(chunk)
+            status_code = response.status_code
+            header_map = {str(key).lower(): value for key, value in response.headers.items()}
+            body = bytes(buf)
+
+    def read_json(payload=body):
+        return json.loads(payload.decode("utf-8"))
+
+    return SimpleNamespace(status_code=status_code, headers=header_map, json=read_json)
+
+
+def send_temperature(model: str | None = None) -> bool:
+    """Haiku 5.x rejects the temperature field. Omit it unless the env forces it on."""
+    flag = (os.getenv("LLM_SEND_TEMPERATURE") or "").strip().lower()
+    if flag in {"0", "false", "no", "off"}:
+        return False
+    if flag in {"1", "true", "yes", "on"}:
+        return True
+    name = (model if model is not None else os.getenv("LLM_MODEL") or "").strip().lower()
+    return not name.startswith("claude-haiku-5")
+
+
+def last_stop_reason() -> str | None:
+    return _LLM_STOP_REASON
+
+
+def _note_stop_reason(value) -> None:
+    global _LLM_STOP_REASON
+    _LLM_STOP_REASON = value
 
 
 def _record_llm_attempt(*, transport, http_status=None, request_id=None):
@@ -1012,8 +1268,12 @@ def llm_path_from_attempts(*, final, model_used, discarded):
     )
 
 
-def call_llm(messages, temperature=0.25):
+def call_llm(messages, temperature=0.25, timeout=None, max_tokens=None, retries=None):
     prov = os.getenv("LLM_PROVIDER", "").lower(); key = os.getenv("LLM_API_KEY", "")
+    # Explicit fake provider: fixed string, no HTTP. A real provider below is unchanged.
+    if prov == "fake":
+        from adapters import fake_llm_complete
+        return fake_llm_complete()
     model = os.getenv("LLM_MODEL", "")
     if prov == "gemini":
         import time
@@ -1023,9 +1283,12 @@ def call_llm(messages, temperature=0.25):
         for m in dict.fromkeys(chain):
             for att in range(4):
                 try:
+                    gemini_body = {"model": m, "messages": messages, "reasoning_effort": "low"}
+                    if send_temperature(m):
+                        gemini_body["temperature"] = temperature
                     r = httpx.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", timeout=90,
                                    headers={"Authorization": f"Bearer {key}"},
-                                   json={"model": m, "messages": messages, "temperature": temperature, "reasoning_effort": "low"})
+                                   json=gemini_body)
                 except httpx.TimeoutException as e:
                     last = e; break
                 if r.status_code == 200:
@@ -1041,25 +1304,40 @@ def call_llm(messages, temperature=0.25):
         import time, random, logging
         log = logging.getLogger("ur.llm")
         last = None
-        for att in range(2):
+        attempts = 1 if retries == 0 else 2
+        for att in range(attempts):
             t0 = time.monotonic()
             try:
-                r = httpx.post(
-                    "https://api.anthropic.com/v1/messages",
-                    timeout=_ANTHROPIC_TIMEOUT,
-                    headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
-                    json={
-                        "model": model or "claude-sonnet-4-5",
-                        "max_tokens": 1400,
-                        "system": messages[0]["content"],
-                        "messages": messages[1:],
-                        "temperature": temperature,
-                    },
-                )
+                anthropic_body = {
+                    "model": model or "claude-sonnet-4-5",
+                    "max_tokens": max_tokens or 1400,
+                    "system": messages[0]["content"],
+                    "messages": messages[1:],
+                }
+                if send_temperature(anthropic_body["model"]):
+                    anthropic_body["temperature"] = temperature
+                anthropic_body.update(thinking_fields(anthropic_body["model"]))
+                headers = {"x-api-key": key, "anthropic-version": "2023-06-01"}
+                # A numeric timeout is one wall-clock budget. A patched httpx.post
+                # stays on the existing fake and never opens a live connection.
+                if isinstance(timeout, (int, float)) and httpx.post is _HTTPX_POST:
+                    r = post_with_deadline(
+                        "https://api.anthropic.com/v1/messages",
+                        float(timeout),
+                        headers=headers,
+                        json=anthropic_body,
+                    )
+                else:
+                    r = httpx.post(
+                        "https://api.anthropic.com/v1/messages",
+                        timeout=timeout or _ANTHROPIC_TIMEOUT,
+                        headers=headers,
+                        json=anthropic_body,
+                    )
             except httpx.TimeoutException as e:
                 _record_llm_attempt(transport="error", http_status=None)
                 last = e
-                if att == 0:
+                if retries != 0 and att == 0:
                     time.sleep(1.0 + random.random())
                     continue
                 raise RuntimeError("Anthropic timeout") from e
@@ -1070,10 +1348,12 @@ def call_llm(messages, temperature=0.25):
             log.info("anthropic status=%s latency=%.2fs request-id=%s", r.status_code, time.monotonic() - t0, rid)
             if r.status_code == 200:
                 _record_llm_attempt(transport="ok", http_status=200, request_id=rid)
-                return r.json()["content"][0]["text"]
+                payload = r.json()
+                _note_stop_reason(payload.get("stop_reason"))
+                return anthropic_visible_text(payload)
             _record_llm_attempt(transport="error", http_status=r.status_code, request_id=rid)
             last = f"HTTP {r.status_code}"
-            if r.status_code in (429, 500, 529) and att == 0:
+            if retries != 0 and r.status_code in (429, 500, 529) and att == 0:
                 time.sleep(1.0 + random.random())
                 continue
             raise RuntimeError(f"Anthropic niedostępny (HTTP {r.status_code})")
@@ -1083,16 +1363,34 @@ def call_llm(messages, temperature=0.25):
     # block clearly non-http(s) bases to reduce SSRF risk if env is mis-set
     if not (base or "").startswith(("https://", "http://localhost", "http://127.0.0.1")):
         raise RuntimeError("LLM_BASE_URL niedozwolony")
+    openai_body = {"model": model or "gpt-4o-mini", "messages": messages}
+    if send_temperature(openai_body["model"]):
+        openai_body["temperature"] = temperature
     r = httpx.post(base + "/chat/completions", timeout=120, headers={"Authorization": f"Bearer {key}"},
-                   json={"model": model or "gpt-4o-mini", "messages": messages, "temperature": temperature})
+                   json=openai_body)
     if r.status_code >= 400:
         raise RuntimeError(f"LLM niedostępny (HTTP {r.status_code})")
     return r.json()["choices"][0]["message"]["content"]
 
 def llm_enabled():
     p = os.getenv("LLM_PROVIDER", "").lower()
+    # fake/off must not look like a live model on /api/status
+    if p in ("", "fake", "off", "disabled"):
+        return False
     if p == "gemini": return bool(os.getenv("GEMINI_API_KEY") or os.getenv("LLM_API_KEY"))
     return bool(p) and (bool(os.getenv("LLM_API_KEY")) or p == "ollama")
+
+def _generation_block_reason() -> str | None:
+    """Pause generation after a provider burst, or when a configured daily budget is spent."""
+    try:
+        from phase4 import BREAKER, budget_open
+    except Exception:
+        return None
+    if BREAKER.is_open():
+        return "provider_pause"
+    if not budget_open():
+        return "budget"
+    return None
 
 PROF_LABEL = {
  "pl": {"status": "status", "tryb": "tryb", "poziom": "poziom", "rok": "rok", "drugi_kierunek": "drugi kierunek / dyplom", "niepelnosprawnosc": "orzeczenie o niepełnosprawności", "kierunek": "kierunek/grupa", "pobyt": "pobyt"},
@@ -1826,6 +2124,16 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             clarify=False, mode="security", sources=[], profile={}, topics=[], lang=lang,
             answer=refuse_message(lang), llm_path=closed_path("refusal"),
         ), state)
+    # Approved FAQ only. Any miss, compound, negation, or unknown id falls through.
+    try:
+        from faq_fast import try_fast_path
+        fast = try_fast_path(question, lang)
+    except Exception:
+        fast = None
+    if fast is not None:
+        fast["lang"] = lang
+        fast["llm_path"] = closed_path("deterministic")
+        return _attach_state(fast, state)
     # Verified social-scholarship scenario (no LLM) — reversible via SCENARIO_SOCIAL
     try:
         from scenarios.social import (
@@ -2058,7 +2366,17 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             if line:
                 computed_lines.append(line)
     facts_block = render_facts_block(selected_facts, lang, computed_lines=computed_lines)
-    facts_for_user = render_facts_for_user(selected_facts, lang, computed_lines=computed_lines)
+    shown_facts = fallback_facts(selected_facts, question, topics, limit=3)
+    positions = {id(fact): index for index, fact in enumerate(selected_facts, 1)}
+    facts_for_user = strip_staff_contacts(
+        render_facts_for_user(
+            shown_facts,
+            lang,
+            computed_lines=computed_lines,
+            numbers=[positions[id(fact)] for fact in shown_facts],
+        ),
+        question,
+    )
 
     blob6 = _hit_blob(hits[:6])
     # Parallel to selected_facts. Only a verified fact contributes an official URL.
@@ -2076,7 +2394,7 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
         out = finalize_answer_urls(
             out, hits[:6], fact_urls=fact_urls, lang=lang, hits_blob=blob6, cited_fact_indexes=cited,
         )
-        out += deadline_passed_note(out, lang)
+        out += notes_from_signed_deadlines(selected_facts, lang, question_topics=topics)
         out, fee_corrected = _with_selected_english_tuition(out, lang, selected_facts, question, hist_user)
         if fee_corrected:
             llm_path = dict(llm_path)
@@ -2091,7 +2409,15 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             state,
         )
 
-    if llm_enabled():
+    scope = out_of_scope_answer(question, lang, topics, hits, hist_user)
+    if scope is not None:
+        return _attach_state(dict(
+            clarify=False, mode="no_answer", sources=scope["sources"], profile=prof, topics=topics,
+            lang=lang, answer=scope["answer"], llm_path=closed_path("deterministic"),
+        ), state)
+
+    generation_block = _generation_block_reason() if llm_enabled() else None
+    if llm_enabled() and not generation_block:
         _reset_llm_attempts()
         import datetime
         import json as _json
@@ -2103,7 +2429,6 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                      .replace("{lang}", lang)
                      .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
                      .replace("{security_rules}", SECURITY_RULES))
-        cards = fact_cards(selected_facts, lang)
         dialogue = {
             "prior_user_turns": [
                 (m.get("content") or "")[:500]
@@ -2112,34 +2437,74 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
             "latest": question,
             "original_intent": getattr(state, "original_question", None),
         }
+        from answer_contract import (
+            accept_model_answer, fallback_contract, load_prompt_settings, looks_like_json,
+            output_was_truncated, unwrap_model_text,
+        )
+        prompt_settings = load_prompt_settings()
+        chunk_n = max(1, int(prompt_settings["context_chunks"]))
+        chunk_chars = max(80, int(prompt_settings["chunk_chars"]))
+        card_n = max(1, int(prompt_settings["fact_cards_max"]))
+        card_chars = max(80, int(prompt_settings["card_chars"]))
+        cards = fact_cards(selected_facts[:card_n], lang)
+        for card in cards:
+            preview = card.get("value_preview") or ""
+            if len(preview) > card_chars:
+                card["value_preview"] = preview[:card_chars] + "…"
+        shown_for_prompt = selected_facts[:card_n]
+        from answer_contract import assemble_citable
+        fact_rows = []
+        for fact, card in zip(shown_for_prompt, cards):
+            fact_rows.append({
+                "id": getattr(fact, "id", None),
+                "title": card.get("label") or getattr(fact, "id", ""),
+                "url": ((getattr(fact, "source", None) or {}).get("url") or "").strip(),
+                "text": card.get("value_preview") or "",
+            })
+        manifest = assemble_citable(
+            fact_rows, hits, chunk_n=chunk_n, chunk_chars=chunk_chars,
+        )
+        by_cite = {row["chunk_id"]: row["n"] for row in manifest}
+        for card in cards:
+            if card.get("id") in by_cite:
+                card["n"] = by_cite[card["id"]]
+        citable_ids = [{"n": row["n"], "id": row["chunk_id"]} for row in manifest]
         user_payload = _json.dumps({
             "lang": lang,
             "profile": prof,
             "topics": topics,
+            "citable_ids": citable_ids,
             "fact_cards": cards,
             "sources": [
-                {"id": i, "title": h.get("title"), "url": h.get("url")}
-                for i, h in enumerate(hits[:6], 1)
+                {"id": row["chunk_id"], "n": row["n"], "title": row["title"]}
+                for row in manifest if row.get("kind") == "chunk"
             ],
             "dialogue": dialogue,
         }, ensure_ascii=False)
         msgs = [
             {"role": "system", "content": sys},
-            {"role": "user", "content": user_payload + "\n\nReturn JSON only."},
+            {"role": "user", "content": user_payload + "\n\nReturn JSON only. Cite only ids from citable_ids."},
         ]
+        msgs[0]["content"] = prompt_settings["answer_prompt"]
         try:
-            raw = strip_untrusted_wrappers(redact_secrets(call_llm(msgs, temperature=0.2)))
-            data = parse_model_json(raw)
-            if data and template_has_raw_money(data.get("template") or ""):
-                # one repair: strip money instruction
-                repair = msgs + [{"role": "user", "content":
-                    "INVALID: template contains raw monetary digits. Rewrite JSON using only {{F:…}} / {{C:…}} placeholders."}]
-                raw = strip_untrusted_wrappers(redact_secrets(call_llm(repair, temperature=0.1)))
-                data = parse_model_json(raw)
-                if data and template_has_raw_money(data.get("template") or ""):
-                    data = None
-            if data:
-                # Facts-first: force tuition fact_ids into structured answers (P5)
+            # One generation. Invalid schema, bad citations, and wrong language do not call again.
+            raw = strip_untrusted_wrappers(redact_secrets(call_llm(
+                msgs,
+                temperature=prompt_settings["temperature"],
+                timeout=prompt_settings["answer_timeout_s"],
+                max_tokens=prompt_settings["answer_max_tokens"],
+                retries=0,
+            )))
+            stop_reason = last_stop_reason()
+            if output_was_truncated(stop_reason):
+                degraded = fallback_contract(lang, manifest, "truncated")
+                done = _finalize(degraded["answer"], "wyszukiwanie", llm_path_from_attempts(
+                    final="fallback", model_used=False, discarded="truncated",
+                ))
+                done["contract"] = degraded
+                return done
+            data = parse_model_json(unwrap_model_text(raw) if raw else raw)
+            if data and not template_has_raw_money(data.get("template") or ""):
                 fids = list(data.get("fact_ids") or [])
                 if "oplaty" in topics:
                     for fid in ("tuition_english_programmes", "tuition_polish_part_time_I"):
@@ -2149,59 +2514,67 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
                 need = list(data.get("computed_need") or [])
                 computed = build_computed(selected_facts, need, profile=prof)
                 out = render_answer(data["template"], selected_facts, computed=computed, lang=lang)
-                # Drop out-of-range citations (never show [4] when only 2 sources)
                 from render import validate_citations
                 for bad in validate_citations(out, len(srcs)):
                     out = out.replace(bad, "")
-                if out:
-                    if not output_lang_ok(out, lang) and _time.monotonic() + 20 < _t_deadline:
-                        repair = msgs + [{"role": "user", "content":
-                            f"CRITICAL: template language must be {LANG_NAME.get(lang, 'polski')} (lang={lang}). Rewrite JSON."}]
-                        raw2 = strip_untrusted_wrappers(redact_secrets(call_llm(repair, temperature=0.1)))
-                        data2 = parse_model_json(raw2)
-                        if data2 and not template_has_raw_money(data2.get("template") or ""):
-                            out = render_answer(
-                                data2["template"], selected_facts,
-                                computed=build_computed(selected_facts, data2.get("computed_need") or [], profile=prof),
-                                lang=lang,
-                            )
-                    if out and output_lang_ok(out, lang):
-                        return _finalize(out, "llm-structured", llm_path_from_attempts(
-                            final="model", model_used=True, discarded=None,
-                        ))
-            # JSON failed → free-text legacy once, then fallback
-            sys_ft = (SYSTEM_FREE_TEXT.replace("{today}", datetime.date.today().isoformat())
-                                      .replace("{lang}", lang)
-                                      .replace("{lang_name}", LANG_NAME.get(lang, "polski"))
-                                      .replace("{security_rules}", SECURITY_RULES))
-            facts_section = (facts_block + "\n\n") if facts_block else ""
-            msgs_ft = [{"role": "system", "content": sys_ft}] + _safe_history(history, 8) + [{
-                "role": "user",
-                "content": (
-                    f"PROFILE: {prof_txt}\nLANG: {lang}\nTOPICS: {', '.join(topics) or '—'}\n\n"
-                    + facts_section
-                    + f"SOURCES:\n{fmt_sources(hits)}\n\n"
-                    + wrap_untrusted("USER_QUESTION", llm_q)
-                    + "\n\nAnswer per system rules. Prefer amounts from FACTS only."
-                ),
-            }]
-            model_text = strip_untrusted_wrappers(redact_secrets(call_llm(msgs_ft, temperature=0.3)))
-            if not model_text or not output_lang_ok(model_text, lang):
+                if out and output_lang_ok(out, lang):
+                    return _finalize(out, "llm-structured", llm_path_from_attempts(
+                        final="model", model_used=True, discarded=None,
+                    ))
+                if out and not output_lang_ok(out, lang):
+                    out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
+                    return _finalize(out, "wyszukiwanie", llm_path_from_attempts(
+                        final="fallback", model_used=False, discarded="lang",
+                    ))
+            accepted, reason = accept_model_answer(raw, manifest, lang, stop_reason=stop_reason)
+            if accepted:
+                done = _finalize(accepted["answer"], "answer-contract", llm_path_from_attempts(
+                    final="model", model_used=True, discarded=None,
+                ))
+                done["contract"] = accepted
+                cited_sources = []
+                for item in accepted["citations"]:
+                    if not item.get("url"):
+                        continue
+                    cited_sources.append({
+                        "n": item["n"],
+                        "title": item.get("title") or "",
+                        "url": item["url"],
+                        "fact_ids": [] if str(item.get("chunk_id") or "").startswith("chunk-") else [item["chunk_id"]],
+                    })
+                if cited_sources:
+                    done["sources"] = cited_sources
+                return done
+            if reason == "lang" or (raw and not looks_like_json(raw) and not output_lang_ok(raw, lang)):
                 out = compose_fallback_answer(lang, topics, prof, hits, prof_txt, err="", facts_block=facts_for_user)
                 return _finalize(out, "wyszukiwanie", llm_path_from_attempts(
-                    final="fallback", model_used=False,
-                    discarded="empty" if not model_text else "lang",
+                    final="fallback", model_used=False, discarded="lang",
                 ))
-            return _finalize(model_text, "llm", llm_path_from_attempts(
-                final="model", model_used=True, discarded=None,
+            if raw and not looks_like_json(raw) and output_lang_ok(raw, lang):
+                return _finalize(raw, "llm", llm_path_from_attempts(
+                    final="model", model_used=True, discarded=None,
+                ))
+            degraded = fallback_contract(lang, manifest, reason or "invalid_schema")
+            done = _finalize(degraded["answer"], "wyszukiwanie", llm_path_from_attempts(
+                final="fallback", model_used=False, discarded=reason or "invalid_schema",
             ))
-        except Exception:
+            done["contract"] = degraded
+            return done
+        except Exception as exc:
+            kind = "format"
+            try:
+                kind = record_model_failure(exc)
+            except Exception:
+                pass
+            from answer_contract import provider_failure_reason
+            reason = "format" if kind == "format" else provider_failure_reason(exc)
             err = LLM_ERR.get(lang, LLM_ERR["pl"])
             ans = strip_untrusted_wrappers(redact_secrets(
                 compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
             ))
             return _finalize(ans, "wyszukiwanie", llm_path_from_attempts(
-                final="fallback", model_used=False, discarded="exception",
+                final="fallback", model_used=False,
+                discarded=reason if reason in ("timeout", "rate_limit", "format") else "exception",
             ))
     else:
         err = ""
@@ -2209,5 +2582,6 @@ def answer(question, history, session_lang=None, state_token=None, conv_id=None,
         compose_fallback_answer(lang, topics, prof, hits, prof_txt, err=err, facts_block=facts_for_user)
     ))
     return _finalize(ans, "wyszukiwanie", llm_path_from_attempts(
-        final="fallback", model_used=False, discarded="not_enabled",
+        final="fallback", model_used=False,
+        discarded=generation_block or "not_enabled",
     ))

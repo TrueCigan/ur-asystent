@@ -264,9 +264,9 @@
 - id: r5-exam-date-not-deadline-one-window
   origin: r5-S10
   deadline_note: {text: "реєстрація на екзамен для року 2026/2027 закривається 19.02.2026. Екзамен писемний — 03.03.2026 о 16:30 на WEiF", lang: uk, expect_count: 1, today: "2026-11-04"}
-- id: r5-partial-range-one-warning
+- id: r5-check-in-not-deadline
   origin: r4
-  deadline_note: {text: "Zakwaterowanie w terminie 29.09–1.10.2026", lang: pl, expect_count: 1, today: "2026-11-04", must_match: ["29\\.09\\.2026 – 01\\.10\\.2026"]}
+  deadline_note: {text: "Zakwaterowanie w terminie 29.09–1.10.2026", lang: pl, expect_count: 0, today: "2026-11-04", must_not_match: ["już minął", "29\\.09\\.2026 – 01\\.10\\.2026"]}
 - id: r5-update-date-not-deadline
   origin: r5-S2
   deadline_note: {text: "Strona zaktualizowana 24.08.2026. Uchwała nr 000-9/2/2026 z dnia 12.03.2026.", lang: pl, expect_count: 0, today: "2026-11-04"}
@@ -386,8 +386,8 @@
     text: "Kwaterowanie: 29–30 września i 1 października 2026, godz. 8–15"
     lang: pl
     today: "2026-11-05"
-    expect_count: 1
-    must_match: ["29\\.09\\.2026|01\\.10\\.2026"]
+    expect_count: 0
+    must_not_match: ["już minął", "29\\.09\\.2026"]
 - id: r6-deadline-bip-not-flagged
   origin: r6-S2
   deadline_note:

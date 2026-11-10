@@ -14,6 +14,8 @@
   candidates_seen:
   - value: 3560.60
     note: Komunikat MNiSW z 11.09.2025 (rok 2025/2026) podaje 3.560,6 zł. Cytowany URL odpowiedzi to aneks UR, nie strona gov.pl (tej strony nie ma w korpusie źródeł).
+  - value: 3556
+    note: Owner recollection on 2026-11-09 for 2025/2026. Do not answer with 3556. It does not replace the annex figure 3560.60, and it is not the 2026/2027 cap.
   source:
     url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2025/12/Aneks-01-R-41-2025.pdf
     ordinance: Aneks nr 1 z 11.12.2025 do R-41/2025, ustalenia na rok 2025/2026, pkt 4 — łączna miesięczna wysokość stypendium socjalnego i stypendium rektora 3.560,60 zł. To nie jest limit 3667 zł z okna 2026/2027.
@@ -44,9 +46,9 @@
     url: https://student.uniwersytetradom.pl/stypendia-socjalne/
   source:
     url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
-    ordinance: Strona UR 'Świadczenia' + MNiSW 2026/2027 — 38% wynagrodzenia profesora 9650 zł = 3667,00 zł (od 01.01.2026). Kwota 3560,60 zł dotyczy roku 2025/2026 (osobny fakt rector_social_cap_monthly_2025_2026), nie jest konfliktem.
+    ordinance: Strona UR 'Świadczenia' + MNiSW 2026/2027 — 38% wynagrodzenia profesora 9650 zł = 3667,00 zł (od 01.01.2026). Kwota 3560,60 zł dotyczy roku 2025/2026 (osobny fakt rector_social_cap_monthly_2025_2026). Roczny limit 3667 nie zastępuje limitu 2025/2026. Właściciel 2026-11-09 potwierdził 3667 jako limit 2026/2027.
     document_date: '2026-09-08'
-    checked: '2026-11-05'
+    checked: '2026-11-09'
   status: verified
   i18n_label:
     pl: Limit socjalne+rektora (2026/2027)
@@ -178,7 +180,21 @@
 - id: dorm_application_deadline
   topic:
   - akademik
-  value: Wniosek w Wirtualnej Uczelni do 15.05.2026 (termin minął); pierwszoroczni – po uzyskaniu dostępu do WU; zadatek 94 zł do 31.08.2026; kwaterowanie 29.09–01.10.2026, 8–15
+  value:
+    application_channel: Wirtualna Uczelnia
+    application_end: '2026-05-15'
+    first_years: after access to Wirtualna Uczelnia (I and II cycle)
+    deposit_pln: 94
+    deposit_due: '2026-08-31'
+    deposit_for: October
+    check_in_dates:
+    - '2026-09-29'
+    - '2026-09-30'
+    - '2026-10-01'
+    check_in_hours: 08:00-15:00
+    check_in_is_application_deadline: false
+    income_in_application: declaration_only
+    summary: Elektroniczny wniosek w Wirtualnej Uczelni do 15.05.2026. 29 września 2026 jest dniem kwaterowania, nie terminem składania wniosku.
   unit: null
   academic_year: 2026/2027
   applies_to: {}
@@ -186,12 +202,12 @@
     start: null
     end: '2026-05-15'
   candidates_seen:
-  - note: do 15 maja / 15 May 2026 — verify year
+  - note: Owner 2026-11-09 confirmed the dorm page. Do not use 29 September as the application deadline.
   source:
     url: https://student.uniwersytetradom.pl/domy-studenckie/
-    ordinance: Strona 'Domy studenckie' (rok 2026/27)
+    ordinance: Strona 'Domy studenckie' (rok 2026/27). Wniosek elektroniczny do 15.05.2026; pierwszoroczni po dostępie do WU; zadatek 94 zł do 31.08.2026; kwaterowanie 29–30.09 i 01.10.2026, 8:00–15:00. Dochód we wniosku to oświadczenie.
     document_date: '2026-10-27'
-    checked: '2026-11-05'
+    checked: '2026-11-09'
   status: verified
   i18n_label:
     pl: Termin składania wniosków o akademik
@@ -211,12 +227,12 @@
     start: '2026-09-01'
     end: '2026-10-05'
   candidates_seen:
-  - note: 01.09.2026 – 05.10.2026 vs 1–5 października 2026 — verify
+  - note: Owner 2026-11-09 confirmed the window 2026-09-01 through 2026-10-05. The last day is 5 October. From 6 October the scholarship window for that question is closed. A question that does not name which deadline still needs clarification.
   source:
     url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
-    ordinance: Strona 'Świadczenia dla studentów' – termin na cały rok 2026/2027 (wariant '1–5 października' to tylko część tego okna)
+    ordinance: Strona 'Świadczenia dla studentów' – termin 1.09.2026–5.10.2026 na rok 2026/2027. Ostatni dzień to 5 października.
     document_date: '2026-09-08'
-    checked: '2026-11-05'
+    checked: '2026-11-09'
   status: verified
   i18n_label:
     pl: Termin składania wniosków o stypendia
@@ -295,7 +311,7 @@
     base_rate_percent_of_professor_przed: 37
     base_rate_percent_of_professor_po: 57
     disability_topup_percent_of_przed: 30
-    note: 'Amounts listed on gov.pl (page date 26.02.2024): base 37% before the mid-term evaluation and 57% after; disability supplement 30% of the pre-evaluation base (1071.15), not 37% of the professor salary. That page does not state 2026/2027 or 01.01.2026. Professor salary 9650 from 01.01.2026 is Dz.U. 2026 poz. 525 (14.04.2026), a salary rule, not a stipend decision. 6571.65 is 5500.50 + 1071.15. The stipend period is not confirmed.'
+    note: 'Amounts listed on gov.pl (page date 26.02.2024): base 37% before the mid-term evaluation and 57% after; disability supplement 30% of the pre-evaluation base (1071.15), not 37% of the professor salary. That page does not state 2026/2027 or 01.01.2026. Professor salary 9650 from 01.01.2026 is Dz.U. 2026 poz. 525 (14.04.2026), a salary rule, not a stipend decision. 6571.65 is 5500.50 + 1071.15. The period is a separate owner-confirmed fact (doctoral_stipend_period), not a date taken from this page or from the salary act.'
   unit: PLN/month
   academic_year: null
   applies_to:
@@ -388,13 +404,12 @@
     status:
     - doktorant
   candidates_seen:
-  - note: 'CONFLICT: r1 Nie / r2 Tak / r3 no info — owner must decide from regulations'
+  - note: 'Owner 2026-11-09: a doctoral student cannot receive the rector scholarship. First-cycle and second-cycle students can. There is no under-26 age condition. Earlier QA rounds disagreed; do not reintroduce an age limit.'
   source:
     url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf
-    ordinance: art. 86 ust. 1 i art. 91 ustawy PSWN (stypendium rektora tylko dla studentów) + Regulamin świadczeń dla studentów R-32/2024; doktorant w szkole doktorskiej nie jest studentem – otrzymuje
-      stypendium doktoranckie (art. 209)
+    ordinance: art. 86 ust. 1 i art. 91 ustawy PSWN (stypendium rektora tylko dla studentów) + Regulamin świadczeń dla studentów R-32/2024; doktorant w szkole doktorskiej nie jest studentem – otrzymuje stypendium doktoranckie (art. 209). Brak warunku wieku poniżej 26 lat.
     document_date: '2024-07-29'
-    checked: '2026-11-05'
+    checked: '2026-11-09'
   status: verified
   i18n_label:
     pl: Czy doktorant może dostać stypendium rektora
@@ -407,17 +422,17 @@
   - stypendium_rektora
   - stypendium_niepeln
   - akademik
-  value: Wirtualna Uczelnia (elektronicznie, skany PDF)
+  value: Wirtualna Uczelnia, sekcja Moje stypendia (strona internetowa albo aplikacja o tej samej nazwie; elektronicznie, skany PDF)
   unit: null
   academic_year: null
   applies_to: {}
   candidates_seen:
-  - note: Wirtualna Uczelnia / Wirtualny Dziekanat; never mention USOS/SIRK in user-facing text (prompt constraint only)
+  - note: Owner 2026-11-09 spelled the section Moje stypendia (not stypendie/stypendje). Same name for the website and the app. Never mention USOS/SIRK in user-facing text.
   source:
     url: https://student.uniwersytetradom.pl/swiadczenia-dla-studentow-pomoc-materialna/
-    ordinance: Strona 'Świadczenia dla studentów' + 'Domy studenckie'
+    ordinance: Strona 'Świadczenia dla studentów' + 'Domy studenckie'. Kanał to Wirtualna Uczelnia, sekcja Moje stypendia.
     document_date: '2026-09-08'
-    checked: '2026-11-05'
+    checked: '2026-11-09'
   status: verified
   i18n_label:
     pl: Kanał składania wniosków
@@ -445,4 +460,185 @@
     en: UA temporary-protection eligibility for social scholarship
     uk: Право UA (тимчасовий захист) на соціальну стипендію
     mn: UA түр хамгаалалттай нийгмийн тэтгэлэг
+- id: rector_cycle_eligibility
+  topic:
+  - stypendium_rektora
+  value:
+    doctoral_school: "no"
+    first_cycle: "yes"
+    second_cycle: "yes"
+    age_under_26_required: false
+  unit: null
+  academic_year: 2026/2027
+  applies_to: {}
+  candidates_seen: []
+  source:
+    url: https://student.uniwersytetradom.pl/wp-content/uploads/sites/41/2024/08/R-32-2024-Regulamin-swiadczen-dla-studentow.pdf
+    ordinance: Owner 2026-11-09 plus the student-benefits regulation. Rector's scholarship is for first-cycle and second-cycle students. Doctoral students cannot receive it. No under-26 age condition.
+    document_date: '2024-07-29'
+    checked: '2026-11-09'
+  status: verified
+  i18n_label:
+    pl: Kto może dostać stypendium rektora
+    en: Who may receive the rector's scholarship
+    uk: Хто може отримати стипендію ректора
+- id: doctoral_stipend_period
+  topic:
+  - doktoranckie
+  value: podczas roku akademickiego, w którym przyjęto wniosek
+  unit: null
+  academic_year: null
+  applies_to:
+    status:
+    - doktorant
+  candidates_seen:
+  - note: The gov.pl amounts page does not state this period. Dz.U. 2026 poz. 525 does not state it either.
+  source:
+    url: ''
+    ordinance: Owner Kostya Prochan, chat review 2026-11-09. The stipend lasts during the academic year in which the application was accepted. This is not a date copied from the professor-salary regulation.
+    document_date: '2026-11-09'
+    checked: '2026-11-09'
+  status: verified
+  i18n_label:
+    pl: Okres stypendium doktoranckiego
+    en: Doctoral stipend period
+    uk: Період докторської стипендії
+- id: erasmus_application_2026_2027
+  topic:
+  - erasmus
+  value:
+    academic_year: 2026/2027
+    who: Students of cycle 1, 2, or 3, full-time or part-time, any citizenship, who passed the exam session of the semester before recruitment and departure, have preliminary consent of the faculty Erasmus+ coordinator and the dean, submit documents to Dział Współpracy z Zagranicą, and attend the interview. Graduates may also apply for a traineeship.
+    mobility_long_days: 90-360
+    mobility_short_days: 5-30
+    written_motivation_letter_to_dean: false
+    steps:
+    - Preliminary consent of the faculty Erasmus+ coordinator and the dean.
+    - Submit to DWZ Podanie do Prorektora ds. Spraw Dydaktycznych i Studenckich and Formularz Studenta (study or traineeship form), plus a language-certificate copy if the student has one.
+    - Attend the required interview and present motivation orally in a foreign language.
+    forms_filled_on: computer
+    study_rules_point_4_year_label: The study-departure rules, point 4, say "na zasadach ustalonych dla roku 2025/2026" under a 2026/2027 title. The traineeship rules say 2026/2027 in the same point. Do not invent which label wins.
+  unit: null
+  academic_year: 2026/2027
+  applies_to: {}
+  candidates_seen: []
+  source:
+    url: https://dwz.uniwersytetradom.pl/erasmus-2026-2027/
+    ordinance: Rekrutacja PDF and Zasady wyjazdów na studia / praktyki, DWZ, captured 2026-11-09. No written motivational letter to the dean.
+    document_date: '2026-02-04'
+    checked: '2026-11-09'
+  status: verified
+  i18n_label:
+    pl: Zgłoszenie Erasmus+ 2026/2027
+    en: Erasmus+ 2026/2027 application
+    uk: Заявка Erasmus+ 2026/2027
+- id: erasmus_selection_2026_2027
+  topic:
+  - erasmus
+  value:
+    language_exam: '2026-03-03 16:30, Wydział Ekonomii i Finansów, ul. Chrobrego 31, rooms 209, 219, 208. Student ID required. No phones, smartwatches, or other electronics. If the room changes, check sjo.uniwersytetradom.pl.'
+    exam_signup_email: sjo@uthrad.pl
+    exam_signup_deadline: '2026-02-19'
+    exam_signup_from: student mailbox in the URad domain
+    interview: '2026-03-05 10:00, rectorate, with the vice-rector for science and international cooperation. Motivation is oral.'
+    criteria:
+    - average grade confirmed by Biuro Obsługi Studenta
+    - language exam (SJO also assesses external certificates)
+    - year of study, with preference for later years
+    - Buddy System gives 1 point
+    appeal: written to the vice-rector for science and international cooperation, through the faculty coordinator and the dean
+    withdrawal: written, with a reason, signed by the faculty coordinator and the dean, submitted to DWZ
+  unit: null
+  academic_year: 2026/2027
+  applies_to: {}
+  candidates_seen: []
+  source:
+    url: https://uniwersytetradom.pl/2026/02/04/rekrutacja-na-wyjazdy-w-ramach-programu-erasmus-na-studia-i-praktyki-w-roku-akademickim-2026-2027/
+    ordinance: Recruitment announcement plus the 2026/2027 rules PDFs on the DWZ page.
+    document_date: '2026-02-04'
+    checked: '2026-11-09'
+  status: verified
+  i18n_label:
+    pl: Nabór Erasmus+ 2026/2027
+    en: Erasmus+ 2026/2027 selection
+    uk: Відбір Erasmus+ 2026/2027
+- id: erasmus_rates_2026_2027
+  topic:
+  - erasmus
+  value:
+    table_scope: Long-term student study mobility (SMS) for projects accepted in the 2024 call. No separate monthly table for long-term traineeships was in the PDF. Do not invent one.
+    group_1_eur_month: 670
+    group_1: Austria, Belgium, Denmark, Finland, France, Ireland, Iceland, Liechtenstein, Luxembourg, Netherlands, Germany, Norway, Sweden, Italy, and non-programme countries of regions 13 and 14
+    group_2_eur_month: 670
+    group_2: Cyprus, Czechia, Estonia, Greece, Spain, Latvia, Malta, Portugal, Slovakia, Slovenia
+    group_3_eur_month: 600
+    group_3: Bulgaria, Croatia, Lithuania, North Macedonia, Poland, Romania, Serbia, Turkey, Hungary
+    short_5_14_eur_day: 79
+    short_5_14_fewer_opportunities_eur: 100
+    short_15_30_eur_day: 56
+    short_15_30_fewer_opportunities_eur: 150
+    social_scholarship_topup_eur_month: 250
+    green_travel_short_lump_eur: 50
+    travel_lump_eur:
+    - distance_km: 10-99
+      green: 56
+      standard: 28
+    - distance_km: 100-499
+      green: 285
+      standard: 211
+    - distance_km: 500-1999
+      green: 417
+      standard: 309
+    - distance_km: 2000-2999
+      green: 535
+      standard: 395
+    - distance_km: 3000-3999
+      green: 785
+      standard: 580
+    - distance_km: 4000-7999
+      green: 1188
+      standard: 1188
+    - distance_km: 8000+
+      green: 1735
+      standard: 1735
+  unit: EUR
+  academic_year: 2026/2027
+  applies_to: {}
+  candidates_seen: []
+  source:
+    url: https://dwz.uniwersytetradom.pl/wp-content/uploads/sites/57/2026/02/Stawki-stypendiow-i-kosztow-podrozy.pdf
+    ordinance: Stawki stypendiów i kosztów podróży published on the DWZ 2026/2027 page. Social top-up of 250 EUR/month is also in the study and traineeship rules for participants entitled to a social scholarship, confirmed by BOS on the student form.
+    document_date: '2026-02-04'
+    checked: '2026-11-09'
+  status: verified
+  i18n_label:
+    pl: Stawki Erasmus+ 2026/2027
+    en: Erasmus+ 2026/2027 rates
+    uk: Ставки Erasmus+ 2026/2027
+- id: erasmus_dwz_contact
+  topic:
+  - erasmus
+  value:
+    office: Dział Współpracy z Zagranicą, ul. Malczewskiego 29, pok. 124 i 125, 26-600 Radom
+    announcement_phone: 48 361 7073
+    announcement_email: dwz@urad.edu.pl
+    agnieszka_dabrowska: '+48 48 361 70 74, mobile +48 691 100 844, a.dabrowska@uthrad.pl'
+    marta_okolus: '+48 48 361 70 73, dwz@uthrad.pl, m.okolus@uthrad.pl'
+    monika_kalotka_tatar: '+48 48 361 70 73, dwz@uthrad.pl, m.kalotka-tatar@urad.edu.pl'
+    footer_phone: '+48 48 361 70 55'
+    not_a_dean_office: true
+  unit: null
+  academic_year: 2026/2027
+  applies_to: {}
+  candidates_seen: []
+  source:
+    url: https://dwz.uniwersytetradom.pl/erasmus-2026-2027/
+    ordinance: Contacts printed on the DWZ 2026/2027 page and in the recruitment announcement. These are DWZ contacts, not a dean's office number.
+    document_date: '2026-02-04'
+    checked: '2026-11-09'
+  status: verified
+  i18n_label:
+    pl: Kontakt DWZ (Erasmus+)
+    en: DWZ contact (Erasmus+)
+    uk: Контакт DWZ (Erasmus+)
 

@@ -1,23 +1,24 @@
-import os, sys, time, collections, threading, ipaddress
+import os, sys, time, threading, ipaddress
 sys.path.insert(0, os.path.dirname(__file__))
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import rag
+from admin_ai import router as admin_router
 from security import redact_secrets, strip_untrusted_wrappers
 
 app = FastAPI(title="Asystent UR", docs_url=None, redoc_url=None, openapi_url=None)
+app.include_router(admin_router)
 
 @app.on_event("startup")
 def _warm():
     threading.Thread(target=rag.load, daemon=True).start()
 
-MAXQ, MAXH, LIMIT, WIN, GLOBAL = 500, 10, 20, 600, 1000
-hits = collections.defaultdict(collections.deque)
-glob = collections.deque()
-lock = threading.Lock()
-sem = threading.Semaphore(3)
+MAXQ, MAXH = 500, 10
+# At most 10 generations at once. A full set returns 503.
+sem = threading.Semaphore(10)
+_RATE_SECRET = None
 
 class Q(BaseModel):
     question: str = Field(..., min_length=1, max_length=MAXQ)
@@ -76,8 +77,17 @@ def home():
     with open(path, encoding="utf-8") as f:
         return f.read()
 
-@app.post("/api/chat")
-def chat(q: Q, r: Request):
+def _rate_secret() -> bytes:
+    global _RATE_SECRET
+    raw = (os.getenv("RATE_LIMIT_SECRET") or os.getenv("SESSION_SECRET") or "").strip()
+    if raw:
+        return raw.encode("utf-8")
+    if _RATE_SECRET is None:
+        _RATE_SECRET = os.urandom(32)
+    return _RATE_SECRET
+
+
+def _answer_request(q: Q, r: Request):
     question = q.question.strip()
     if not question or len(question) > MAXQ:
         raise HTTPException(400, f"Pytanie musi mieć od 1 do {MAXQ} znaków.")
@@ -93,62 +103,179 @@ def chat(q: Q, r: Request):
             "content": strip_untrusted_wrappers(redact_secrets(str(h.get("content", ""))[:3000])),
         })
     now = time.time()
-    k = ip(r)
     hist_user = "\n".join(m["content"] for m in hist if m["role"] == "user")
     lang = rag.detect_lang(question, hist_user, latest=question, session_lang=q.session_lang)
-    limit_msg = {
-        "pl": "Limit: 20 pytań na 10 minut. Spróbuj później.",
-        "en": "Limit: 20 questions per 10 minutes. Please try again later.",
-        "uk": "Ліміт: 20 запитань на 10 хвилин. Спробуйте пізніше.",
-        "mn": "Хязгаар: 10 минутад 20 асуулт. Дараа дахин оролдоно уу.",
-    }.get(lang, "Limit: 20 questions per 10 minutes. Please try again later.")
-    glob_msg = {
-        "pl": "Dzienny/godzinny limit serwisu wyczerpany. Spróbuj później.",
-        "en": "Service hourly limit reached. Please try again later.",
-        "uk": "Годинний ліміт сервісу вичерпано. Спробуйте пізніше.",
-        "mn": "Үйлчилгээний цагийн хязгаар дууссан. Дараа дахин оролдоно уу.",
-    }.get(lang, "Service hourly limit reached. Please try again later.")
-    with lock:
-        d = hits[k]
-        while d and now - d[0] > WIN:
-            d.popleft()
-        while glob and now - glob[0] > 3600:
-            glob.popleft()
-        if len(d) >= LIMIT:
-            raise HTTPException(429, limit_msg)
-        if len(glob) >= GLOBAL:
-            raise HTTPException(429, glob_msg)
-        d.append(now)
-        glob.append(now)
-    busy_msg = {
+    from phase4 import LIMITER, Overloaded, contains_pii
+    # The network id is hashed inside the limiter and is not stored or logged.
+    allowed, retry_after, scope = LIMITER.check(ip(r), _rate_secret(), now)
+    if not allowed:
+        detail = {
+            "pl": "Limit: 20 pytań na minutę i 200 na dobę." if scope != "global" else "Limit serwisu: 60 pytań na minutę.",
+            "en": "Limit: 20 questions per minute and 200 per day." if scope != "global" else "Service limit: 60 questions per minute.",
+            "uk": "Ліміт: 20 запитань на хвилину і 200 на добу." if scope != "global" else "Ліміт сервісу: 60 запитань на хвилину.",
+        }.get(lang, "Limit: 20 questions per minute and 200 per day.")
+        raise HTTPException(429, detail, headers={"Retry-After": str(retry_after)})
+    busy = {
         "pl": "Serwer zajęty, spróbuj za chwilę.",
         "en": "Server busy, please try again shortly.",
         "uk": "Сервер зайнятий, спробуйте за мить.",
-        "mn": "Сервер завгүй байна, түр хүлээгээд дахин оролдоно уу.",
     }.get(lang, "Serwer zajęty, spróbuj za chwilę.")
-    if not sem.acquire(timeout=10):
-        raise HTTPException(503, busy_msg)
+
+    def compute():
+        if not sem.acquire(timeout=0):
+            raise Overloaded()
+        try:
+            return rag.answer(
+                question, hist,
+                session_lang=q.session_lang,
+                state_token=q.state,
+                conv_id=q.conv_id,
+                scenario_context=q.scenario_context,
+            )
+        finally:
+            sem.release()
+
     t0 = time.time()
     try:
-        return rag.answer(
-            question, hist,
-            session_lang=q.session_lang,
-            state_token=q.state,
-            conv_id=q.conv_id,
-            scenario_context=q.scenario_context,
-        )
+        private = contains_pii(question) or contains_pii(hist_user) or bool(q.scenario_context)
+        result = _cached_or_compute(question, q.session_lang, lang, now, compute, private)
+        if isinstance(result, dict) and not result.get("state"):
+            result["state"] = q.state
+        try:
+            from phase4 import note_chat
+            if isinstance(result, dict):
+                note_chat(result, (time.time() - t0) * 1000)
+        except Exception:
+            pass
+        return result
+    except Overloaded:
+        raise HTTPException(503, busy)
     except HTTPException:
         raise
     except Exception:
         raise HTTPException(500, "Wewnętrzny błąd serwera. Spróbuj ponownie.")
     finally:
-        sem.release()
-        # timing breakdown without secrets
         try:
             import logging
-            logging.getLogger("ur.api").info("chat done in %.2fs ip=%s", time.time() - t0, k)
+            logging.getLogger("ur.api").info("chat done in %.2fs", time.time() - t0)
         except Exception:
             pass
+
+
+def _cached_or_compute(question, session_lang, lang, now, compute, private: bool):
+    """Rate limiting already happened. A down cache still runs compute()."""
+    from datetime import datetime
+    from phase4 import (
+        CACHE, CacheUnavailable, faq_fingerprint, load_settings, remember_intent,
+        response_cache_key, ttl_seconds, index_revision,
+    )
+    from query_norm import normalize_query
+    from answer_contract import load_prompt_settings
+    from clock import timezone_name, zone
+
+    if private:
+        return compute()
+    norm = normalize_query(question).search
+    intent = remember_intent(question, str(load_settings().get("university_id") or ""))
+    filters = {
+        "topics": list(intent.get("topics") or []),
+        "academic_year": intent.get("academic_year"),
+        "faculty_id": intent.get("faculty_id"),
+        "program_id": intent.get("program_id"),
+        "answer_lang": lang,
+    }
+    relative = bool(intent.get("relative_deadline"))
+    if relative:
+        filters["resolved_date"] = datetime.now(zone()).date().isoformat()
+        filters["timezone"] = timezone_name()
+    settings = load_settings()
+    revision = index_revision()
+    settings_revision = f"{settings.get('revision') or ''}|faq:{faq_fingerprint()}"
+    prompt_version = str(load_prompt_settings().get("version") or "")
+    model_version = (os.getenv("LLM_MODEL") or "unconfigured").strip()
+    key = response_cache_key(
+        university_id=str(settings.get("university_id") or ""),
+        normalized_query=norm,
+        answer_lang=lang or session_lang or "",
+        canonical_filters=filters,
+        index_revision=revision,
+        settings_revision=settings_revision,
+        prompt_version=prompt_version,
+        model_version=model_version,
+    )
+    CACHE.note_fingerprint("|".join([revision, settings_revision, prompt_version, model_version]))
+    faq_fp = faq_fingerprint()
+    try:
+        hit = CACHE.get(key, now, faq_fingerprint=faq_fp)
+    except CacheUnavailable:
+        return compute()
+    if hit is not None:
+        hit["cache"] = "hit"
+        return hit
+    try:
+        result = CACHE.single_flight(key, compute, 60, now, faq_fingerprint=faq_fp)
+    except CacheUnavailable:
+        return compute()
+    if isinstance(result, dict) and result.get("cache") != "hit":
+        # The in-flight copy used a short TTL. Replace it with the real one.
+        kind, deadline = _cache_kind(result, relative)
+        moment = datetime.now(zone())
+        ttl = ttl_seconds(kind, moment, contains_deadline=deadline, relative_date=relative)
+        try:
+            public = {k: v for k, v in result.items() if k not in ("state", "session")}
+            public["cache"] = "miss"
+            CACHE.put(key, public, ttl, now, faq_fingerprint=faq_fp)
+        except CacheUnavailable:
+            pass
+        result = dict(result)
+        result["cache"] = "miss"
+    return result
+
+
+def _cache_kind(result: dict, relative: bool) -> tuple[str, bool]:
+    contract = result.get("contract") or {}
+    status = str(contract.get("status") or "")
+    answer = (result.get("answer") or "").lower()
+    deadline = relative or any(word in answer for word in ("termin", "deadline", "до "))
+    if status == "no_answer":
+        return "no_answer", deadline
+    if result.get("mode") == "faq":
+        return "faq", deadline
+    return "response", deadline
+
+@app.post("/api/chat")
+def chat(q: Q, r: Request):
+    return _answer_request(q, r)
+
+@app.post("/api/chat/stream")
+def chat_stream(q: Q, r: Request):
+    """Buffered SSE. The model text is validated before any answer event."""
+    from answer_contract import buffered_events, error_event, format_sse
+    request_id = uuid_request()
+    try:
+        result = _answer_request(q, r)
+    except HTTPException as exc:
+        detail = exc.detail if isinstance(exc.detail, str) else "error"
+        return StreamingResponse(
+            iter([error_event(detail, request_id)]),
+            media_type="text/event-stream",
+            status_code=exc.status_code,
+            headers=dict(exc.headers or {}),
+        )
+    except Exception:
+        return StreamingResponse(
+            iter([error_event("error", request_id)]),
+            media_type="text/event-stream",
+            status_code=500,
+        )
+    return StreamingResponse(
+        iter([format_sse(buffered_events(result, request_id))]),
+        media_type="text/event-stream",
+    )
+
+def uuid_request():
+    import uuid
+    return uuid.uuid4().hex
 
 @app.get("/healthz")
 def healthz():
@@ -220,7 +347,11 @@ def social_scholarship_estimate(body: SocialEstimateIn):
 @app.exception_handler(Exception)
 async def _unhandled(_, exc):
     if isinstance(exc, HTTPException):
-        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+        return JSONResponse(
+            {"detail": exc.detail},
+            status_code=exc.status_code,
+            headers=dict(exc.headers or {}),
+        )
     return JSONResponse({"detail": "Wewnętrzny błąd serwera."}, status_code=500)
 
 app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="assets")

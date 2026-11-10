@@ -1,0 +1,12 @@
+# USD per 1M tokens. null is unknown and must not be stored as 0.
+# This is not a live provider bill.
+prices:
+  - model: ""
+    provider: ""
+    currency: USD
+    effective_at: "2026-11-09"
+    usd_per_1m:
+      input: null
+      output: null
+      cached_input: null
+      embedding: null

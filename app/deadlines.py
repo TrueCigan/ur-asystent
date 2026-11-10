@@ -25,14 +25,17 @@ _DEADLINE_CTX = re.compile(
     r"(?i)(?:do|until|by|termin|deadline|nie\s+później\s+niż|nie\s+pozniej\s+niz|"
     r"до|не\s*пізніше|składa\s*się\s*do|wpłacić\s*do|wplacic\s*do|"
     r"registration\s+closes|opłat\w*\s*do|wniosek.{0,20}do|zadatek.{0,20}do|"
-    r"zakwaterowanie\s+w\s+terminie|закрывається|закривається)",
+    r"закрывається|закривається)",
 )
 
+# Check-in, exam sessions, and timetable dates are not application deadlines.
 _EXCLUDE_CTX = re.compile(
     r"(?i)(?:z\s+dnia|dated|uchwał|zarządzen|regulation|aktualizac|updated|"
     r"egzamin|exam|екзамен|о\s+\d{1,2}:\d{2}|zaktualizowana|"
     r"uchwała\s*nr|zarządzenie\s*nr|\bBIP\b|resolution|postanowien|"
-    r"enter\s+into\s+force|wchodzi\s+w\s+życie|strona\s+zaktualizowana)",
+    r"enter\s+into\s+force|wchodzi\s+w\s+życie|strona\s+zaktualizowana|"
+    r"kwaterowan|zakwaterowan|check-?in|move-?in|wprowadz|заселен|"
+    r"sesj\w*\s*egzamin|timetable|rozkład\s+zaj|rozklad\s+zaj|plan\s+zaj)",
 )
 
 
@@ -42,6 +45,7 @@ class Deadline:
     end: date
     label_key: str
     source_url: str | None = None
+    subject: str = ""
 
 
 def _fold(token: str) -> str:
@@ -90,8 +94,8 @@ def _yearless_date(month: int, day: int, today: date) -> date | None:
 
 def _ctx_ok(text: str, start: int, end: int) -> bool:
     """Require deadline cue nearby; reject regulation/exam/update dates."""
-    left = text[max(0, start - 40):start]
-    right = text[end:min(len(text), end + 20)]
+    left = text[max(0, start - 80):start]
+    right = text[end:min(len(text), end + 48)]
     window = left + text[start:end] + right
     if _EXCLUDE_CTX.search(window):
         return False
@@ -135,6 +139,9 @@ def parse_deadlines(text: str, today: date | None = None) -> list[Deadline]:
         if not end:
             continue
         covered.append((m.start(), m.end()))
+        window = text[max(0, m.start() - 80):min(len(text), m.end() + 40)]
+        if _EXCLUDE_CTX.search(window):
+            continue
         found.append(Deadline(start=start, end=end, label_key="range"))
 
     # Partial ranges: 29.09–1.10.2026 (inherit year; if start month > end month → year-1)
@@ -155,6 +162,9 @@ def parse_deadlines(text: str, today: date | None = None) -> list[Deadline]:
         if not end:
             continue
         covered.append((m.start(), m.end()))
+        window = text[max(0, m.start() - 80):min(len(text), m.end() + 40)]
+        if _EXCLUDE_CTX.search(window):
+            continue
         found.append(Deadline(start=start, end=end, label_key="partial_range"))
 
     # Ranges with month names: 1–5 października 2026
@@ -199,8 +209,8 @@ def parse_deadlines(text: str, today: date | None = None) -> list[Deadline]:
             continue
         if mid and mid > end:
             end = mid
+        # Move-in windows are not application deadlines, so they get no warning.
         covered.append((m.start(), m.end()))
-        found.append(Deadline(start=start, end=end, label_key="window"))
 
     # Prefixed single: until/by/do + date (always contextual)
     for m in re.finditer(
@@ -306,12 +316,20 @@ def render_deadline_notes(
             disp = f"{_fmt(d.start, lang)} – {_fmt(d.end, lang)}"
         else:
             disp = _fmt(d.end, lang)
-        msg = {
-            "pl": f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()}).",
-            "en": f"⚠️ This deadline ({disp}) has already passed (today: {today.isoformat()}).",
-            "uk": f"⚠️ Цей термін ({disp}) уже минув (сьогодні: {today.isoformat()}).",
-            "mn": f"⚠️ Энэ хугацаа ({disp}) өнгөрсөн (өнөөдөр: {today.isoformat()}).",
-        }.get(lang) or f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()})."
+        if d.subject:
+            msg = {
+                "pl": f"⚠️ {d.subject} ({disp}) już minął (dziś: {today.isoformat()}).",
+                "en": f"⚠️ {d.subject} ({disp}) has already passed (today: {today.isoformat()}).",
+                "uk": f"⚠️ {d.subject} ({disp}) уже минув (сьогодні: {today.isoformat()}).",
+                "mn": f"⚠️ {d.subject} ({disp}) өнгөрсөн (өнөөдөр: {today.isoformat()}).",
+            }.get(lang) or f"⚠️ {d.subject} ({disp}) już minął (dziś: {today.isoformat()})."
+        else:
+            msg = {
+                "pl": f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()}).",
+                "en": f"⚠️ This deadline ({disp}) has already passed (today: {today.isoformat()}).",
+                "uk": f"⚠️ Цей термін ({disp}) уже минув (сьогодні: {today.isoformat()}).",
+                "mn": f"⚠️ Энэ хугацаа ({disp}) өнгөрсөн (өнөөдөр: {today.isoformat()}).",
+            }.get(lang) or f"⚠️ Ten termin ({disp}) już minął (dziś: {today.isoformat()})."
         if msg not in notes:
             notes.append(msg)
     tset = set(topics or [])
@@ -352,6 +370,66 @@ def strip_llm_deadline_notes(text: str) -> str:
         if line.strip():
             lines.append(line)
     return "\n".join(lines).rstrip()
+
+
+# Only these signed records are application or submission deadlines.
+_APPLICATION_DEADLINE_IDS = frozenset({
+    "dorm_application_deadline",
+    "social_rector_deadline",
+})
+
+
+_DEADLINE_SUBJECT = {
+    "dorm_application_deadline": {
+        "pl": "Termin składania wniosków o miejsce w domu studenckim",
+        "en": "Dormitory application deadline",
+        "uk": "Термін подання заяв на місце в гуртожитку",
+    },
+    "social_rector_deadline": {
+        "pl": "Termin składania wniosków o stypendium socjalne lub rektora",
+        "en": "Social or rector scholarship application deadline",
+        "uk": "Термін подання заяв на соціальну стипендію або стипендію ректора",
+    },
+}
+
+
+def notes_from_signed_deadlines(
+    facts, lang: str = "pl", today: date | None = None, question_topics: list[str] | None = None,
+) -> str:
+    """Warn only from a signed application deadline whose topic matches the question."""
+    today = today or date.today()
+    found: list[Deadline] = []
+    topics: list[str] = []
+    asked = set(question_topics or [])
+    for fact in facts or []:
+        if getattr(fact, "status", None) != "verified":
+            continue
+        if getattr(fact, "id", None) not in _APPLICATION_DEADLINE_IDS:
+            continue
+        fact_topics = list(getattr(fact, "topic", None) or [])
+        if question_topics is not None and not (asked & set(fact_topics)):
+            continue
+        raw = getattr(fact, "deadline", None) or {}
+        if not isinstance(raw, dict):
+            continue
+        end_raw = raw.get("end")
+        if not end_raw:
+            continue
+        try:
+            end = date.fromisoformat(str(end_raw)[:10])
+        except ValueError:
+            continue
+        start = None
+        if raw.get("start"):
+            try:
+                start = date.fromisoformat(str(raw["start"])[:10])
+            except ValueError:
+                start = None
+        labels = _DEADLINE_SUBJECT.get(getattr(fact, "id", ""), {})
+        subject = labels.get(lang) or labels.get("pl") or ""
+        found.append(Deadline(start=start, end=end, label_key="until", subject=subject))
+        topics.extend(fact_topics)
+    return render_deadline_notes(found, lang, today, topics=topics)
 
 
 def deadline_passed_note(text: str, lang: str = "pl", today: date | None = None, topics: list[str] | None = None) -> str:

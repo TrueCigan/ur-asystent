@@ -19,6 +19,39 @@ jobs:
         run: python tests/test_social_scenario.py
       - name: Answer contract without a live model
         run: python tests/test_answer_contract.py
+      - name: EVAL_REAL must stay off in the free gate
+        run: |
+          python - <<'PY'
+          import os, sys
+          val = os.environ.get("EVAL_REAL", "0").strip()
+          if val == "1":
+              sys.exit("EVAL_REAL=1 is forbidden in eval-unit")
+          sys.path.insert(0, "app")
+          os.environ.pop("LLM_API_KEY", None)
+          os.environ.pop("GEMINI_API_KEY", None)
+          from adapters import eval_real_enabled
+          if eval_real_enabled():
+              sys.exit("eval_real_enabled")
+          print("eval_real_off")
+          PY
+      - name: Phase 0 skeleton and fakes (no network)
+        run: python tests/test_phase0.py
+      - name: Phase 1 ingestion guards (no network)
+        run: python tests/test_phase1_ingestion.py
+      - name: Phase 2 retrieval guards (no network)
+        run: python tests/test_phase2_retrieval.py
+      - name: Phase 3 answer contract (no network)
+        run: python tests/test_phase3_answer.py
+      - name: Phase 4 cache and cost (no network)
+        run: python tests/test_phase4_speed.py
+      - name: Phase 5 admin guards (no network)
+        run: python tests/test_phase5_admin.py
+      - name: Phase 6 hardening checks (no network)
+        run: python tests/test_phase6_hardening.py
+      - name: Phase 6 eval fixes (no network)
+        run: python tests/test_phase6_fixes.py
+      - name: Phase 6 rerun fixes
+        run: python tests/test_phase6_fixes2.py
       - name: Docker image build and container smoke
         run: |
           docker build -t ur-asystent-ci .

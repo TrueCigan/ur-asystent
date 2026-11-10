@@ -1,0 +1,22 @@
+# Phase 0
+
+Аудит и каркас оценки. Рабочий ассистент остаётся на Python, FastAPI и файловом индексе.
+
+| Документ | Содержание |
+|---|---|
+| [PROJECT_CARD.md](PROJECT_CARD.md) | Известные поля и явные пустые |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Модули и будущие порты по фазам |
+| [DEPLOY_AND_LANGUAGE.md](DEPLOY_AND_LANGUAGE.md) | Флаг на деплое и монгольский |
+| [BACKLOG.md](BACKLOG.md) | Пробелы фаз 1–6, без реализации |
+| [DEFINITION_OF_DONE.md](DEFINITION_OF_DONE.md) | Команды и критерий закрытия |
+| [BASELINE.md](BASELINE.md) | Замер текущего кода без платного API |
+| [PHASE1.md](PHASE1.md) | Что вошло в Phase 1 и какой allowlist ещё не подписан |
+| [PHASE2.md](PHASE2.md) | FAQ-путь и фильтры Phase 2 |
+| [PHASE3.md](PHASE3.md) | Схема ответа и буферизованный SSE |
+| [PHASE4.md](PHASE4.md) | Кэш, лимит и стоимость |
+| [PHASE5.md](PHASE5.md) | Закрытая админка |
+| [PHASE6.md](PHASE6.md) | Укрепление без оценки 40 кейсов и без запуска |
+| [RUNBOOK.md](RUNBOOK.md) | Локальный старт, индекс, сбой провайдера, откат |
+| [PHASE6_EVAL_REPORT.md](PHASE6_EVAL_REPORT.md) | Пустой шаблон отчёта по 40 кейсам |
+
+Кейсы скелета: `tests/phase0_cases.yaml`. Старые диалоги: `tests/cases.yaml` (не заменяются).

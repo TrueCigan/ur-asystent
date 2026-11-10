@@ -1,0 +1,5 @@
+# Public cache and budget settings. Empty prices are unknown, not zero.
+revision: "2026-11-09"
+university_id: uniwersytet-radomski
+# null means no daily generation cap is configured.
+daily_generation_budget_usd: null
