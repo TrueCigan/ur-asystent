@@ -12,7 +12,7 @@ import os
 import threading
 import time
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +23,11 @@ INTENT_TTL = 24 * 60 * 60
 FAQ_TTL = 24 * 60 * 60
 MINUTE = 60
 DAY = 24 * 60 * 60
+# TZ defaults. These periods are not a GDPR compliance claim.
+TECHNICAL_DAYS = 30
+SAMPLE_DAYS = 7
+SUMMARY_DAYS = 90
+PURGE_HOOKS: list = []
 
 
 class CacheUnavailable(Exception):
@@ -382,19 +387,71 @@ def _limit_caps() -> tuple[int, int, int]:
 
 
 class RequestNotes:
-    """Redacted in-process samples. Raw question text, IP, session, and user id are not fields."""
+    """Redacted in-process samples. Raw question text, IP, session, and user id are not fields.
+
+    Samples are kept 7 days, technical rows 30 days, daily summaries 90 days.
+    They are not a reconstructed request history and they vanish on process restart.
+    """
 
     def __init__(self):
         self.samples: deque = deque(maxlen=50)
+        self.technical: deque = deque(maxlen=500)
+        self.summaries: dict[str, dict] = {}
 
     def clear(self) -> None:
         self.samples.clear()
+        self.technical.clear()
+        self.summaries.clear()
 
     def add(self, sample: dict) -> None:
         self.samples.append(dict(sample))
+        purge_expired()
+
+    def add_technical(self, row: dict) -> None:
+        self.technical.append(dict(row))
+        purge_expired()
 
 
 NOTES = RequestNotes()
+
+
+def _utc_today():
+    return datetime.now(timezone.utc).date()
+
+
+def age_days(stamp: str, today=None) -> int:
+    today = today or _utc_today()
+    day = datetime.fromisoformat(str(stamp)[:10]).date()
+    return (today - day).days
+
+
+def purge_expired(today=None) -> None:
+    """Drop aged in-process rows. There is no external scheduler."""
+    today = today or _utc_today()
+    NOTES.samples = deque(
+        [row for row in NOTES.samples if age_days(row.get("created_at") or today.isoformat(), today) < SAMPLE_DAYS],
+        maxlen=50,
+    )
+    NOTES.technical = deque(
+        [row for row in NOTES.technical if age_days(row.get("created_at") or today.isoformat(), today) < TECHNICAL_DAYS],
+        maxlen=500,
+    )
+    NOTES.summaries = {
+        day: payload for day, payload in NOTES.summaries.items()
+        if age_days(day, today) < SUMMARY_DAYS
+    }
+    for hook in list(PURGE_HOOKS):
+        hook(today)
+
+
+def remember_summary(day: str, payload: dict) -> None:
+    NOTES.summaries[day] = {
+        "requests": payload.get("requests"),
+        "faq": payload.get("faq"),
+        "generated": payload.get("generated"),
+        "unknown": payload.get("unknown"),
+    }
+    purge_expired()
 
 
 def note_chat(result: dict, total_ms: float) -> None:
@@ -445,6 +502,14 @@ def note_chat(result: dict, total_ms: float) -> None:
         "prompt_version": prompt_version,
         "model": (os.getenv("LLM_MODEL") or "unconfigured").strip(),
         "tokens": None,
+    })
+    NOTES.add_technical({
+        "created_at": time.strftime("%Y-%m-%d", time.gmtime()),
+        "path": path,
+        "error_code": result.get("error_code") or None,
+        "total_ms": round(float(total_ms), 1),
+        "index_revision": revision,
+        "prompt_version": prompt_version,
     })
 
 

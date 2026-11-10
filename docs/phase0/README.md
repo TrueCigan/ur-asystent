@@ -14,6 +14,9 @@
 | [PHASE2.md](PHASE2.md) | FAQ-путь и фильтры Phase 2 |
 | [PHASE3.md](PHASE3.md) | Схема ответа и буферизованный SSE |
 | [PHASE4.md](PHASE4.md) | Кэш, лимит и стоимость |
-| [PHASE5.md](PHASE5.md) | Закрытая админка; фаза 6 не начата |
+| [PHASE5.md](PHASE5.md) | Закрытая админка |
+| [PHASE6.md](PHASE6.md) | Укрепление без оценки 40 кейсов и без запуска |
+| [RUNBOOK.md](RUNBOOK.md) | Локальный старт, индекс, сбой провайдера, откат |
+| [PHASE6_EVAL_REPORT.md](PHASE6_EVAL_REPORT.md) | Пустой шаблон отчёта по 40 кейсам |
 
 Кейсы скелета: `tests/phase0_cases.yaml`. Старые диалоги: `tests/cases.yaml` (не заменяются).

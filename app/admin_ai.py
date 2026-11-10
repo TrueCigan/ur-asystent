@@ -119,10 +119,25 @@ def require(header: str | None, minimum: str, csrf: str | None = None, mutating:
     return payload["role"]
 
 
+def purge_audit(today) -> None:
+    kept = []
+    for row in AUDIT:
+        stamp = row.get("at") or ""
+        if stamp and phase4.age_days(stamp, today) >= phase4.TECHNICAL_DAYS:
+            continue
+        kept.append(row)
+    AUDIT[:] = kept
+
+
+if purge_audit not in phase4.PURGE_HOOKS:
+    phase4.PURGE_HOOKS.append(purge_audit)
+
+
 def _audit(role: str, action: str, detail: dict) -> None:
     safe = {key: value for key, value in detail.items() if "secret" not in key and "password" not in key and "token" not in key}
     AUDIT.append({"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "role": role, "action": action, "detail": safe})
     log.info("admin action=%s role=%s", action, role)
+    phase4.purge_expired()
 
 
 def overview() -> dict:
@@ -151,7 +166,7 @@ def overview() -> dict:
             "of": of,
         }
 
-    return {
+    report = {
         "requests_today": requests,
         "requests_denominator": "in-process redacted notes for this UTC date; not a reconstructed history",
         "faq_percent": percent(faq, requests, "requests today"),
@@ -174,6 +189,13 @@ def overview() -> dict:
         "latency_p95_ms": "not measured",
         "score_40": "not measured",
     }
+    phase4.remember_summary(today, {
+        "requests": requests,
+        "faq": faq,
+        "generated": generated,
+        "unknown": report["unknown_marker"],
+    })
+    return report
 
 
 def list_samples(date: str | None = None, path: str | None = None, error: str | None = None) -> list[dict]:
