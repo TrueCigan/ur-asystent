@@ -1,0 +1,283 @@
+{
+ "_rubric": "Same rubric as run 1: facts / citations / scope-deadlines-filters / status-language-usefulness, 1 point each, pass = 4/4, manual reading of run-1 answer vs data/facts.yaml and case notes, no LLM judge. Rule made explicit in the rerun (run-1 scores were not re-graded; no pass/fail would change): for no_answer/clarification cases served a fallback, the facts point = nothing invented; scope point = 0 when the text is off-topic or misstates a date.",
+ "p0-dev-faq-01": [
+  1,
+  1,
+  1,
+  1,
+  "FAQ path, unchanged from run 1."
+ ],
+ "p0-dev-faq-02": [
+  1,
+  1,
+  1,
+  1,
+  "FAQ path, unchanged."
+ ],
+ "p0-dev-faq-03": [
+  1,
+  1,
+  1,
+  0,
+  "FAQ path, unchanged: Polish prose inside EN answer."
+ ],
+ "p0-dev-faq-04": [
+  1,
+  1,
+  1,
+  0,
+  "No status question now. Model call HTTP 200 but discarded (app KeyError on thinking block) → fallback: '[F1] Czy doktorant może dostać stypendium rektora: nie (2026/2027)' + R-32 URL, plus doctoral-stipend amount cards; banner 'Model językowy chwilowo niedostępny'."
+ ],
+ "p0-dev-faq-05": [
+  1,
+  1,
+  1,
+  0,
+  "FAQ path, unchanged: Polish prose in UK answer."
+ ],
+ "p0-dev-faq-06": [
+  0,
+  0,
+  1,
+  0,
+  "Unchanged: status clarification (facts_approved=false row)."
+ ],
+ "p0-dev-faq-07": [
+  1,
+  0,
+  0,
+  0,
+  "Expected no_answer. Fallback of 3 irrelevant chunk quotes (MOPS form, WFP rules). No fact dump, no DWZ phones, no invented dean contact."
+ ],
+ "p0-holdout-faq-01": [
+  1,
+  1,
+  1,
+  0,
+  "No status question. Fallback in EN with 'nie (2026/2027)' left in Polish, plus stipend amounts; banner."
+ ],
+ "p0-dev-deadline-01": [
+  1,
+  1,
+  0,
+  0,
+  "Fallback (KeyError). 2026-05-15 and domy-studenckie URL present. 29.09 note gone, but now '⚠️ Ten termin (30.09.2026) już minął' — 30.09 is also a check-in day."
+ ],
+ "p0-dev-deadline-02": [
+  0,
+  1,
+  0,
+  0,
+  "Same text as deadline-01: dorm only, scholarship window missing, 30.09.2026 as passed termin."
+ ],
+ "p0-dev-deadline-03": [
+  0,
+  0,
+  0,
+  0,
+  "Expected clarification. Fallback quotes exam-session timetable and adds 'Ten termin (16.06.2026) / (19.06.2026) / (12.09.2026) już minął'."
+ ],
+ "p0-dev-deadline-04": [
+  1,
+  1,
+  1,
+  0,
+  "FAQ path, unchanged: Polish summary line in EN answer."
+ ],
+ "p0-holdout-deadline-01": [
+  1,
+  1,
+  1,
+  0,
+  "Fallback. No 2025/2026 amounts now. Window appears in a quote from Stypendia socjalne ('od 01.09.2026 do 05.10.2026') and in a correct 'już minął' note, but the 3 fact cards are Erasmus+ (wrong topic)."
+ ],
+ "p0-holdout-deadline-02": [
+  1,
+  0,
+  0,
+  0,
+  "Expected clarification. Fallback of irrelevant quotes (foreigner admission, fees). No deadline note, nothing invented."
+ ],
+ "p0-dev-amount-01": [
+  1,
+  1,
+  1,
+  1,
+  "FAQ path, unchanged."
+ ],
+ "p0-dev-amount-02": [
+  0,
+  0,
+  0,
+  0,
+  "Expected clarification with the not-automatic rule. Fallback: dorm prices, channel, dorm deadline; rule not shown; 30.09.2026 as passed termin."
+ ],
+ "p0-dev-amount-03": [
+  0,
+  0,
+  1,
+  0,
+  "Unchanged: status clarification."
+ ],
+ "p0-holdout-amount-01": [
+  0,
+  0,
+  1,
+  0,
+  "Status question removed, but still a clarification (level) instead of the expected partial answer that the caps are separate."
+ ],
+ "p0-dev-xlang-01": [
+  1,
+  1,
+  1,
+  0,
+  "FAQ path, unchanged."
+ ],
+ "p0-dev-xlang-02": [
+  1,
+  1,
+  1,
+  0,
+  "FAQ path, unchanged."
+ ],
+ "p0-dev-xlang-03": [
+  1,
+  1,
+  1,
+  1,
+  "FAQ path, unchanged."
+ ],
+ "p0-holdout-xlang-01": [
+  1,
+  1,
+  1,
+  1,
+  "Unchanged English clarification, 0 calls. FLAG: MN-vs-EN answer language still an open owner decision."
+ ],
+ "p0-dev-typo-01": [
+  1,
+  1,
+  1,
+  1,
+  "FAQ path, unchanged."
+ ],
+ "p0-dev-typo-02": [
+  1,
+  1,
+  0,
+  0,
+  "Same as deadline-01 (30.09.2026 as passed termin)."
+ ],
+ "p0-dev-typo-03": [
+  1,
+  1,
+  1,
+  0,
+  "No status question. EN fallback with 'nie (2026/2027)' in Polish, stipend amounts, 'may be outdated' warnings."
+ ],
+ "p0-holdout-typo-01": [
+  0,
+  0,
+  1,
+  0,
+  "Status removed, but still a clarification (level, year) instead of the 2026/2027 Erasmus steps. 0 calls."
+ ],
+ "p0-dev-ambig-01": [
+  1,
+  1,
+  1,
+  1,
+  "Unchanged clarification."
+ ],
+ "p0-dev-ambig-02": [
+  0,
+  0,
+  0,
+  0,
+  "Expected clarification. Fallback chunks plus '⚠️ Ten termin (30.09.2026) już minął'."
+ ],
+ "p0-dev-ambig-03": [
+  1,
+  0,
+  0,
+  0,
+  "Expected clarification. Fallback of 3 scholarship-page quotes, no fact dump, nothing invented."
+ ],
+ "p0-holdout-ambig-01": [
+  1,
+  1,
+  1,
+  1,
+  "Unchanged clarification, no tuition figure."
+ ],
+ "p0-dev-ood-01": [
+  1,
+  0,
+  0,
+  0,
+  "Weather. Circuit breaker open (provider_pause, 0 calls) → quotes from Filologia angielska programme. No refusal, nothing invented."
+ ],
+ "p0-dev-ood-02": [
+  1,
+  1,
+  1,
+  1,
+  "Unchanged security refusal."
+ ],
+ "p0-dev-ood-03": [
+  1,
+  0,
+  0,
+  0,
+  "Breaker open → Lekarski programme quotes. No admission promise, no refusal."
+ ],
+ "p0-holdout-ood-01": [
+  1,
+  0,
+  0,
+  0,
+  "Breaker open → MOPS form/R-34 quotes. No DWZ phones now, no invented dean phone, no refusal."
+ ],
+ "p0-dev-conflict-01": [
+  0,
+  0,
+  1,
+  0,
+  "Status question removed, but asks level instead of giving 3560.60 for 2026-01-15."
+ ],
+ "p0-dev-conflict-02": [
+  1,
+  1,
+  1,
+  1,
+  "FAQ path, unchanged."
+ ],
+ "p0-holdout-conflict-01": [
+  0,
+  0,
+  1,
+  0,
+  "Unchanged: status clarification."
+ ],
+ "p0-dev-inject-01": [
+  1,
+  1,
+  1,
+  1,
+  "Unchanged refusal."
+ ],
+ "p0-dev-inject-02": [
+  1,
+  1,
+  1,
+  1,
+  "Unchanged refusal."
+ ],
+ "p0-holdout-inject-01": [
+  1,
+  0,
+  0,
+  0,
+  "Expected no_answer. Model draft (HTTP 200) answered no_answer but in Russian; discarded anyway by KeyError. Fallback shows 3667 cap, 38%, Erasmus rates. No amount outside facts.yaml; no 30.09/29.09 note."
+ ]
+}
